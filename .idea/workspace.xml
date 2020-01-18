@@ -2,38 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="afd21798-d36e-4d1c-9d3a-9a2867b3b819" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/jarRepositories.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/2.14/taskArtifacts/cache.properties" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/2.14/taskArtifacts/cache.properties.lock" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/2.14/taskArtifacts/fileHashes.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/2.14/taskArtifacts/fileSnapshots.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/2.14/taskArtifacts/fileSnapshotsToTreeSnapshotsIndex.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/2.14/taskArtifacts/taskArtifacts.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/2.14/taskArtifacts/treeSnapshotUsage.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/2.14/taskArtifacts/treeSnapshots.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/tmp/makeStart/extracted/GradleStart.java" beforeDir="false" afterPath="$PROJECT_DIR$/build/tmp/makeStart/extracted/GradleStart.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/tmp/makeStart/extracted/GradleStartServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/build/tmp/makeStart/extracted/GradleStartServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/tmp/makeStart/extracted/net/minecraftforge/gradle/GradleForgeHacks.java" beforeDir="false" afterPath="$PROJECT_DIR$/build/tmp/makeStart/extracted/net/minecraftforge/gradle/GradleForgeHacks.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/tmp/makeStart/extracted/net/minecraftforge/gradle/GradleStartCommon.java" beforeDir="false" afterPath="$PROJECT_DIR$/build/tmp/makeStart/extracted/net/minecraftforge/gradle/GradleStartCommon.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/tmp/makeStart/extracted/net/minecraftforge/gradle/tweakers/AccessTransformerTweaker.java" beforeDir="false" afterPath="$PROJECT_DIR$/build/tmp/makeStart/extracted/net/minecraftforge/gradle/tweakers/AccessTransformerTweaker.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/tmp/makeStart/extracted/net/minecraftforge/gradle/tweakers/CoremodTweaker.java" beforeDir="false" afterPath="$PROJECT_DIR$/build/tmp/makeStart/extracted/net/minecraftforge/gradle/tweakers/CoremodTweaker.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classes/production/Factions.main/com/demmodders/factions/Factions.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/classes/production/Factions.main/mcmod.info" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/classes/production/Factions.main/pack.mcmeta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.properties" beforeDir="false" afterPath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradlew" beforeDir="false" afterPath="$PROJECT_DIR$/gradlew" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradlew.bat" beforeDir="false" afterPath="$PROJECT_DIR$/gradlew.bat" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
-  </component>
-  <component name="DefaultGradleProjectSettings">
-    <option name="isMigrated" value="true" />
   </component>
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
@@ -165,25 +140,42 @@
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
     <state x="414" y="195" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1920.1080/1920.-11.1920.1080/-1920.0.1920.1080@0.0.1920.1080" timestamp="1579290605580" />
-    <state width="1877" height="363" key="GridCell.Tab.0.bottom" timestamp="1579290620935">
+    <state width="1877" height="224" key="GridCell.Tab.0.bottom" timestamp="1579295817389">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1877" height="363" key="GridCell.Tab.0.bottom/0.0.1920.1080/1920.-11.1920.1080/-1920.0.1920.1080@0.0.1920.1080" timestamp="1579290620935" />
-    <state width="1877" height="363" key="GridCell.Tab.0.center" timestamp="1579290620935">
+    <state width="1877" height="224" key="GridCell.Tab.0.bottom/0.0.1920.1080/1920.-11.1920.1080/-1920.0.1920.1080@0.0.1920.1080" timestamp="1579295817389" />
+    <state width="1877" height="224" key="GridCell.Tab.0.center" timestamp="1579295817389">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1877" height="363" key="GridCell.Tab.0.center/0.0.1920.1080/1920.-11.1920.1080/-1920.0.1920.1080@0.0.1920.1080" timestamp="1579290620935" />
-    <state width="1877" height="363" key="GridCell.Tab.0.left" timestamp="1579290620934">
+    <state width="1877" height="224" key="GridCell.Tab.0.center/0.0.1920.1080/1920.-11.1920.1080/-1920.0.1920.1080@0.0.1920.1080" timestamp="1579295817389" />
+    <state width="1877" height="224" key="GridCell.Tab.0.left" timestamp="1579295817389">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1877" height="363" key="GridCell.Tab.0.left/0.0.1920.1080/1920.-11.1920.1080/-1920.0.1920.1080@0.0.1920.1080" timestamp="1579290620934" />
-    <state width="1877" height="363" key="GridCell.Tab.0.right" timestamp="1579290620935">
+    <state width="1877" height="224" key="GridCell.Tab.0.left/0.0.1920.1080/1920.-11.1920.1080/-1920.0.1920.1080@0.0.1920.1080" timestamp="1579295817389" />
+    <state width="1877" height="224" key="GridCell.Tab.0.right" timestamp="1579295817389">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1877" height="363" key="GridCell.Tab.0.right/0.0.1920.1080/1920.-11.1920.1080/-1920.0.1920.1080@0.0.1920.1080" timestamp="1579290620935" />
-    <state x="656" y="364" key="com.intellij.ide.util.TipDialog" timestamp="1579290387022">
+    <state width="1877" height="224" key="GridCell.Tab.0.right/0.0.1920.1080/1920.-11.1920.1080/-1920.0.1920.1080@0.0.1920.1080" timestamp="1579295817389" />
+    <state width="1877" height="224" key="GridCell.Tab.1.bottom" timestamp="1579295817389">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state width="1877" height="224" key="GridCell.Tab.1.bottom/0.0.1920.1080/1920.-11.1920.1080/-1920.0.1920.1080@0.0.1920.1080" timestamp="1579295817389" />
+    <state width="1877" height="224" key="GridCell.Tab.1.center" timestamp="1579295817389">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state width="1877" height="224" key="GridCell.Tab.1.center/0.0.1920.1080/1920.-11.1920.1080/-1920.0.1920.1080@0.0.1920.1080" timestamp="1579295817389" />
+    <state width="1877" height="224" key="GridCell.Tab.1.left" timestamp="1579295817389">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state width="1877" height="224" key="GridCell.Tab.1.left/0.0.1920.1080/1920.-11.1920.1080/-1920.0.1920.1080@0.0.1920.1080" timestamp="1579295817389" />
+    <state width="1877" height="224" key="GridCell.Tab.1.right" timestamp="1579295817389">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state width="1877" height="224" key="GridCell.Tab.1.right/0.0.1920.1080/1920.-11.1920.1080/-1920.0.1920.1080@0.0.1920.1080" timestamp="1579295817389" />
+    <state x="656" y="364" key="com.intellij.ide.util.TipDialog" timestamp="1579348401219">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
     <state x="656" y="364" key="com.intellij.ide.util.TipDialog/0.0.1920.1080/1920.-11.1920.1080/-1920.0.1920.1080@0.0.1920.1080" timestamp="1579290387022" />
+    <state x="656" y="364" key="com.intellij.ide.util.TipDialog/1920.-11.1920.1080/-1920.0.1920.1080/0.0.1920.1080@0.0.1920.1080" timestamp="1579348401219" />
   </component>
 </project>
