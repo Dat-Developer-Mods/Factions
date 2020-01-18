@@ -1,5 +1,6 @@
 package com.demmodders.factions;
 
+import net.minecraft.command.CommandBase;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -26,6 +27,7 @@ public class Factions {
     @EventHandler
     public void init(FMLInitializationEvent event) {
         LOGGER.info(Factions.NAME + "says hi!");
+        CommandBase test;
     }
 
     @EventHandler
