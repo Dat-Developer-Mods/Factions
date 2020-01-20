@@ -3,12 +3,14 @@ package com.demmodders.factions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.PlayerList;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.event.ServerChatEvent;
+import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
@@ -25,5 +27,12 @@ public class EventsChat{
     @SubscribeEvent
     public static void ServerChatEvent(ServerChatEvent e){
         LOGGER.info(Factions.NAME + " " + e.toString());
+    }
+
+    @SubscribeEvent
+    public static void chunkTraversal(EntityEvent.EnteringChunk e){
+        if(e.getEntity() instanceof EntityPlayer) {
+            LOGGER.info(e.getEntity().getName());
+        }
     }
 }
