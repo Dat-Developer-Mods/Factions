@@ -1,15 +1,13 @@
 package com.demmodders.factions;
 
-import com.demmodders.factions.faction.Faction;
+import com.demmodders.factions.commands.CommandRegister;
 import com.demmodders.factions.faction.FactionManager;
-import com.demmodders.factions.util.Location;
-import com.google.gson.Gson;
-import net.minecraft.command.CommandBase;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -25,16 +23,23 @@ public class Factions {
 
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
+        // Load faction data
         FactionManager.getInstance();
     }
 
     @EventHandler
     public void init(FMLInitializationEvent event) {
         LOGGER.info(Factions.NAME + "says hi!");
+        CommandRegister.RegisterPermissionNodes();
     }
 
     @EventHandler
     public void postInit(FMLPostInitializationEvent event) {
 
+    }
+
+    @EventHandler
+    public void ServerLoad(FMLServerStartingEvent e){
+        CommandRegister.RegisterCommands(e);
     }
 }

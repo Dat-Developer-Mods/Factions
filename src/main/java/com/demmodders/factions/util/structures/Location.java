@@ -1,4 +1,4 @@
-package com.demmodders.factions.util;
+package com.demmodders.factions.util.structures;
 
 public class Location {
     String world;

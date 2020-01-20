@@ -62,7 +62,7 @@ public class FactionManager {
         return PlayerMap.getOrDefault(ID, null);
     }
 
-    public UUID getPlayerIDFromeName(String Name){
+    public UUID getPlayerIDFromName(String Name){
         for (UUID playerID : PlayerMap.keySet()){
             if (FactionMap.get(playerID).name.equals(Name)){
                 return playerID;
@@ -75,13 +75,32 @@ public class FactionManager {
     // Factions
     private void addPlayersToFactions(){
         for (UUID playerID : PlayerMap.keySet()){
-            
+            UUID factionID = PlayerMap.get(playerID).faction;
+            if(FactionMap.containsKey(factionID)){
+                FactionMap.get(PlayerMap.get(playerID).faction).members.add(playerID);
+            } else {
+                LOGGER.warn(Factions.MODID + " Player references faction that doesn't exist, removing reference");
+                PlayerMap.get(playerID).clearFaction();
+                savePlayer(playerID);
+            }
         }
     }
 
     // Players
     public boolean isPlayerRegistered(UUID PlayerID){
         return PlayerMap.containsKey(PlayerID);
+    }
+
+    public Faction getPlayersFaction(UUID playerID){
+        UUID factionID = PlayerMap.get(playerID).faction;
+        if (factionID != null){
+            return FactionMap.get(factionID);
+        }
+        return null;
+    }
+
+    public UUID getPlayersFactionID(UUID playerID){
+        return PlayerMap.get(playerID).faction;
     }
 
     // Chunks
@@ -121,16 +140,6 @@ public class FactionManager {
         savePlayer(PlayerID);
 
         return 0;
-    }
-
-    public ArrayList<Player> getPlayersInFaction(UUID FactionID){
-        ArrayList<Player> players = new ArrayList<>();
-        for(UUID playerID : PlayerMap.keySet()){
-            if (PlayerMap.get(playerID).faction == FactionID){
-                players.add(PlayerMap.get(playerID));
-            }
-        }
-        return players;
     }
 
     // Player Functions
