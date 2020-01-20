@@ -7,6 +7,9 @@ public class Location {
     float z;
     float pitch;
     float yaw;
+    public Location(){
+
+    }
     public Location(String world, float x, float y, float z, float pitch, float yaw){
         this.world = world;
         this.x = x;

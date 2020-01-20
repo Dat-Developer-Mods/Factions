@@ -27,7 +27,8 @@ public class PlayerEvents {
     @SubscribeEvent
     public static void chunkTraversal(EntityEvent.EnteringChunk e){
         if(e.getEntity() instanceof EntityPlayer) {
-            LOGGER.info(e.getEntity().getName());
+            FactionManager.getInstance().getChunkOwningFaction(e.getEntity().dimension, e.getNewChunkX(), e.getNewChunkZ());
+            LOGGER.info("Dimension ID = " + e.getEntity().dimension);
         }
     }
 }

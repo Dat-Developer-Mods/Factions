@@ -1,6 +1,7 @@
 package com.demmodders.factions;
 
 import com.demmodders.factions.faction.Faction;
+import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.Location;
 import com.google.gson.Gson;
 import net.minecraft.command.CommandBase;
@@ -24,7 +25,7 @@ public class Factions {
 
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-
+        FactionManager.getInstance();
     }
 
     @EventHandler

@@ -4,10 +4,13 @@ import com.demmodders.factions.Factions;
 import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.FileHelper;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -24,37 +27,88 @@ public class FactionManager {
     }
 
     FactionManager(){
+        LOGGER.info(Factions.MODID + " Loading Factions");
+        LOGGER.debug(Factions.MODID + " Loading Faction data");
         loadFactions();
+        LOGGER.debug(Factions.MODID + " Loading Player data");
         loadPlayers();
+        LOGGER.debug(Factions.MODID + " Loading Claimed Chunks data");
         loadClaimedChunks();
+
+        LOGGER.debug(Factions.MODID + " Adding players to factions");
+        addPlayersToFactions();
     }
 
     // Faction Objects
     private HashMap<UUID, Faction> FactionMap = new HashMap<>();
-    private HashMap<UUID, Player> Players = new HashMap<>();
-    private HashMap<String, HashMap<String, UUID>> ClaimedLand = new HashMap<>();
+    private HashMap<UUID, Player> PlayerMap = new HashMap<>();
+    private HashMap<Integer, HashMap<String, UUID>> ClaimedLand = new HashMap<>();
 
-    // Utilities
+    // Getters
+    public Faction getFaction(UUID ID){
+        return FactionMap.getOrDefault(ID, null);
+    }
+
     public UUID getFactionIDFromName(String Name){
-        for(UUID key: FactionMap.keySet()){
-            if(FactionMap.get(key).name.equals(Name)){
-                return key;
+        for (UUID factionID : FactionMap.keySet()){
+            if (FactionMap.get(factionID).name.equals(Name)){
+                return factionID;
             }
         }
         return null;
     }
 
+    public Player getPlayer(UUID ID){
+        return PlayerMap.getOrDefault(ID, null);
+    }
+
+    public UUID getPlayerIDFromeName(String Name){
+        for (UUID playerID : PlayerMap.keySet()){
+            if (FactionMap.get(playerID).name.equals(Name)){
+                return playerID;
+            }
+        }
+        return null;
+    }
+
+    // Utilities
+    // Factions
+    private void addPlayersToFactions(){
+        for (UUID playerID : PlayerMap.keySet()){
+            
+        }
+    }
+
+    // Players
     public boolean isPlayerRegistered(UUID PlayerID){
-        return Players.containsKey(PlayerID);
+        return PlayerMap.containsKey(PlayerID);
+    }
+
+    // Chunks
+    public static String makeChunkKey(int ChunkX, int ChunkZ){
+        return String.valueOf(ChunkX) + ", " + String.valueOf(ChunkZ);
+    }
+
+    public UUID getChunkOwningFaction(int Dim, int ChunkX, int ChunkZ){
+        if (ClaimedLand.containsKey(Dim)){
+            String chunkKey = makeChunkKey(ChunkX, ChunkZ);
+            if (ClaimedLand.get(Dim).containsKey(chunkKey)){
+                return ClaimedLand.get(Dim).get(chunkKey);
+            }
+        }
+        return null;
     }
 
     // Faction Functions
     public int createFaction(String Name, UUID PlayerID) {
         if (Name.length() > FactionConfig.maxFactionNameLength) {
+            LOGGER.warn(Factions.MODID + " Failed to create faction, name too long");
             return 1;
         } else if (Name.length() < 1){
+            LOGGER.warn(Factions.MODID + " Failed to create faction, name too short");
             return 2;
         } else if(getFactionIDFromName(Name) != null){
+            LOGGER.warn(Factions.MODID + " Failed to create faction, Faction already exists");
             return 3;
         }
         UUID factionID = UUID.randomUUID();
@@ -62,17 +116,29 @@ public class FactionManager {
 
         saveFaction(factionID);
 
-        Players.get(PlayerID).faction = factionID;
-        Players.get(PlayerID).factionRank = "Owner";
+        PlayerMap.get(PlayerID).faction = factionID;
+        PlayerMap.get(PlayerID).factionRank = "Owner";
         savePlayer(PlayerID);
 
         return 0;
     }
 
+    public ArrayList<Player> getPlayersInFaction(UUID FactionID){
+        ArrayList<Player> players = new ArrayList<>();
+        for(UUID playerID : PlayerMap.keySet()){
+            if (PlayerMap.get(playerID).faction == FactionID){
+                players.add(PlayerMap.get(playerID));
+            }
+        }
+        return players;
+    }
+
     // Player Functions
     public void registerPlayer(UUID PlayerID){
-        if(isPlayerRegistered(PlayerID)) return;
-        Players.put(PlayerID, new Player(null, null, new Power(FactionConfig.playerStartingPower, FactionConfig.playerStartingMaxPower)));
+        if(isPlayerRegistered(PlayerID)) {
+            return;
+        }
+        PlayerMap.put(PlayerID, new Player(null, null, new Power(FactionConfig.playerStartingPower, FactionConfig.playerStartingMaxPower)));
         savePlayer(PlayerID);
     }
 
@@ -97,7 +163,7 @@ public class FactionManager {
     }
 
     public void savePlayer(UUID PlayerID){
-        if (Players.containsKey(PlayerID)){
+        if (PlayerMap.containsKey(PlayerID)){
             Gson gson = new Gson();
             File playerFile = FileHelper.openFile(new File(FileHelper.getPlayerDir(), PlayerID.toString()));
             if (playerFile == null){
@@ -105,7 +171,25 @@ public class FactionManager {
             }
             try {
                 BufferedWriter writer = new BufferedWriter(new FileWriter(playerFile));
-                String json = gson.toJson(Players.get(PlayerID));
+                String json = gson.toJson(PlayerMap.get(PlayerID));
+                writer.write(json);
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void saveClaimedChunks(int dim){
+        if (ClaimedLand.containsKey(dim)){
+            Gson gson = new Gson();
+            File dimFile = FileHelper.openFile(new File(FileHelper.getClaimedDir(), String.valueOf(dim)));
+            if (dimFile == null){
+                return;
+            }
+            try {
+                BufferedWriter writer = new BufferedWriter(new FileWriter(dimFile));
+                String json = gson.toJson(ClaimedLand.get(dim));
                 writer.write(json);
                 writer.close();
             } catch (IOException e) {
@@ -143,14 +227,57 @@ public class FactionManager {
     }
 
     public void loadPlayers(){
-
+        File[] players = FileHelper.getFactionsDir().listFiles();
+        if (players != null) {
+            for (File player : players){
+                loadPlayer(player);
+            }
+        }
     }
 
-    public void loadplayer(UUID id){
+    public void loadPlayer(File playerFile){
         Gson gson = new Gson();
-
+        try {
+            Reader reader = new FileReader(playerFile);
+            Player playerObject = gson.fromJson(reader, Player.class);
+            if (playerObject != null){
+                PlayerMap.put(UUID.fromString(playerFile.getName()), playerObject);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
+
+    public void loadPlayer(UUID id){
+        File theFile = new File(FileHelper.getPlayerDir(), id.toString());
+        if (theFile.exists()) loadFaction(theFile);
+    }
+
     public void loadClaimedChunks(){
-
+        File[] dims = FileHelper.getClaimedDir().listFiles();
+        if (dims != null) {
+            for (File dim : dims){
+                loadClaimedChunkDim(dim);
+            }
+        }
     }
+
+    public void loadClaimedChunkDim(File dimFile){
+        Gson gson = new Gson();
+        try {
+            Reader reader = new FileReader(dimFile);
+            Type typeOfHashMap = new TypeToken<HashMap<String, UUID>>(){}.getType();
+            HashMap<String, UUID> dimChunks = gson.fromJson(reader, typeOfHashMap);
+            ClaimedLand.put(Integer.parseInt(dimFile.getName()), dimChunks);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void loadClaimedChunkDim(String dim){
+        File theFile = new File(FileHelper.getClaimedDir(), dim);
+        if (theFile.exists()) loadClaimedChunkDim(theFile);
+    }
+
+
 }

@@ -7,6 +7,7 @@ public class Player {
     public String factionRank;
     public Power power;
     public transient UUID lastFactionLand;
+    public transient boolean useFactionChat = false;
 
     public Player(){
         faction = null;
