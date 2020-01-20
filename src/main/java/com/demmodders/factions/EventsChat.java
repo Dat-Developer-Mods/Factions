@@ -28,11 +28,4 @@ public class EventsChat{
     public static void ServerChatEvent(ServerChatEvent e){
         LOGGER.info(Factions.NAME + " " + e.toString());
     }
-
-    @SubscribeEvent
-    public static void chunkTraversal(EntityEvent.EnteringChunk e){
-        if(e.getEntity() instanceof EntityPlayer) {
-            LOGGER.info(e.getEntity().getName());
-        }
-    }
 }
