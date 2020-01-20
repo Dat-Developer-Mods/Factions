@@ -27,7 +27,6 @@ public class Factions {
     @EventHandler
     public void init(FMLInitializationEvent event) {
         LOGGER.info(Factions.NAME + "says hi!");
-        CommandBase test;
     }
 
     @EventHandler
