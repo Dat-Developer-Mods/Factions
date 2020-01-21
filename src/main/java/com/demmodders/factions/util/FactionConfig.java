@@ -5,10 +5,21 @@ import net.minecraftforge.common.config.Config;
 
 @Config(modid = Factions.MODID)
 public class FactionConfig {
+    // Faction
     @Config.Name("Max Faction Name Length")
     @Config.RangeInt(min=1)
     @Config.Comment("The maximum length of characters in a faction's name")
     public static int maxFactionNameLength = 20;
+
+    @Config.Name("Max Faction Description Length")
+    @Config.RangeInt(min=1)
+    @Config.Comment("The maximum length of characters in a faction's description")
+    public static int maxFactionDescLength = 100;
+
+    @Config.Name("Max Faction MOTD Length")
+    @Config.RangeInt(min=1)
+    @Config.Comment("The maximum length of characters in a faction's MOTD")
+    public static int maxFactionMOTDLength = 100;
 
     @Config.Name("Faction Starting Power")
     @Config.RangeInt(min=1)

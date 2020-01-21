@@ -11,6 +11,7 @@ public class Faction {
     public String desc;
     public String motd;
     public Location homePos;
+    public Long foundingTime;
     public Power power;
     public ArrayList<Relationship> relationships = new ArrayList<>();
     public transient ArrayList<UUID> members;
@@ -23,6 +24,7 @@ public class Faction {
         this.name = name;
         this.members = new ArrayList<>();
         this.members.add(playerID);
+        this.foundingTime = System.currentTimeMillis();
     }
 }
 
