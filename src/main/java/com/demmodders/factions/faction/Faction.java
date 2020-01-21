@@ -17,8 +17,10 @@ public class Faction {
 
     }
 
-    public Faction(String name){
+    public Faction(String name, UUID playerID){
         this.name = name;
+        this.members = new ArrayList<>();
+        this.members.add(playerID);
     }
 }
 

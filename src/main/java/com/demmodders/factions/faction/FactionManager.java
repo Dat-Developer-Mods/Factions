@@ -9,9 +9,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 public class FactionManager {
@@ -86,6 +88,14 @@ public class FactionManager {
         }
     }
 
+    public List<Faction> getListOfFactions(){
+        return new ArrayList<Faction>(FactionMap.values());
+    }
+
+    public List<UUID> getListOfFactionsUUIDs(){
+        return new ArrayList<UUID>(FactionMap.keySet());
+    }
+
     // Players
     public boolean isPlayerRegistered(UUID PlayerID){
         return PlayerMap.containsKey(PlayerID);
@@ -131,7 +141,7 @@ public class FactionManager {
             return 3;
         }
         UUID factionID = UUID.randomUUID();
-        FactionMap.put(factionID, new Faction(Name));
+        FactionMap.put(factionID, new Faction(Name, PlayerID));
 
         saveFaction(factionID);
 
