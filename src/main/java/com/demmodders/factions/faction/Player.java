@@ -1,5 +1,7 @@
 package com.demmodders.factions.faction;
 
+import com.demmodders.factions.util.enums.FactionChatMode;
+
 import java.util.UUID;
 
 public class Player {
@@ -8,7 +10,7 @@ public class Player {
     public Power power;
     public long lastSeen;
     public transient UUID lastFactionLand;
-    public transient boolean useFactionChat = true;
+    public transient FactionChatMode factionChat = FactionChatMode.NORMAL;
 
     public Player(){
         faction = null;
@@ -26,6 +28,7 @@ public class Player {
     public void clearFaction(){
         this.faction = null;
         this.factionRank = null;
-        useFactionChat = false;
+        factionChat = FactionChatMode.NORMAL;
     }
 }
+

@@ -1,6 +1,7 @@
 package com.demmodders.factions.faction;
 
 import com.demmodders.factions.util.structures.Location;
+import com.demmodders.factions.util.structures.Relationship;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -11,6 +12,7 @@ public class Faction {
     public String motd;
     public Location homePos;
     public Power power;
+    public ArrayList<Relationship> relationships = new ArrayList<>();
     public transient ArrayList<UUID> members;
 
     Faction(){

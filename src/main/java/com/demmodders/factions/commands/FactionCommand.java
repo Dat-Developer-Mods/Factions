@@ -61,7 +61,7 @@ public class FactionCommand extends CommandBase {
 
                                 StringBuilder factionText = new StringBuilder();
                                 // Header
-                                factionText.append("Page ").append(page).append(" of ").append( factions.size() % 10).append("\n");
+                                factionText.append(TextFormatting.DARK_GREEN).append("Showing factions page ").append(page).append(" of ").append( factions.size() % 10).append("\n").append(TextFormatting.RESET);
 
                                 // First faction, without comma
                                 if (factions.get((page - 1) * 10) == factionID) factionText.append(TextFormatting.GREEN).append(fMan.getFaction(factions.get((page - 1) * 10)).name).append(TextFormatting.RESET);

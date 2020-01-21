@@ -5,9 +5,13 @@ import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.FileHelper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nullable;
 import java.io.*;
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
@@ -29,6 +33,7 @@ public class FactionManager {
     }
 
     FactionManager(){
+        // Load faction details
         LOGGER.info(Factions.MODID + " Loading Factions");
         LOGGER.debug(Factions.MODID + " Loading Faction data");
         loadFactions();
@@ -37,6 +42,7 @@ public class FactionManager {
         LOGGER.debug(Factions.MODID + " Loading Claimed Chunks data");
         loadClaimedChunks();
 
+        // Calculate metadata that we haven't saved
         LOGGER.debug(Factions.MODID + " Adding players to factions");
         addPlayersToFactions();
     }
@@ -47,10 +53,17 @@ public class FactionManager {
     private HashMap<Integer, HashMap<String, UUID>> ClaimedLand = new HashMap<>();
 
     // Getters
+    /*
+     * Gets the faction object that has the given ID
+     */
     public Faction getFaction(UUID ID){
         return FactionMap.getOrDefault(ID, null);
     }
 
+    /*
+     * Gets the ID of the faction that has the given name
+     */
+    @Nullable
     public UUID getFactionIDFromName(String Name){
         for (UUID factionID : FactionMap.keySet()){
             if (FactionMap.get(factionID).name.equals(Name)){
@@ -60,10 +73,17 @@ public class FactionManager {
         return null;
     }
 
+    /*
+     * Gets the Player object that has the given ID
+     */
     public Player getPlayer(UUID ID){
         return PlayerMap.getOrDefault(ID, null);
     }
 
+    /*
+     * Gets the ID of the player object that has the given name
+     */
+    @Nullable
     public UUID getPlayerIDFromName(String Name){
         for (UUID playerID : PlayerMap.keySet()){
             if (FactionMap.get(playerID).name.equals(Name)){
@@ -75,6 +95,9 @@ public class FactionManager {
 
     // Utilities
     // Factions
+    /*
+     * Iterates through all the players that factions is aware of and gives a reference to them to their owning faction
+     */
     private void addPlayersToFactions(){
         for (UUID playerID : PlayerMap.keySet()){
             UUID factionID = PlayerMap.get(playerID).faction;
@@ -88,19 +111,32 @@ public class FactionManager {
         }
     }
 
+    /*
+     * Gets a list of all the factions in the game
+     */
     public List<Faction> getListOfFactions(){
         return new ArrayList<Faction>(FactionMap.values());
     }
 
+    /*
+     * Gets a list of all IDs of the factions in the game
+     */
     public List<UUID> getListOfFactionsUUIDs(){
         return new ArrayList<UUID>(FactionMap.keySet());
     }
 
     // Players
+    /*
+     * Checks if a player is registered to the factions system
+     */
     public boolean isPlayerRegistered(UUID PlayerID){
         return PlayerMap.containsKey(PlayerID);
     }
 
+    /*
+     * Gets the faction that the given player belongs to
+     */
+    @Nullable
     public Faction getPlayersFaction(UUID playerID){
         UUID factionID = PlayerMap.get(playerID).faction;
         if (factionID != null){
@@ -109,15 +145,25 @@ public class FactionManager {
         return null;
     }
 
+    /*
+     * Gets the ID of the faction that owns the given player
+     */
     public UUID getPlayersFactionID(UUID playerID){
         return PlayerMap.get(playerID).faction;
     }
 
     // Chunks
+    /*
+     * Generates the key for the chunk that is used to identify it in the factions system
+     */
     public static String makeChunkKey(int ChunkX, int ChunkZ){
         return String.valueOf(ChunkX) + ", " + String.valueOf(ChunkZ);
     }
 
+    @Nullable
+    /*
+     * Gets the owner of the chunk at the given coordinates
+     */
     public UUID getChunkOwningFaction(int Dim, int ChunkX, int ChunkZ){
         if (ClaimedLand.containsKey(Dim)){
             String chunkKey = makeChunkKey(ChunkX, ChunkZ);
@@ -129,6 +175,9 @@ public class FactionManager {
     }
 
     // Faction Functions
+    /*
+     * Creates a faction
+     */
     public int createFaction(String Name, UUID PlayerID) {
         if (Name.length() > FactionConfig.maxFactionNameLength) {
             LOGGER.warn(Factions.MODID + " Failed to create faction, name too long");
@@ -152,7 +201,22 @@ public class FactionManager {
         return 0;
     }
 
+    /*
+     * Sends the given message to all the online members of the given faction
+     */
+    public void sendFactionwideMessage(UUID FactionID, ITextComponent Message){
+        for(UUID playerID : FactionMap.get(FactionID).members){
+            EntityPlayerMP player = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayerByUUID(playerID);
+            if (player != null){
+                player.sendMessage(Message);
+            }
+        }
+    }
+
     // Player Functions
+    /*
+     * Registers a player to the factions system
+     */
     public void registerPlayer(UUID PlayerID){
         if(isPlayerRegistered(PlayerID)) {
             return;
@@ -297,6 +361,4 @@ public class FactionManager {
         File theFile = new File(FileHelper.getClaimedDir(), dim);
         if (theFile.exists()) loadClaimedChunkDim(theFile);
     }
-
-
 }
