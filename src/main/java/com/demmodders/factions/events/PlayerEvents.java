@@ -1,18 +1,17 @@
 package com.demmodders.factions.events;
 
 import com.demmodders.factions.Factions;
+import com.demmodders.factions.commands.TeleportHandler;
 import com.demmodders.factions.faction.FactionManager;
+import com.demmodders.factions.util.structures.Location;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
-import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.lwjgl.Sys;
-
-import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = Factions.MODID)
 public class PlayerEvents {
@@ -26,6 +25,8 @@ public class PlayerEvents {
         } else {
             FactionManager.getInstance().registerPlayer(e.player);
         }
+
+        TeleportHandler.getInstance().addTeleportEvent((EntityPlayerMP) e.player, new Location(0, 20, 20, 20, 20, 20), 5);
     }
 
     @SubscribeEvent
@@ -35,6 +36,4 @@ public class PlayerEvents {
             LOGGER.info("Dimension ID = " + e.getEntity().dimension);
         }
     }
-
-    // TODO: log last seen when player leaves
 }

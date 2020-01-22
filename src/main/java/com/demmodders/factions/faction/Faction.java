@@ -22,6 +22,7 @@ public class Faction {
     public Location homePos= null;
     public Long foundingTime = 0L;
     public Power power = null;
+    public ArrayList<UUID> invites;
     public HashMap<String, Boolean> flags;
     public HashMap<UUID, Relationship> relationships = new HashMap<>();
     public transient ArrayList<UUID> members;
@@ -36,6 +37,7 @@ public class Faction {
         this.foundingTime = System.currentTimeMillis();
 
         power = new Power();
+        invites = new ArrayList<>();
 
         flags = new HashMap<>();
         relationships = new HashMap<>();

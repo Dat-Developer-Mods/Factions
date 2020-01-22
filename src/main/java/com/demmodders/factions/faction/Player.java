@@ -4,6 +4,7 @@ import com.demmodders.factions.util.enums.FactionChatMode;
 import com.demmodders.factions.util.enums.FactionRank;
 import com.demmodders.factions.util.structures.Power;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 public class Player {
@@ -12,6 +13,7 @@ public class Player {
     public Power power;
     public String lastKnownName;
     public transient UUID lastFactionLand;
+    public transient ArrayList<UUID> invites = new ArrayList<>();
     public transient FactionChatMode factionChat = FactionChatMode.NORMAL;
 
     public Player(){

@@ -50,6 +50,9 @@ public class FactionManager {
 
         LOGGER.debug(Factions.MODID + " Adding chunks to factions");
         addLandToFactions();
+
+        LOGGER.debug(Factions.MODID + " Adding invites to players");
+        addInvitesToPlayers();
     }
 
     // Faction Objects
@@ -75,7 +78,7 @@ public class FactionManager {
     @Nullable
     public UUID getFactionIDFromName(String Name){
         for (UUID factionID : FactionMap.keySet()){
-            if (FactionMap.get(factionID).name.equals(Name)){
+            if (FactionMap.get(factionID).name.toLowerCase().equals(Name)){
                 return factionID;
             }
         }
@@ -123,7 +126,6 @@ public class FactionManager {
      * @param PlayerID the player who's faction is being change
      * @param FactionID the faction the player is being added to
      */
-
     public void setPlayerFaction(UUID PlayerID, UUID FactionID){
         UUID faction = PlayerMap.get(PlayerID).faction;
         if (faction != null){
@@ -141,6 +143,41 @@ public class FactionManager {
 
     // Utilities
     // Factions
+    /**
+     * Attempts to invite the given player to the given faction
+     * @param PlayerID The player being invited
+     * @param FactionID The faction the player is invited to
+     * @return Whether the player was successfully invited to the faction
+     */
+    public boolean invitePlayerToFaction(UUID PlayerID, UUID FactionID){
+        if (!FactionMap.get(FactionID).invites.contains(PlayerID)) {
+            FactionMap.get(FactionID).invites.add(PlayerID);
+            PlayerMap.get(PlayerID).invites.add(FactionID);
+            removePlayerInvite(PlayerID, FactionID);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Remove the any invites to the player if they have any
+     * @param PlayerID The player who's getting the invite
+     * @param FactionID The faction the player's invited to
+     * @return Whether there were any invites to remove
+     */
+    public boolean removePlayerInvite(UUID PlayerID, UUID FactionID){
+        boolean removed = false;
+        if (FactionMap.get(FactionID).invites.contains(PlayerID)) {
+            FactionMap.get(FactionID).invites.remove(PlayerID);
+            removed = true;
+        }
+        if (PlayerMap.get(PlayerID).invites.contains(FactionID)) {
+           PlayerMap.get(PlayerID).invites.remove(FactionID);
+            removed = true;
+        }
+        return removed;
+    }
     /**
      * Iterates through all the players that factions is aware of and gives a reference to them to their owning faction
      */
@@ -180,6 +217,17 @@ public class FactionManager {
     }
 
     /**
+     * Iterates through all the factions that factions and add's their invites to the invited players
+     */
+    private void addInvitesToPlayers(){
+        for (UUID factionID : FactionMap.keySet()){
+            for (UUID playerID : FactionMap.get(factionID).invites){
+                PlayerMap.get(playerID).invites.add(factionID);
+            }
+        }
+    }
+
+    /**
      * Gets a list of all the factions in the game
      * @return A list of all the factions
      */
@@ -203,6 +251,19 @@ public class FactionManager {
      */
     public boolean isPlayerRegistered(UUID PlayerID){
         return PlayerMap.containsKey(PlayerID);
+    }
+
+    /**
+     * Checks whether the given player can join the given faction
+     * @param PlayerID The player trying to join the faction
+     * @param FactionID The faction the player is trying to join
+     * @return Whether the player can join the given faction
+     */
+    public boolean canAddPlayerToFaction(UUID PlayerID, UUID FactionID){
+        Faction faction = FactionMap.get(FactionID);
+        if (faction.hasFlag("Open")) return true;
+        else if (faction.invites.contains(PlayerID)) return true;
+        else return false;
     }
 
     /**
@@ -306,7 +367,7 @@ public class FactionManager {
      * Removes all land owned by a faction
      * @param FactionID The ID of the faction
      */
-    public void removeAllFactionLand(UUID FactionID){
+    public void releaseAllFactionLand(UUID FactionID){
         for (int dim : ClaimedLand.keySet()){
             for (String land : ClaimedLand.get(dim).keySet()){
                 if (ClaimedLand.get(dim).get(land) == FactionID) {

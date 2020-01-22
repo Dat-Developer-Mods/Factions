@@ -3,6 +3,7 @@ package com.demmodders.factions.commands;
 import com.demmodders.factions.Factions;
 import com.demmodders.factions.faction.Faction;
 import com.demmodders.factions.faction.FactionManager;
+import com.demmodders.factions.util.FactionConfig;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -95,7 +96,7 @@ public class FactionCommand extends CommandBase {
                                 replyMessage = TextFormatting.GOLD + "You don't belong to a faction, you may only look up other factions";
                             }
                         } else {
-                            replyMessage = fMan.getFaction(fMan.getFactionIDFromName(args[1])).printFactionInfo();
+                            replyMessage = fMan.getFaction(fMan.getFactionIDFromName(args[1].toLowerCase())).printFactionInfo();
                         }
                     } else {
                         commandResult = 1;
@@ -106,9 +107,23 @@ public class FactionCommand extends CommandBase {
                 case "join":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
                         if (args.length == 1) {
-                            // ToDo: Bad command
+                            commandResult = 2;
                         } else {
-                            // ToDo: join faction
+                            if (factionID == null) {
+                                factionID = fMan.getFactionIDFromName(args[1].toLowerCase());
+                                if (factionID != null) {
+                                    if (fMan.canAddPlayerToFaction(playerID, factionID)){
+                                        fMan.setPlayerFaction(playerID, factionID);
+                                        replyMessage = TextFormatting.GOLD + "Successfully joined " + TextFormatting.DARK_GREEN + fMan.getFaction(factionID).name;
+                                    } else {
+                                        replyMessage = TextFormatting.GOLD + "You're not invited to that faction";
+                                    }
+                                } else {
+                                    replyMessage = TextFormatting.GOLD + "That faction doesn't exist";
+                                }
+                            } else {
+                                replyMessage = TextFormatting.GOLD + "You can't join a faction while you're a member of a different faction, leave your current one first";
+                            }
                         }
                     } else {
                         commandResult = 1;
@@ -116,10 +131,23 @@ public class FactionCommand extends CommandBase {
                     break;
                 case "invites":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
-                        if (args.length == 1) {
-                            // ToDo: give own faction info
+
+                        ArrayList<UUID> invites = fMan.getPlayer(playerID).invites;
+                        if (invites.size() > 0) {
+                            int page = ((args.length == 1) ? 1 : Integer.parseInt(args[1]));
+                            StringBuilder inviteText = new StringBuilder();
+                            // Header
+                            inviteText.append(TextFormatting.DARK_GREEN).append("Showing factions page ").append(page).append(" of ").append( invites.size() % 10).append("\n").append(TextFormatting.RESET);
+
+                            // First faction, without comma
+                            inviteText.append(fMan.getFaction(invites.get((page - 1) * 10)).name);
+                            for (int i = ((page - 1) * 10) + 1; i < invites.size() && i < ((10 * page)); i++) {
+                                inviteText.append(", ").append(fMan.getFaction(invites.get(i)).name);
+                            }
+                            replyMessage = inviteText.toString();
+
                         } else {
-                            // ToDo: Look up faction and display info
+                            replyMessage = TextFormatting.GOLD + "You don't have any invites";
                         }
                     } else {
                         commandResult = 1;
@@ -128,9 +156,14 @@ public class FactionCommand extends CommandBase {
                 case "reject":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
                         if (args.length == 1) {
-                            // ToDo: give own faction info
+                            commandResult = 2;
                         } else {
-                            // ToDo: Look up faction and display info
+                            factionID = fMan.getFactionIDFromName(args[1].toLowerCase());
+                            if (factionID != null) {
+                                fMan.removePlayerInvite(playerID, factionID);
+                            } else {
+                                replyMessage = TextFormatting.GOLD + "You don't have an invite from that faction";
+                            }
                         }
                     } else {
                         commandResult = 1;
@@ -169,10 +202,15 @@ public class FactionCommand extends CommandBase {
                 // Faction member
                 case "home":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
-                        if (args.length == 1) {
-                            // ToDo: give own faction info
+                        if (factionID != null) {
+                            if (fMan.getFaction(factionID).homePos != null) {
+                                TeleportHandler.getInstance().addTeleportEvent((EntityPlayerMP) sender, fMan.getFaction(factionID).homePos, FactionConfig.playerSubCat.teleportDelay);
+                                replyMessage = TextFormatting.GOLD + "Teleporting in " + String.valueOf(FactionConfig.playerSubCat.teleportDelay) + " Seconds";
+                            } else {
+                                replyMessage = TextFormatting.GOLD + "Your faction doesn't have a home";
+                            }
                         } else {
-                            // ToDo: Look up faction and display info
+                            replyMessage = TextFormatting.GOLD + "You must be a member of a faction to do that";
                         }
                     } else {
                         commandResult = 1;

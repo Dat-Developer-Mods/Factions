@@ -59,6 +59,11 @@ public class FactionConfig {
         @Config.RangeInt(min = 1)
         @Config.Comment("The maximum amount of power the player can ever have")
         public int playerMaxPowerCap = 100;
+
+        @Config.Name("Faction home Delay")
+        @Config.RangeInt()
+        @Config.Comment("The delay in seconds before a player teleports when using /faction home")
+        public int teleportDelay = 5;
     }
 
     public static class Land {

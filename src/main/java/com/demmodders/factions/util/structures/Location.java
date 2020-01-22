@@ -1,17 +1,18 @@
 package com.demmodders.factions.util.structures;
 
 public class Location {
-    String world;
-    float x;
-    float y;
-    float z;
-    float pitch;
-    float yaw;
+    public int dim;
+    public double x;
+    public double y;
+    public double z;
+    public float pitch;
+    public float yaw;
+
     public Location(){
 
     }
-    public Location(String world, float x, float y, float z, float pitch, float yaw){
-        this.world = world;
+    public Location(int Dim, float x, float y, float z, float pitch, float yaw){
+        this.dim = Dim;
         this.x = x;
         this.y = y;
         this.z = z;
