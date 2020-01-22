@@ -411,7 +411,7 @@ public class FactionManager {
         }
 
         // Check the land is connected
-        if (FactionConfig.landSubCat.landRequireConnect && !(FactionConfig.landSubCat.landRequireConnectWhenStealing && owned) && getFaction(FactionID).checkLandTouches(Dim, ChunkX, ChunkZ)) return 3;
+        if (FactionConfig.landSubCat.landRequireConnect && !(FactionConfig.landSubCat.landRequireConnectWhenStealing && owned) && !getFaction(FactionID).checkLandTouches(Dim, ChunkX, ChunkZ)) return 3;
 
         ClaimedLand.get(Dim).put(chunkKey, FactionID);
         saveClaimedChunks(Dim);

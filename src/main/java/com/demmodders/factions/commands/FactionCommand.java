@@ -61,7 +61,7 @@ public class FactionCommand extends CommandBase {
 
                                 StringBuilder factionText = new StringBuilder();
                                 // Header
-                                factionText.append(TextFormatting.DARK_GREEN).append("Showing factions page ").append(page).append(" of ").append( factions.size() % 10).append("\n").append(TextFormatting.RESET);
+                                factionText.append(TextFormatting.DARK_GREEN).append("Showing factions page ").append(page).append(" of ").append( (int)Math.ceil(factions.size() / 10f)).append("\n").append(TextFormatting.RESET);
 
                                 // First faction, without comma
                                 if (factions.get((page - 1) * 10) == factionID) factionText.append(TextFormatting.GREEN).append(fMan.getFaction(factions.get((page - 1) * 10)).name).append(TextFormatting.RESET);
@@ -137,7 +137,7 @@ public class FactionCommand extends CommandBase {
                             int page = ((args.length == 1) ? 1 : Integer.parseInt(args[1]));
                             StringBuilder inviteText = new StringBuilder();
                             // Header
-                            inviteText.append(TextFormatting.DARK_GREEN).append("Showing factions page ").append(page).append(" of ").append( invites.size() % 10).append("\n").append(TextFormatting.RESET);
+                            inviteText.append(TextFormatting.DARK_GREEN).append("Showing factions page ").append(page).append(" of ").append( (int)Math.ceil(invites.size() / 10f)).append("\n").append(TextFormatting.RESET);
 
                             // First faction, without comma
                             inviteText.append(fMan.getFaction(invites.get((page - 1) * 10)).name);
@@ -178,16 +178,16 @@ public class FactionCommand extends CommandBase {
                                 int result = fMan.createFaction(args[1], playerID);
                                 switch (result){
                                     case 0:
-                                        replyMessage = "Faction " + args[1] + " successfully created, add a description with \"/faction desc\", and invite players with \"/faction invite <Player>\"";
+                                        replyMessage = TextFormatting.GOLD + "Faction " + args[1] + " successfully created, add a description with \"/faction desc\", and invite players with \"/faction invite <Player>\"";
                                         break;
                                     case 1:
-                                        replyMessage = "Failed to create faction: name too long";
+                                        replyMessage = TextFormatting.GOLD + "Failed to create faction: name too long";
                                         break;
                                     case 2:
-                                        replyMessage = "Failed to create faction: name too short";
+                                        replyMessage = TextFormatting.GOLD + "Failed to create faction: name too short";
                                         break;
                                     case 3:
-                                        replyMessage = "Failed to create faction: a faction with that name already exists";
+                                        replyMessage = TextFormatting.GOLD + "Failed to create faction: a faction with that name already exists";
                                         break;
                                 }
                             } else {

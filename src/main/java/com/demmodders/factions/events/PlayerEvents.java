@@ -13,6 +13,8 @@ import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.UUID;
+
 @Mod.EventBusSubscriber(modid = Factions.MODID)
 public class PlayerEvents {
     public static final Logger LOGGER = LogManager.getLogger(Factions.MODID);
@@ -29,9 +31,11 @@ public class PlayerEvents {
 
     @SubscribeEvent
     public static void chunkTraversal(EntityEvent.EnteringChunk e){
-        if(e.getEntity() instanceof EntityPlayer) {
-            FactionManager.getInstance().getChunkOwningFaction(e.getEntity().dimension, e.getNewChunkX(), e.getNewChunkZ());
-            LOGGER.info("Dimension ID = " + e.getEntity().dimension);
+        if(e.getEntity() instanceof EntityPlayer && (e.getOldChunkX() != e.getNewChunkX() || e.getOldChunkZ() != e.getNewChunkZ())) {
+            UUID factionID = FactionManager.getInstance().getChunkOwningFaction(e.getEntity().dimension, e.getNewChunkX(), e.getNewChunkZ());
+            if(factionID != null){
+                LOGGER.info(e.getEntity().getName() + " Crossed into " + FactionManager.getInstance().getFaction(factionID).name);
+            }
         }
     }
 }

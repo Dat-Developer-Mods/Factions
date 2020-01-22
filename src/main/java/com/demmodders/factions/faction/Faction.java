@@ -150,7 +150,10 @@ public class Faction {
 
 
     public boolean checkLandTouches(int Dim, int X, int Z){
-        // TODO: Consider moving to thread
+        if (land.size() == 0){
+            return true;
+        }
+        else if (land.get(Dim).size() == 0) return true;
         String[] coords;
         for (String key : land.get(Dim)){
             coords = key.split(", ");
