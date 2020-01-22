@@ -35,7 +35,6 @@ public class FactionCommand extends CommandBase {
 
     @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-        Factions.LOGGER.info(Arrays.toString(args));
         if(!(sender instanceof EntityPlayerMP)) return;
 
         int commandResult = 0;
@@ -74,13 +73,13 @@ public class FactionCommand extends CommandBase {
                                 replyMessage = factionText.toString();
 
                             } else {
-                                replyMessage = "There are no factions";
+                                replyMessage = TextFormatting.GOLD + "There are no factions";
                             }
 
                         } catch (NumberFormatException e){
                             commandResult = 2;
                         } catch (IndexOutOfBoundsException e){
-                            replyMessage = "There aren't that many pages";
+                            replyMessage = TextFormatting.GOLD + "There aren't that many pages";
                         }
                     } else {
                         commandResult = 1;
@@ -90,9 +89,13 @@ public class FactionCommand extends CommandBase {
                 case "info":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.info")) {
                         if (args.length == 1) {
-                            // ToDo: give own faction info
+                            if(factionID != null){
+                                replyMessage = fMan.getFaction(factionID).printFactionInfo();
+                            } else {
+                                replyMessage = TextFormatting.GOLD + "You don't belong to a faction, you may only look up other factions";
+                            }
                         } else {
-                            // ToDo: Look up faction and display info
+                            replyMessage = fMan.getFaction(fMan.getFactionIDFromName(args[1])).printFactionInfo();
                         }
                     } else {
                         commandResult = 1;
@@ -197,7 +200,17 @@ public class FactionCommand extends CommandBase {
                         commandResult = 1;
                     }
                     break;
-
+                case "chat":
+                    if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
+                        if (args.length == 1) {
+                            // ToDo: give own faction info
+                        } else {
+                            // ToDo: Look up faction and display info
+                        }
+                    } else {
+                        commandResult = 1;
+                    }
+                    break;
                 // Faction Officer
                 case "ally":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {

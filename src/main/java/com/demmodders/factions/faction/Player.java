@@ -1,28 +1,27 @@
 package com.demmodders.factions.faction;
 
 import com.demmodders.factions.util.enums.FactionChatMode;
+import com.demmodders.factions.util.enums.FactionRank;
+import com.demmodders.factions.util.structures.Power;
 
 import java.util.UUID;
 
 public class Player {
     public UUID faction;
-    public String factionRank;
+    public FactionRank factionRank;
     public Power power;
-    public long lastSeen;
+    public String lastKnownName;
     public transient UUID lastFactionLand;
     public transient FactionChatMode factionChat = FactionChatMode.NORMAL;
 
     public Player(){
-        faction = null;
-        factionRank = "";
-        power = new Power();
-        lastSeen = System.currentTimeMillis();
     }
-    public Player(UUID Faction, String FactionRank, Power power){
+
+    public Player(UUID Faction, FactionRank Rank, Power power, String name){
         this.faction = Faction;
-        this.factionRank = FactionRank;
+        this.factionRank = Rank;
         this.power = power;
-        lastSeen = System.currentTimeMillis();
+        this.lastKnownName = name;
     }
 
     public void clearFaction(){

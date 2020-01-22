@@ -1,11 +1,12 @@
-package com.demmodders.factions.faction;
+package com.demmodders.factions.util.structures;
 
 public class Power {
     public int power;
     public int maxPower;
-    Power(){
-    };
-    Power(int StartPower, int MaxPower){
+    public Power(){
+    }
+
+    public Power(int StartPower, int MaxPower){
         power = StartPower;
         maxPower = MaxPower;
     }

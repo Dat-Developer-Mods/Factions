@@ -14,6 +14,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.HashMap;
 import java.util.UUID;
 
 import static net.minecraftforge.fml.common.eventhandler.EventPriority.NORMAL;
@@ -38,9 +39,10 @@ public class ChatEvents {
             fMan.sendFactionwideMessage(factionID, message);
 
             if (fMan.getPlayer(playerID).factionChat == FactionChatMode.ALLY) {
-                for(Relationship relation : fMan.getFaction(factionID).relationships){
+                HashMap<UUID, Relationship> relationships = fMan.getFaction(factionID).relationships;
+                for(UUID otherFaction : relationships.keySet()){
                     // Only send message to allies
-                    if (relation.relation == RelationState.ALLY) fMan.sendFactionwideMessage(relation.Faction, message);
+                    if (relationships.get(otherFaction).relation == RelationState.ALLY) fMan.sendFactionwideMessage(otherFaction, message);
                 }
             }
         }

@@ -2,9 +2,13 @@ package com.demmodders.factions.util.enums;
 
 import com.google.gson.annotations.SerializedName;
 
-public enum RelationState{
+public enum FactionRank {
     @SerializedName("0")
-    ENEMY,
+    GRUNT,
+    @SerializedName("1")
+    Lieutenant,
     @SerializedName("2")
-    ALLY,
+    OFFICER,
+    @SerializedName("0")
+    OWNER
 }

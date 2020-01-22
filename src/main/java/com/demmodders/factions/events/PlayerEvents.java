@@ -6,9 +6,11 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.PlayerEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.lwjgl.Sys;
 
 import java.util.UUID;
 
@@ -17,10 +19,12 @@ public class PlayerEvents {
     public static final Logger LOGGER = LogManager.getLogger(Factions.MODID);
 
     @SubscribeEvent
-    public static void playerLogin(PlayerEvent.PlayerLoggedInEvent e){
-        UUID playerID = e.player.getUniqueID();
-        if(!FactionManager.getInstance().isPlayerRegistered(playerID)){
-            FactionManager.getInstance().registerPlayer(playerID);
+    public static void playerLogin(PlayerLoggedInEvent e){
+        if (FactionManager.getInstance().isPlayerRegistered(e.player.getUniqueID())) {
+            // record username for use when they're offline
+            FactionManager.getInstance().setPlayerLastKnownName(e.player.getUniqueID(), e.player.getName());
+        } else {
+            FactionManager.getInstance().registerPlayer(e.player);
         }
     }
 
@@ -32,5 +36,5 @@ public class PlayerEvents {
         }
     }
 
-    // TODO: long last seen when player leaves
+    // TODO: log last seen when player leaves
 }
