@@ -25,8 +25,6 @@ public class PlayerEvents {
         } else {
             FactionManager.getInstance().registerPlayer(e.player);
         }
-
-        TeleportHandler.getInstance().addTeleportEvent((EntityPlayerMP) e.player, new Location(0, 20, 20, 20, 20, 20), 5);
     }
 
     @SubscribeEvent

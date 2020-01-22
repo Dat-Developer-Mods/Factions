@@ -32,14 +32,17 @@ public class TeleportHandler {
     //TODO: Cancel teleport when player moves
 
     @SubscribeEvent
-    public static void onTickEvent(TickEvent.WorldTickEvent event){
+    public static void onTickEvent(TickEvent.WorldTickEvent event) {
         TeleportHandler handler = TeleportHandler.getInstance();
-        TeleportEvent tele = handler.teleportQueue.remove();
-        if (tele != null && ((int)(Utils.calculateAge(tele.startTime) / 1000)) > tele.delay){
-            if (tele.playerMP.dimension != tele.destination.dim) tele.playerMP.changeDimension(tele.destination.dim, new FactionTeleporter(tele.destination.x, tele.destination.y, tele.destination.z));
-            else  tele.playerMP.setPositionAndUpdate(tele.destination.x, tele.destination.y, tele.destination.z);
-        } else {
-            handler.teleportQueue.add(tele);
+        if (!handler.teleportQueue.isEmpty()) {
+            TeleportEvent tele = handler.teleportQueue.remove();
+            if (tele != null && ((int) (Utils.calculateAge(tele.startTime) / 1000)) > tele.delay) {
+                if (tele.playerMP.dimension != tele.destination.dim)
+                    tele.playerMP.changeDimension(tele.destination.dim, new FactionTeleporter(tele.destination.x, tele.destination.y, tele.destination.z));
+                else tele.playerMP.setPositionAndUpdate(tele.destination.x, tele.destination.y, tele.destination.z);
+            } else {
+                handler.teleportQueue.add(tele);
+            }
         }
     }
 }

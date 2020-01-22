@@ -131,8 +131,9 @@ public class FactionManager {
         if (faction != null){
             FactionMap.get(faction).removePlayer(PlayerID);
         }
+
         PlayerMap.get(PlayerID).faction = FactionID;
-        FactionMap.get(FactionID).addPlayer(PlayerID);
+        if (FactionID != null) FactionMap.get(FactionID).addPlayer(PlayerID);
         savePlayer(PlayerID);
     }
 
@@ -376,6 +377,46 @@ public class FactionManager {
             }
             saveClaimedChunks(dim);
         }
+    }
+
+    /**
+     * Attempts to claim a chunk for the given faction
+     * @param FactionID The faction claiming the chunk
+     * @param Dim The dimention the chunk is in
+     * @param ChunkX The X Coord of the chunk
+     * @param ChunkZ The Z Coord of the chunk
+     * @return The result of the claim (0: Success, 1:Success, but stolen, 2: Not enough power, 3: Must touch other land, 4: Faction owns it, 5: You own it)
+     */
+    public int claimLand(UUID FactionID, int Dim, int ChunkX, int ChunkZ){
+        // Check they can afford it
+        if (!FactionMap.get(FactionID).calculateLandCost(1)) return 2;
+
+        String chunkKey = makeChunkKey(ChunkX, ChunkZ);
+
+        // Check it isn't owned, or owned by someone who can't afford it
+        boolean owned = false;
+        if (ClaimedLand.containsKey(Dim)) {
+            if (ClaimedLand.get(Dim).containsKey(chunkKey)){
+                owned = true;
+                UUID owner = ClaimedLand.get(Dim).get(chunkKey);
+
+                if (owner == FactionID) return 5;
+                if ((FactionMap.get(owner).calculatePower() >= FactionMap.get(owner).calculateLandCost())) {
+                    return 4;
+                }
+            }
+        } else {
+            // Create dimension
+            ClaimedLand.put(Dim, new HashMap<>());
+        }
+
+        // Check the land is connected
+        if (FactionConfig.landSubCat.landRequireConnect && !(FactionConfig.landSubCat.landRequireConnectWhenStealing && owned) && getFaction(FactionID).checkLandTouches(Dim, ChunkX, ChunkZ)) return 3;
+
+        ClaimedLand.get(Dim).put(chunkKey, FactionID);
+        saveClaimedChunks(Dim);
+        FactionMap.get(FactionID).addLandToFaction(Dim, chunkKey);
+        return (owned ? 1 : 0);
     }
 
     // Player Functions

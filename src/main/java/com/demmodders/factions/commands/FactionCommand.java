@@ -1,9 +1,10 @@
 package com.demmodders.factions.commands;
 
-import com.demmodders.factions.Factions;
 import com.demmodders.factions.faction.Faction;
 import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.FactionConfig;
+import com.demmodders.factions.util.enums.FactionChatMode;
+import com.demmodders.factions.util.enums.FactionRank;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -16,7 +17,6 @@ import net.minecraftforge.server.permission.PermissionAPI;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -218,10 +218,15 @@ public class FactionCommand extends CommandBase {
                     break;
                 case "leave":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
-                        if (args.length == 1) {
-                            // ToDo: give own faction info
+                        if (factionID != null) {
+                            if (fMan.getPlayer(playerID).factionRank == FactionRank.OWNER){
+                                replyMessage = TextFormatting.GOLD + "You are the leader of this faction, you must disband it";
+                            } else {
+                                fMan.setPlayerFaction(playerID, null);
+                                replyMessage = TextFormatting.GOLD + "You have successfully left your faction";
+                            }
                         } else {
-                            // ToDo: Look up faction and display info
+                            replyMessage = TextFormatting.GOLD + "You must be a member of a faction to do that";
                         }
                     } else {
                         commandResult = 1;
@@ -229,10 +234,11 @@ public class FactionCommand extends CommandBase {
                     break;
                 case "motd":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
-                        if (args.length == 1) {
-                            // ToDo: give own faction info
+                        if (factionID != null) {
+                            Faction faction = fMan.getFaction(factionID);
+                            replyMessage = String.format(FactionConfig.factionSubCat.factionMOTDHeader, faction.name) + "\n" + faction.motd;
                         } else {
-                            // ToDo: Look up faction and display info
+                            replyMessage = TextFormatting.GOLD + "You must be a member of a faction to do that";
                         }
                     } else {
                         commandResult = 1;
@@ -240,15 +246,66 @@ public class FactionCommand extends CommandBase {
                     break;
                 case "chat":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
-                        if (args.length == 1) {
-                            // ToDo: give own faction info
+                        if (factionID != null) {
+                            if (args.length == 1) {
+                                replyMessage = TextFormatting.GOLD + "Available chat modes are normal, faction, and ally";
+                            } else {
+                                try{
+                                    fMan.getPlayer(playerID).factionChat = FactionChatMode.valueOf(args[1].toUpperCase());
+                                    replyMessage = TextFormatting.GOLD + "Successfully set chat mode to " + args[1];
+                                } catch (IllegalArgumentException e){
+                                    replyMessage = TextFormatting.GOLD + "Unknown chat mode, available chat modes are normal, faction, and ally";
+                                }
+
+                            }
                         } else {
-                            // ToDo: Look up faction and display info
+                            replyMessage = TextFormatting.GOLD + "You must be a member of a faction to do that";
                         }
                     } else {
                         commandResult = 1;
                     }
                     break;
+
+                // Faction Lieutenant
+                case "claim":
+                    if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
+                        if (factionID != null){
+                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.LIEUTENANT.ordinal()) {
+                                UUID currentOwner = fMan.getChunkOwningFaction(((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ);
+                                int result = fMan.claimLand(factionID, ((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ);
+                                switch(result){
+                                    case 0:
+                                        replyMessage = TextFormatting.GOLD + "Successfully claimed chunk for your faction";
+                                        fMan.getPlayer(playerID).lastFactionLand = factionID;
+                                        break;
+                                    case 1:
+                                        replyMessage = TextFormatting.GOLD + "Successfully claimed chunk for your faction off of " + fMan.getFaction(currentOwner).name;
+                                        fMan.getPlayer(playerID).lastFactionLand = factionID;
+                                        break;
+                                    case 2:
+                                        replyMessage = TextFormatting.GOLD + "You do not have enough power to claim this chunk";
+                                        break;
+                                    case 3:
+                                        replyMessage = TextFormatting.GOLD + "You cannot claim this chunk, all your claimed land must be connected";
+                                        break;
+                                    case 4:
+                                        replyMessage = TextFormatting.GOLD + "You cannot claim this chunk, " + fMan.getFaction(currentOwner).name + " owns it and has the power to keep it";
+                                        break;
+                                    case 5:
+                                        replyMessage = TextFormatting.GOLD + "You already own this chunk";
+                                        break;
+                                }
+                            } else {
+                                replyMessage = TextFormatting.GOLD + "You are not a high enough rank to be able to do that";
+                            }
+                        } else {
+                            replyMessage = TextFormatting.GOLD + "You must be a member of a faction to do that";
+                        }
+                    } else {
+                        commandResult = 1;
+                    }
+                    break;
+
                 // Faction Officer
                 case "ally":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
@@ -273,17 +330,6 @@ public class FactionCommand extends CommandBase {
                     }
                     break;
                 case "neutral":
-                    if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (args.length == 1) {
-                            // ToDo: give own faction info
-                        } else {
-                            // ToDo: Look up faction and display info
-                        }
-                    } else {
-                        commandResult = 1;
-                    }
-                    break;
-                case "claim":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (args.length == 1) {
                             // ToDo: give own faction info

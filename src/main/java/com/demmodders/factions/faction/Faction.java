@@ -135,6 +135,35 @@ public class Faction {
         return landCount * FactionConfig.landSubCat.landPowerCost;
     }
 
+    /**
+     * Calculates whether the faction can have the extra amount of land given
+     * @param extraLand the amount more land to test
+     * @return Whether the faction can claim the amount of land given
+     */
+    public boolean calculateLandCost(int extraLand){
+        int landCount = extraLand;
+        for (int dim: land.keySet()) {
+            landCount += land.get(dim).size();
+        }
+        return landCount * FactionConfig.landSubCat.landPowerCost < calculatePower();
+    }
+
+
+    public boolean checkLandTouches(int Dim, int X, int Z){
+        // TODO: Consider moving to thread
+        String[] coords;
+        for (String key : land.get(Dim)){
+            coords = key.split(", ");
+            if (X == Integer.parseInt(coords[0]) && Z == (Integer.parseInt(coords[1]) + 1) ||
+                X == Integer.parseInt(coords[0]) && Z == (Integer.parseInt(coords[1]) - 1) ||
+                X == (Integer.parseInt(coords[0]) + 1) && Z == Integer.parseInt(coords[1]) ||
+                X == (Integer.parseInt(coords[0]) - 1) && Z == Integer.parseInt(coords[1])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public String printFactionInfo(){
         FactionManager fman = FactionManager.getInstance();
 

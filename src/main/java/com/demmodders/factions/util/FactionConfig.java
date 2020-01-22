@@ -29,6 +29,10 @@ public class FactionConfig {
         @Config.Comment("The maximum length of characters in a faction's MOTD")
         public int maxFactionMOTDLength = 100;
 
+        @Config.Name("MOTD Header")
+        @Config.Comment("The text that appears at the top of every MOTD, use %s for the faction name")
+        public String factionMOTDHeader = "_[%s MOTD]_";
+
         @Config.Name("Faction Starting Power")
         @Config.RangeInt(min = 1)
         @Config.Comment("The amount of power the faction starts with when it's created")
@@ -39,9 +43,7 @@ public class FactionConfig {
         @Config.Comment("The maximum amount of power the player can have when they it's created")
         public int factionStartingMaxPower = 10;
 
-        @Config.Name("Require land to connect")
-        @Config.Comment("Require newly claimed land to be right next to previously claimed land")
-        public boolean landRequireConnect = true;
+
     }
 
     public static class Player {
@@ -71,12 +73,20 @@ public class FactionConfig {
         @Config.RangeInt(min = 1)
         @Config.Comment("The amount of power each chunk takes up when claimed")
         public int landPowerCost = 5;
+
+        @Config.Name("Require land to connect")
+        @Config.Comment("Require newly claimed land to be right next to previously claimed land")
+        public boolean landRequireConnect = true;
+
+        @Config.Name("Require land to connect when stealing")
+        @Config.Comment("Require newly claimed land to be right next to previously claimed land when stealing the land of other factions")
+        public boolean landRequireConnectWhenStealing = true;
     }
 
     @Mod.EventBusSubscriber(modid = Factions.MODID)
     private static class EventHandler {
         @SubscribeEvent
-        public static void onConfigChanged(final ConfigChangedEvent.OnConfigChangedEvent event) {
+        public static void configChanged(final ConfigChangedEvent.OnConfigChangedEvent event) {
             if (event.getModID().equals(Factions.MODID)) {
                 ConfigManager.sync(Factions.MODID, Config.Type.INSTANCE);
             }

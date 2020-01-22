@@ -1,5 +1,7 @@
 package com.demmodders.factions.util;
 
+import com.demmodders.factions.util.enums.FactionChatMode;
+
 import java.util.ArrayList;
 
 public class Utils {

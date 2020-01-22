@@ -6,7 +6,7 @@ public enum FactionRank {
     @SerializedName("0")
     GRUNT,
     @SerializedName("1")
-    Lieutenant,
+    LIEUTENANT,
     @SerializedName("2")
     OFFICER,
     @SerializedName("0")
