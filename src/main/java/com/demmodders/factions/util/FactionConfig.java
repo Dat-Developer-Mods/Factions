@@ -72,6 +72,11 @@ public class FactionConfig {
         @Config.RangeInt()
         @Config.Comment("The delay in seconds before a player teleports when using /faction home")
         public int teleportDelay = 5;
+
+        @Config.Name("Faction home again Delay")
+        @Config.RangeInt()
+        @Config.Comment("The delay in seconds before a player can teleport when using /faction home another time")
+        public int reTeleportDelay = 5;
     }
 
     public static class Land {

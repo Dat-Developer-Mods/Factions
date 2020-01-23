@@ -202,10 +202,12 @@ public class FactionCommand extends CommandBase {
 
                 // Faction member
                 case "home":
+                    //TODO: Check delay has happened
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
                         if (factionID != null) {
                             if (fMan.getFaction(factionID).homePos != null) {
-                                TeleportHandler.getInstance().addTeleportEvent((EntityPlayerMP) sender, fMan.getFaction(factionID).homePos, FactionConfig.playerSubCat.teleportDelay);
+                                EntityPlayerMP posSource =  (EntityPlayerMP) sender;
+                                TeleportHandler.getInstance().addTeleportEvent((EntityPlayerMP) sender, fMan.getFaction(factionID).homePos, FactionConfig.playerSubCat.teleportDelay, posSource.posX, posSource.posY, posSource.posZ);
                                 replyMessage = TextFormatting.GOLD + "Teleporting in " + FactionConfig.playerSubCat.teleportDelay + " Seconds";
                             } else {
                                 replyMessage = TextFormatting.GOLD + "Your faction doesn't have a home";
@@ -393,6 +395,30 @@ public class FactionCommand extends CommandBase {
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
+                                if (args.length > 1) {
+                                    UUID otherFaction = fMan.getFactionIDFromName(args[1]);
+                                    int result = fMan.addNeutral(factionID, otherFaction);
+                                    switch (result) {
+                                        //TODO: Replace with string building kinda thing
+                                        case 0:
+                                            fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.GOLD + "You no longer have any relations with " + fMan.getFaction(otherFaction).name));
+                                            break;
+                                        case 1:
+                                            fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.GOLD + "You're no longer regard " + fMan.getFaction(otherFaction).name + " as an ally"));
+                                            break;
+                                        case 2:
+                                            fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.GOLD  + "You no longer regard " + fMan.getFaction(otherFaction).name + " as an enemy"));                                        break;
+                                        case 3:
+                                        case 4:
+                                            replyMessage = TextFormatting.GOLD + "You do not have relation with that faction";
+                                            break;
+                                        case 5:
+                                            replyMessage = TextFormatting.GOLD + "That's your faction";
+                                            break;
+                                    }
+                                } else {
+                                    commandResult = CommandResult.BADARGUMENT;
+                                }
 
                             }
                         } else {
@@ -406,7 +432,11 @@ public class FactionCommand extends CommandBase {
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
+                                if (args.length > 1) {
 
+                                } else {
+                                    commandResult = CommandResult.BADARGUMENT;
+                                }
                             }
                         } else {
                             commandResult = CommandResult.NOFACTION;
@@ -419,7 +449,11 @@ public class FactionCommand extends CommandBase {
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
+                                if (args.length > 1) {
 
+                                } else {
+                                    commandResult = CommandResult.BADARGUMENT;
+                                }
                             }
                         } else {
                             commandResult = CommandResult.NOFACTION;
@@ -432,7 +466,11 @@ public class FactionCommand extends CommandBase {
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
+                                if (args.length > 1) {
 
+                                } else {
+                                    commandResult = CommandResult.BADARGUMENT;
+                                }
                             }
                         } else {
                             commandResult = CommandResult.NOFACTION;
@@ -445,7 +483,11 @@ public class FactionCommand extends CommandBase {
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
+                                if (args.length > 1) {
 
+                                } else {
+                                    commandResult = CommandResult.BADARGUMENT;
+                                }
                             }
                         } else {
                             commandResult = CommandResult.NOFACTION;
@@ -473,7 +515,11 @@ public class FactionCommand extends CommandBase {
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
+                                if (args.length > 1) {
 
+                                } else {
+                                    commandResult = CommandResult.BADARGUMENT;
+                                }
                             }
                         } else {
                             commandResult = CommandResult.NOFACTION;
@@ -486,7 +532,11 @@ public class FactionCommand extends CommandBase {
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
+                                if (args.length > 1) {
 
+                                } else {
+                                    commandResult = CommandResult.BADARGUMENT;
+                                }
                             }
                         } else {
                             commandResult = CommandResult.NOFACTION;
@@ -499,7 +549,11 @@ public class FactionCommand extends CommandBase {
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
+                                if (args.length > 1) {
 
+                                } else {
+                                    commandResult = CommandResult.BADARGUMENT;
+                                }
                             }
                         } else {
                             commandResult = CommandResult.NOFACTION;
@@ -512,7 +566,11 @@ public class FactionCommand extends CommandBase {
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
+                                if (args.length > 1) {
 
+                                } else {
+                                    commandResult = CommandResult.BADARGUMENT;
+                                }
                             }
                         } else {
                             commandResult = CommandResult.NOFACTION;

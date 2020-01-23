@@ -7,19 +7,17 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.util.ITeleporter;
 
 public class FactionTeleporter implements ITeleporter {
-    double x, y, z;
+    Location location;
 
-    public FactionTeleporter(double X, double Y, double Z){
-        x = X;
-        y = Y;
-        z = Z;
+    public FactionTeleporter(Location Destination){
+        location = Destination;
     }
 
     @Override
     public void placeEntity(World world, Entity entity, float yaw) {
         if (entity instanceof EntityPlayerMP){
             // We only need to update their position
-            ((EntityPlayerMP)entity).setPositionAndUpdate(x, y, z);
+            ((EntityPlayerMP)entity).connection.setPlayerLocation(location.x, location.y, location.z, location.yaw, location.pitch);
         }
     }
 }

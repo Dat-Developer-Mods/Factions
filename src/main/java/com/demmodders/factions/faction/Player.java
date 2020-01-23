@@ -16,6 +16,8 @@ public class Player {
     public transient ArrayList<UUID> invites = new ArrayList<>();
     public transient FactionChatMode factionChat = FactionChatMode.NORMAL;
 
+    public transient long lastTeleport = 0L;
+
     public Player(){
     }
 
