@@ -39,7 +39,7 @@ public class FactionCommand extends CommandBase {
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         if(!(sender instanceof EntityPlayerMP)) return;
 
-        int commandResult = 0;
+        CommandResult commandResult = CommandResult.SUCCESS;
         FactionManager fMan = FactionManager.getInstance();
         UUID playerID = ((EntityPlayerMP)sender).getUniqueID();
         UUID factionID = fMan.getPlayersFactionID(playerID);
@@ -79,12 +79,12 @@ public class FactionCommand extends CommandBase {
                             }
 
                         } catch (NumberFormatException e){
-                            commandResult = 2;
+                            commandResult = CommandResult.BADARGUMENT;
                         } catch (IndexOutOfBoundsException e){
                             replyMessage = TextFormatting.GOLD + "There aren't that many pages";
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
 
@@ -100,7 +100,7 @@ public class FactionCommand extends CommandBase {
                             replyMessage = fMan.getFaction(fMan.getFactionIDFromName(args[1].toLowerCase())).printFactionInfo();
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
 
@@ -108,7 +108,7 @@ public class FactionCommand extends CommandBase {
                 case "join":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
                         if (args.length == 1) {
-                            commandResult = 2;
+                            commandResult = CommandResult.BADARGUMENT;
                         } else {
                             if (factionID == null) {
                                 factionID = fMan.getFactionIDFromName(args[1].toLowerCase());
@@ -127,7 +127,7 @@ public class FactionCommand extends CommandBase {
                             }
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
                 case "invites":
@@ -151,13 +151,13 @@ public class FactionCommand extends CommandBase {
                             replyMessage = TextFormatting.GOLD + "You don't have any invites";
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
                 case "reject":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
                         if (args.length == 1) {
-                            commandResult = 2;
+                            commandResult = CommandResult.BADARGUMENT;
                         } else {
                             factionID = fMan.getFactionIDFromName(args[1].toLowerCase());
                             if (factionID != null) {
@@ -167,13 +167,13 @@ public class FactionCommand extends CommandBase {
                             }
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
                 case "create":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.create")) {
                         if (args.length == 1) {
-                            commandResult = 2;
+                            commandResult = CommandResult.BADARGUMENT;
                         } else {
                             if (fMan.getPlayer(playerID).faction == null){
                                 int result = fMan.createFaction(args[1], playerID);
@@ -196,7 +196,7 @@ public class FactionCommand extends CommandBase {
                             }
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
 
@@ -211,10 +211,10 @@ public class FactionCommand extends CommandBase {
                                 replyMessage = TextFormatting.GOLD + "Your faction doesn't have a home";
                             }
                         } else {
-                            commandResult = 3;
+                            commandResult = CommandResult.NOFACTION;
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
                 case "leave":
@@ -227,10 +227,10 @@ public class FactionCommand extends CommandBase {
                                 replyMessage = TextFormatting.GOLD + "You have successfully left your faction";
                             }
                         } else {
-                            commandResult = 3;
+                            commandResult = CommandResult.NOFACTION;
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
                 case "motd":
@@ -239,10 +239,10 @@ public class FactionCommand extends CommandBase {
                             Faction faction = fMan.getFaction(factionID);
                             replyMessage = String.format(FactionConfig.factionSubCat.factionMOTDHeader, faction.name) + "\n" + faction.motd;
                         } else {
-                            commandResult = 3;
+                            commandResult = CommandResult.NOFACTION;
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
                 case "chat":
@@ -259,10 +259,10 @@ public class FactionCommand extends CommandBase {
                                 }
                             }
                         } else {
-                            commandResult = 3;
+                            commandResult = CommandResult.NOFACTION;
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
 
@@ -296,13 +296,13 @@ public class FactionCommand extends CommandBase {
                                         break;
                                 }
                             } else {
-                                replyMessage = TextFormatting.GOLD + "You are not a high enough rank to be able to do that";
+                                commandResult = CommandResult.NOFACTIONPERMISSION;
                             }
                         } else {
-                            commandResult = 3;
+                            commandResult = CommandResult.NOFACTION;
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
 
@@ -310,35 +310,43 @@ public class FactionCommand extends CommandBase {
                 case "ally":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
-                            if (args.length > 1) {
-                                if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
+                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
+                                if (args.length > 1) {
                                     UUID otherFaction = fMan.getFactionIDFromName(args[1]);
-                                    if (otherFaction != null){
+                                    if (otherFaction != null) {
                                         int result = fMan.addAlly(factionID, otherFaction);
                                         switch (result) {
+                                            //TODO: Replace with string building kinda thing
                                             case 0:
-                                                fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.DARK_GREEN + fMan.getFaction(factionID).name + " and " + TextFormatting.GREEN + fMan.getFaction(otherFaction).name + TextFormatting.GOLD + " are now allies" + (FactionConfig.factionSubCat.allyBuild ? ", this means they can build on yours land, but you can't build on theirs till they add you as an ally as well" : "")));
+                                                fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.GREEN + fMan.getFaction(otherFaction).name + TextFormatting.GOLD + " is now you ally" + (FactionConfig.factionSubCat.allyBuild ? ", this means they can build on your land, but you can't build on theirs till they add you as an ally as well" : "")));
                                                 break;
                                             case 1:
-                                                    fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.DARK_GREEN + fMan.getFaction(factionID).name + " and " + TextFormatting.GREEN + fMan.getFaction(otherFaction).name + TextFormatting.GOLD + " are now allies" + (FactionConfig.factionSubCat.allyBuild ? ", this means you can build on their land, and they can build on yours too" : "")));
+                                                fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.GREEN + fMan.getFaction(otherFaction).name + TextFormatting.GOLD + " is now your mutual ally" + (FactionConfig.factionSubCat.allyBuild ? ", this means you can build on their land, and they can build on yours too" : "")));
                                                 break;
                                             case 2:
+                                                fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.GREEN + fMan.getFaction(otherFaction).name + TextFormatting.GOLD + " is now you ally" + (FactionConfig.factionSubCat.allyBuild ? ", this means you can build on their land, and they can build on yours too" : "") + TextFormatting.DARK_RED + ", however, they still regard you as an enemy"));
+                                                break;
+                                            case 3:
                                                 replyMessage = TextFormatting.GOLD + "That faction is already an ally";
+                                                break;
+                                            case 4:
+                                                replyMessage = TextFormatting.GOLD + "That's your faction";
                                                 break;
                                         }
                                     } else {
                                         replyMessage = TextFormatting.GOLD + "That faction does not exist";
                                     }
-
+                                } else {
+                                        commandResult = CommandResult.BADARGUMENT;
                                 }
                             } else {
-                                commandResult = 2;
+                                commandResult = CommandResult.NOFACTIONPERMISSION;
                             }
                         } else {
-                            commandResult = 3;
+                            commandResult = CommandResult.NOFACTION;
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
                 case "enemy":
@@ -346,16 +354,39 @@ public class FactionCommand extends CommandBase {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
                                 if (args.length > 1) {
-
+                                    UUID otherFaction = fMan.getFactionIDFromName(args[1]);
+                                    if (otherFaction != null) {
+                                        int result = fMan.addEnemy(factionID, otherFaction);
+                                        switch (result) {
+                                            //TODO: Replace with string building kinda thing
+                                            case 0:
+                                                fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.RED + fMan.getFaction(otherFaction).name + TextFormatting.GOLD + " is now you enemy" + (FactionConfig.factionSubCat.allyBuild ? ", this means you can build on their land, and they can build on yours too" : "") + ", they don't regard you as an enemy yet though"));
+                                                break;
+                                            case 1:
+                                                fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.RED + fMan.getFaction(otherFaction).name + TextFormatting.GOLD + " is now your mutual enemy" + (FactionConfig.factionSubCat.allyBuild ? ", this means you can build on their land, and they can build on yours too" : "")));
+                                                break;
+                                            case 2:
+                                                fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.RED + fMan.getFaction(otherFaction).name + TextFormatting.GOLD + " is now you enemy" + (FactionConfig.factionSubCat.allyBuild ? ", this means you can build on their land, and they can build on yours too" : "") + TextFormatting.DARK_RED + ", however, they still regard you as an ally"));
+                                                break;
+                                            case 3:
+                                                replyMessage = TextFormatting.GOLD + "That faction is already an enemy";
+                                                break;
+                                            case 4:
+                                                replyMessage = TextFormatting.GOLD + "That's your faction";
+                                                break;
+                                        }
+                                    } else {
+                                        replyMessage = TextFormatting.GOLD + "That faction does not exist";
+                                    }
                                 } else {
-                                    commandResult = 2;
+                                    commandResult = CommandResult.BADARGUMENT;
                                 }
                             }
                         } else {
-                            commandResult = 3;
+                            commandResult = CommandResult.NOFACTION;
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
                 case "neutral":
@@ -365,10 +396,10 @@ public class FactionCommand extends CommandBase {
 
                             }
                         } else {
-                            commandResult = 3;
+                            commandResult = CommandResult.NOFACTION;
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
                 case "sethome":
@@ -378,10 +409,10 @@ public class FactionCommand extends CommandBase {
 
                             }
                         } else {
-                            commandResult = 3;
+                            commandResult = CommandResult.NOFACTION;
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
                 case "kick":
@@ -391,10 +422,10 @@ public class FactionCommand extends CommandBase {
 
                             }
                         } else {
-                            commandResult = 3;
+                            commandResult = CommandResult.NOFACTION;
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
                 case "invite":
@@ -404,10 +435,10 @@ public class FactionCommand extends CommandBase {
 
                             }
                         } else {
-                            commandResult = 3;
+                            commandResult = CommandResult.NOFACTION;
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
                 case "setmotd":
@@ -417,10 +448,10 @@ public class FactionCommand extends CommandBase {
 
                             }
                         } else {
-                            commandResult = 3;
+                            commandResult = CommandResult.NOFACTION;
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
 
@@ -432,10 +463,10 @@ public class FactionCommand extends CommandBase {
 
                             }
                         } else {
-                            commandResult = 3;
+                            commandResult = CommandResult.NOFACTION;
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
                 case "promote":
@@ -445,10 +476,10 @@ public class FactionCommand extends CommandBase {
 
                             }
                         } else {
-                            commandResult = 3;
+                            commandResult = CommandResult.NOFACTION;
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
                 case "demote":
@@ -458,10 +489,10 @@ public class FactionCommand extends CommandBase {
 
                             }
                         } else {
-                            commandResult = 3;
+                            commandResult = CommandResult.NOFACTION;
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
                 case "setrank":
@@ -471,10 +502,10 @@ public class FactionCommand extends CommandBase {
 
                             }
                         } else {
-                            commandResult = 3;
+                            commandResult = CommandResult.NOFACTION;
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
                 case "setdesc":
@@ -484,22 +515,25 @@ public class FactionCommand extends CommandBase {
 
                             }
                         } else {
-                            commandResult = 3;
+                            commandResult = CommandResult.NOFACTION;
                         }
                     } else {
-                        commandResult = 1;
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
             }
             switch (commandResult){
-                case 1:
+                case NOPERMISSION:
                     replyMessage = TextFormatting.RED + "You do not have permission to execute this command";
                     break;
-                case 2:
+                case BADARGUMENT:
                     replyMessage = TextFormatting.RED + "Error, bad argument";
                     break;
-                case 3:
+                case NOFACTION:
                     replyMessage = TextFormatting.RED + "You must be a member of a faction to do that";
+                    break;
+                case NOFACTIONPERMISSION:
+                    replyMessage = TextFormatting.RED + "You're not a high enough rank in your faction to do that";
                     break;
             }
             if (replyMessage != null) sender.sendMessage(new TextComponentString(replyMessage));
@@ -527,4 +561,12 @@ public class FactionCommand extends CommandBase {
     public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
         return super.getTabCompletions(server, sender, args, targetPos);
     }
+}
+
+enum CommandResult {
+    SUCCESS,
+    NOPERMISSION,
+    BADARGUMENT,
+    NOFACTION,
+    NOFACTIONPERMISSION
 }

@@ -428,27 +428,55 @@ public class FactionManager {
     }
 
     /**
-     * Adds the other faction as an ally to the given faction
+     * Attempts to add the other faction as an ally to the given faction
      * @param FactionID The faction creating the alliance
-     * @param otherFaction the faction the alliance is with
-     * @return the result of the alliance (0: Success them pending, 1: Success both allies, 2: Already allies
+     * @param OtherFaction the faction the alliance is with
+     * @return The result of the alliance (0: Success them pending, 1: Success both allies, 2: Success but enemy, 3: Already allies, 4: That's you)
      */
-    public int addAlly(UUID FactionID, UUID otherFaction){
-        Relationship currentRelation = FactionMap.get(FactionID).relationships.get(otherFaction);
-        if (currentRelation.relation == RelationState.ALLY) return 2;
-        FactionMap.get(FactionID).relationships.put(otherFaction, new Relationship(RelationState.ALLY));
-        if (!FactionMap.get(otherFaction).relationships.containsKey(FactionID)) {
-            sendFactionwideMessage(otherFaction, new TextComponentString(TextFormatting.DARK_GREEN + FactionMap.get(FactionID).name + " Has made you their allies" + (FactionConfig.factionSubCat.allyBuild ? ", this means you can build on their land, but they can't build on yours" : "") + ", add them back with /faction ally" + FactionMap.get(FactionID).name));
+    public int addAlly(UUID FactionID, UUID OtherFaction){
+        Relationship currentRelation = FactionMap.get(FactionID).relationships.get(OtherFaction);
+        if (FactionID == OtherFaction) return 4;
+        if (currentRelation.relation == RelationState.ALLY) return 3;
+        FactionMap.get(FactionID).relationships.put(OtherFaction, new Relationship(RelationState.ALLY));
+        saveFaction(FactionID);
+        if (!FactionMap.get(OtherFaction).relationships.containsKey(FactionID)) {
+            FactionMap.get(OtherFaction).relationships.put(FactionID, new Relationship(RelationState.PENDINGALLY));
+            saveFaction(OtherFaction);
+            sendFactionwideMessage(OtherFaction, new TextComponentString(TextFormatting.DARK_GREEN + FactionMap.get(FactionID).name + " has made you their allies" + (FactionConfig.factionSubCat.allyBuild ? ", this means you can build on their land, but they can't build on yours" : "") + ", add them back with /faction ally " + FactionMap.get(FactionID).name));
             return 1;
-        } else {
-            FactionMap.get(otherFaction).relationships.put(FactionID, new Relationship(RelationState.PENDINGALLY));
-            sendFactionwideMessage(otherFaction, new TextComponentString(TextFormatting.DARK_GREEN + FactionMap.get(FactionID).name + " Have added you as their allies as well" + (FactionConfig.factionSubCat.allyBuild ? ", this means you can build on their land" : "")));
+        } else if (FactionMap.get(OtherFaction).relationships.get(FactionID).relation == RelationState.ALLY){
+            sendFactionwideMessage(OtherFaction, new TextComponentString(TextFormatting.DARK_GREEN + FactionMap.get(FactionID).name + " has added you as their allies as well" + (FactionConfig.factionSubCat.allyBuild ? ", this means you can build on their land" : "")));
             return 0;
+        } else {
+            sendFactionwideMessage(OtherFaction, new TextComponentString(TextFormatting.DARK_GREEN + FactionMap.get(FactionID).name + " has added you as their allies," + TextFormatting.DARK_RED + " you still think they're enemies though"));
+            return 2;
         }
     }
 
-    public int addEnemy(UUID FactionID, UUID otherFaction){
-
+    /**
+     * Attempts to add the other faction as an enemy to the given faction
+     * @param FactionID The faction declaring the enemy
+     * @param OtherFaction The faction becoming an enemy
+     * @return The result of the declaration (0: Success, 1: Success enemies all round, 2: Success but you're an ally to them, 3: already enemies, 4: That's you)
+     */
+    public int addEnemy(UUID FactionID, UUID OtherFaction){
+        Relationship currentRelation = FactionMap.get(FactionID).relationships.get(OtherFaction);
+        if (FactionID == OtherFaction) return 4;
+        if (currentRelation.relation == RelationState.ENEMY) return 3;
+        FactionMap.get(FactionID).relationships.put(OtherFaction, new Relationship(RelationState.ENEMY));
+        saveFaction(FactionID);
+        if (!FactionMap.get(OtherFaction).relationships.containsKey(FactionID) || FactionMap.get(OtherFaction).relationships.get(FactionID).relation == RelationState.PENDINGALLY) {
+            FactionMap.get(OtherFaction).relationships.put(FactionID, new Relationship(RelationState.PENDINGENEMY));
+            saveFaction(OtherFaction);
+            sendFactionwideMessage(OtherFaction, new TextComponentString(TextFormatting.DARK_RED + FactionMap.get(FactionID).name + " has declared you an enemy" + (FactionConfig.factionSubCat.enemyBuild ? ", this means they can build on your land, and you can build on theirs" : "") + ", let them know you got the message with with /faction enemy " + FactionMap.get(FactionID).name));
+            return 0;
+        } else if (FactionMap.get(OtherFaction).relationships.get(FactionID).relation == RelationState.ALLY){
+            sendFactionwideMessage(OtherFaction, new TextComponentString(TextFormatting.DARK_RED + FactionMap.get(FactionID).name + " has declared you an enemy" + (FactionConfig.factionSubCat.enemyBuild ? ", this means they can build on your land, and you can build on theirs" : "") + ", but you still think they're an ally, let them know you got the message with with /faction enemy " + FactionMap.get(FactionID).name));
+            return 2;
+        } else {
+            sendFactionwideMessage(OtherFaction, new TextComponentString(TextFormatting.DARK_RED + FactionMap.get(FactionID).name + " has declared you an enemy as well, you are now at war"));
+            return 1;
+        }
     }
 
     // Player Functions
