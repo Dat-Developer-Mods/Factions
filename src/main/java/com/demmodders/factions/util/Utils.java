@@ -6,7 +6,7 @@ import java.util.ArrayList;
 
 public class Utils {
     /**
-     * Calulate the age based of a starting time and the given time
+     * Calculate the age based of a starting time and the given time
      * @param startingDate starting Time in millis
      * @return the age in millis
      */

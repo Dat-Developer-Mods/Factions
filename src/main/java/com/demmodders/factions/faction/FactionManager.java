@@ -3,18 +3,25 @@ package com.demmodders.factions.faction;
 import com.demmodders.factions.Factions;
 import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.FileHelper;
+import com.demmodders.factions.util.Utils;
 import com.demmodders.factions.util.enums.FactionRank;
+import com.demmodders.factions.util.enums.RelationState;
 import com.demmodders.factions.util.structures.Power;
+import com.demmodders.factions.util.structures.Relationship;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentBase;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
+import javax.management.relation.Relation;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -179,6 +186,7 @@ public class FactionManager {
         }
         return removed;
     }
+
     /**
      * Iterates through all the players that factions is aware of and gives a reference to them to their owning faction
      */
@@ -417,6 +425,30 @@ public class FactionManager {
         saveClaimedChunks(Dim);
         FactionMap.get(FactionID).addLandToFaction(Dim, chunkKey);
         return (owned ? 1 : 0);
+    }
+
+    /**
+     * Adds the other faction as an ally to the given faction
+     * @param FactionID The faction creating the alliance
+     * @param otherFaction the faction the alliance is with
+     * @return the result of the alliance (0: Success them pending, 1: Success both allies, 2: Already allies
+     */
+    public int addAlly(UUID FactionID, UUID otherFaction){
+        Relationship currentRelation = FactionMap.get(FactionID).relationships.get(otherFaction);
+        if (currentRelation.relation == RelationState.ALLY) return 2;
+        FactionMap.get(FactionID).relationships.put(otherFaction, new Relationship(RelationState.ALLY));
+        if (!FactionMap.get(otherFaction).relationships.containsKey(FactionID)) {
+            sendFactionwideMessage(otherFaction, new TextComponentString(TextFormatting.DARK_GREEN + FactionMap.get(FactionID).name + " Has made you their allies" + (FactionConfig.factionSubCat.allyBuild ? ", this means you can build on their land, but they can't build on yours" : "") + ", add them back with /faction ally" + FactionMap.get(FactionID).name));
+            return 1;
+        } else {
+            FactionMap.get(otherFaction).relationships.put(FactionID, new Relationship(RelationState.PENDINGALLY));
+            sendFactionwideMessage(otherFaction, new TextComponentString(TextFormatting.DARK_GREEN + FactionMap.get(FactionID).name + " Have added you as their allies as well" + (FactionConfig.factionSubCat.allyBuild ? ", this means you can build on their land" : "")));
+            return 0;
+        }
+    }
+
+    public int addEnemy(UUID FactionID, UUID otherFaction){
+
     }
 
     // Player Functions

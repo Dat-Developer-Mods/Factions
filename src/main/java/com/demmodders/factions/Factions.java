@@ -29,7 +29,8 @@ public class Factions {
 
     @EventHandler
     public void init(FMLInitializationEvent event) {
-        LOGGER.info(Factions.NAME + "says hi!");
+        LOGGER.info(Factions.NAME + " says hi!");
+        // Register permissions
         CommandRegister.RegisterPermissionNodes();
     }
 
@@ -39,7 +40,8 @@ public class Factions {
     }
 
     @EventHandler
-    public void ServerLoad(FMLServerStartingEvent e){
+    public void serverLoad(FMLServerStartingEvent e){
+        // register commands
         CommandRegister.RegisterCommands(e);
     }
 }

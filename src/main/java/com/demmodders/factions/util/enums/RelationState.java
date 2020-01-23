@@ -7,4 +7,6 @@ public enum RelationState{
     ENEMY,
     @SerializedName("2")
     ALLY,
+    @SerializedName("3")
+    PENDINGALLY
 }

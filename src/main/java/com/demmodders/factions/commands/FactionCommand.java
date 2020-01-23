@@ -3,6 +3,7 @@ package com.demmodders.factions.commands;
 import com.demmodders.factions.faction.Faction;
 import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.FactionConfig;
+import com.demmodders.factions.util.Utils;
 import com.demmodders.factions.util.enums.FactionChatMode;
 import com.demmodders.factions.util.enums.FactionRank;
 import net.minecraft.command.CommandBase;
@@ -42,7 +43,7 @@ public class FactionCommand extends CommandBase {
         FactionManager fMan = FactionManager.getInstance();
         UUID playerID = ((EntityPlayerMP)sender).getUniqueID();
         UUID factionID = fMan.getPlayersFactionID(playerID);
-        String replyMessage = "";
+        String replyMessage = null;
 
         if(args.length == 0){
             sender.sendMessage(new TextComponentString(getUsage(sender)));
@@ -205,12 +206,12 @@ public class FactionCommand extends CommandBase {
                         if (factionID != null) {
                             if (fMan.getFaction(factionID).homePos != null) {
                                 TeleportHandler.getInstance().addTeleportEvent((EntityPlayerMP) sender, fMan.getFaction(factionID).homePos, FactionConfig.playerSubCat.teleportDelay);
-                                replyMessage = TextFormatting.GOLD + "Teleporting in " + String.valueOf(FactionConfig.playerSubCat.teleportDelay) + " Seconds";
+                                replyMessage = TextFormatting.GOLD + "Teleporting in " + FactionConfig.playerSubCat.teleportDelay + " Seconds";
                             } else {
                                 replyMessage = TextFormatting.GOLD + "Your faction doesn't have a home";
                             }
                         } else {
-                            replyMessage = TextFormatting.GOLD + "You must be a member of a faction to do that";
+                            commandResult = 3;
                         }
                     } else {
                         commandResult = 1;
@@ -226,7 +227,7 @@ public class FactionCommand extends CommandBase {
                                 replyMessage = TextFormatting.GOLD + "You have successfully left your faction";
                             }
                         } else {
-                            replyMessage = TextFormatting.GOLD + "You must be a member of a faction to do that";
+                            commandResult = 3;
                         }
                     } else {
                         commandResult = 1;
@@ -238,7 +239,7 @@ public class FactionCommand extends CommandBase {
                             Faction faction = fMan.getFaction(factionID);
                             replyMessage = String.format(FactionConfig.factionSubCat.factionMOTDHeader, faction.name) + "\n" + faction.motd;
                         } else {
-                            replyMessage = TextFormatting.GOLD + "You must be a member of a faction to do that";
+                            commandResult = 3;
                         }
                     } else {
                         commandResult = 1;
@@ -256,10 +257,9 @@ public class FactionCommand extends CommandBase {
                                 } catch (IllegalArgumentException e){
                                     replyMessage = TextFormatting.GOLD + "Unknown chat mode, available chat modes are normal, faction, and ally";
                                 }
-
                             }
                         } else {
-                            replyMessage = TextFormatting.GOLD + "You must be a member of a faction to do that";
+                            commandResult = 3;
                         }
                     } else {
                         commandResult = 1;
@@ -299,7 +299,7 @@ public class FactionCommand extends CommandBase {
                                 replyMessage = TextFormatting.GOLD + "You are not a high enough rank to be able to do that";
                             }
                         } else {
-                            replyMessage = TextFormatting.GOLD + "You must be a member of a faction to do that";
+                            commandResult = 3;
                         }
                     } else {
                         commandResult = 1;
@@ -309,10 +309,33 @@ public class FactionCommand extends CommandBase {
                 // Faction Officer
                 case "ally":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (args.length == 1) {
-                            // ToDo: give own faction info
+                        if (factionID != null){
+                            if (args.length > 1) {
+                                if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
+                                    UUID otherFaction = fMan.getFactionIDFromName(args[1]);
+                                    if (otherFaction != null){
+                                        int result = fMan.addAlly(factionID, otherFaction);
+                                        switch (result) {
+                                            case 0:
+                                                fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.DARK_GREEN + fMan.getFaction(factionID).name + " and " + TextFormatting.GREEN + fMan.getFaction(otherFaction).name + TextFormatting.GOLD + " are now allies" + (FactionConfig.factionSubCat.allyBuild ? ", this means they can build on yours land, but you can't build on theirs till they add you as an ally as well" : "")));
+                                                break;
+                                            case 1:
+                                                    fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.DARK_GREEN + fMan.getFaction(factionID).name + " and " + TextFormatting.GREEN + fMan.getFaction(otherFaction).name + TextFormatting.GOLD + " are now allies" + (FactionConfig.factionSubCat.allyBuild ? ", this means you can build on their land, and they can build on yours too" : "")));
+                                                break;
+                                            case 2:
+                                                replyMessage = TextFormatting.GOLD + "That faction is already an ally";
+                                                break;
+                                        }
+                                    } else {
+                                        replyMessage = TextFormatting.GOLD + "That faction does not exist";
+                                    }
+
+                                }
+                            } else {
+                                commandResult = 2;
+                            }
                         } else {
-                            // ToDo: Look up faction and display info
+                            commandResult = 3;
                         }
                     } else {
                         commandResult = 1;
@@ -320,10 +343,16 @@ public class FactionCommand extends CommandBase {
                     break;
                 case "enemy":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (args.length == 1) {
-                            // ToDo: give own faction info
+                        if (factionID != null){
+                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
+                                if (args.length > 1) {
+
+                                } else {
+                                    commandResult = 2;
+                                }
+                            }
                         } else {
-                            // ToDo: Look up faction and display info
+                            commandResult = 3;
                         }
                     } else {
                         commandResult = 1;
@@ -331,10 +360,12 @@ public class FactionCommand extends CommandBase {
                     break;
                 case "neutral":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (args.length == 1) {
-                            // ToDo: give own faction info
+                        if (factionID != null){
+                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
+
+                            }
                         } else {
-                            // ToDo: Look up faction and display info
+                            commandResult = 3;
                         }
                     } else {
                         commandResult = 1;
@@ -342,10 +373,12 @@ public class FactionCommand extends CommandBase {
                     break;
                 case "sethome":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (args.length == 1) {
-                            // ToDo: give own faction info
+                        if (factionID != null){
+                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
+
+                            }
                         } else {
-                            // ToDo: Look up faction and display info
+                            commandResult = 3;
                         }
                     } else {
                         commandResult = 1;
@@ -353,10 +386,12 @@ public class FactionCommand extends CommandBase {
                     break;
                 case "kick":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (args.length == 1) {
-                            // ToDo: give own faction info
+                        if (factionID != null){
+                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
+
+                            }
                         } else {
-                            // ToDo: Look up faction and display info
+                            commandResult = 3;
                         }
                     } else {
                         commandResult = 1;
@@ -364,10 +399,12 @@ public class FactionCommand extends CommandBase {
                     break;
                 case "invite":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (args.length == 1) {
-                            // ToDo: give own faction info
+                        if (factionID != null){
+                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
+
+                            }
                         } else {
-                            // ToDo: Look up faction and display info
+                            commandResult = 3;
                         }
                     } else {
                         commandResult = 1;
@@ -375,10 +412,12 @@ public class FactionCommand extends CommandBase {
                     break;
                 case "setmotd":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (args.length == 1) {
-                            // ToDo: give own faction info
+                        if (factionID != null){
+                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
+
+                            }
                         } else {
-                            // ToDo: Look up faction and display info
+                            commandResult = 3;
                         }
                     } else {
                         commandResult = 1;
@@ -388,10 +427,12 @@ public class FactionCommand extends CommandBase {
                 // Faction Owner
                 case "disband":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (args.length == 1) {
-                            // ToDo: give own faction info
+                        if (factionID != null){
+                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
+
+                            }
                         } else {
-                            // ToDo: Look up faction and display info
+                            commandResult = 3;
                         }
                     } else {
                         commandResult = 1;
@@ -399,10 +440,12 @@ public class FactionCommand extends CommandBase {
                     break;
                 case "promote":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (args.length == 1) {
-                            // ToDo: give own faction info
+                        if (factionID != null){
+                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
+
+                            }
                         } else {
-                            // ToDo: Look up faction and display info
+                            commandResult = 3;
                         }
                     } else {
                         commandResult = 1;
@@ -410,10 +453,12 @@ public class FactionCommand extends CommandBase {
                     break;
                 case "demote":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (args.length == 1) {
-                            // ToDo: give own faction info
+                        if (factionID != null){
+                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
+
+                            }
                         } else {
-                            // ToDo: Look up faction and display info
+                            commandResult = 3;
                         }
                     } else {
                         commandResult = 1;
@@ -421,10 +466,12 @@ public class FactionCommand extends CommandBase {
                     break;
                 case "setrank":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (args.length == 1) {
-                            // ToDo: give own faction info
+                        if (factionID != null){
+                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
+
+                            }
                         } else {
-                            // ToDo: Look up faction and display info
+                            commandResult = 3;
                         }
                     } else {
                         commandResult = 1;
@@ -432,10 +479,12 @@ public class FactionCommand extends CommandBase {
                     break;
                 case "setdesc":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (args.length == 1) {
-                            // ToDo: give own faction info
+                        if (factionID != null){
+                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
+
+                            }
                         } else {
-                            // ToDo: Look up faction and display info
+                            commandResult = 3;
                         }
                     } else {
                         commandResult = 1;
@@ -443,16 +492,17 @@ public class FactionCommand extends CommandBase {
                     break;
             }
             switch (commandResult){
-                case 0:
-                    sender.sendMessage(new TextComponentString(replyMessage));
-                    break;
                 case 1:
-                    sender.sendMessage(new TextComponentString(TextFormatting.RED + "You do not have permission to execute this command"));
+                    replyMessage = TextFormatting.RED + "You do not have permission to execute this command";
                     break;
                 case 2:
-                    sender.sendMessage(new TextComponentString(TextFormatting.RED + "Error, bad argument"));
+                    replyMessage = TextFormatting.RED + "Error, bad argument";
+                    break;
+                case 3:
+                    replyMessage = TextFormatting.RED + "You must be a member of a faction to do that";
                     break;
             }
+            if (replyMessage != null) sender.sendMessage(new TextComponentString(replyMessage));
         }
     }
 

@@ -43,7 +43,13 @@ public class FactionConfig {
         @Config.Comment("The maximum amount of power the player can have when they it's created")
         public int factionStartingMaxPower = 10;
 
+        @Config.Name("Allow ally build")
+        @Config.Comment("Permit allies to build on each other's land")
+        public boolean allyBuild = true;
 
+        @Config.Name("Allow enemy build")
+        @Config.Comment("Permit enemies to build on each other's land")
+        public boolean enemyBuild = false;
     }
 
     public static class Player {
@@ -93,4 +99,6 @@ public class FactionConfig {
         }
 
     }
+
+
 }

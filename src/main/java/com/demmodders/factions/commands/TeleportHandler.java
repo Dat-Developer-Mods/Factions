@@ -25,6 +25,12 @@ public class TeleportHandler {
 
     Queue<TeleportEvent> teleportQueue = new ArrayDeque<>();
 
+    /**
+     * Adds a teleport event to the queue to be executed after a set delay
+     * @param player The player to teleport
+     * @param destination The location for the player to teleport to
+     * @param delay The delay before the player should teleport
+     */
     public void addTeleportEvent(EntityPlayerMP player, Location destination, int delay){
         teleportQueue.add(new TeleportEvent(player, destination, delay));
     }
@@ -36,11 +42,14 @@ public class TeleportHandler {
         TeleportHandler handler = TeleportHandler.getInstance();
         if (!handler.teleportQueue.isEmpty()) {
             TeleportEvent tele = handler.teleportQueue.remove();
-            if (tele != null && ((int) (Utils.calculateAge(tele.startTime) / 1000)) > tele.delay) {
-                if (tele.playerMP.dimension != tele.destination.dim)
-                    tele.playerMP.changeDimension(tele.destination.dim, new FactionTeleporter(tele.destination.x, tele.destination.y, tele.destination.z));
+            // check the delay has passed
+            if (tele != null && ((int) (Utils.calculateAge(tele.startTime) / 1000)) > tele.delay)
+            {
+                // Make sure we only teleport them cross dimensionally if we need to
+                if (tele.playerMP.dimension != tele.destination.dim) tele.playerMP.changeDimension(tele.destination.dim, new FactionTeleporter(tele.destination.x, tele.destination.y, tele.destination.z));
                 else tele.playerMP.setPositionAndUpdate(tele.destination.x, tele.destination.y, tele.destination.z);
             } else {
+                // Requeue the item at the back of the queue since we didn't use it
                 handler.teleportQueue.add(tele);
             }
         }

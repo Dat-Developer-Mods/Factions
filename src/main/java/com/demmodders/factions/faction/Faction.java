@@ -149,6 +149,13 @@ public class Faction {
     }
 
 
+    /**
+     * Checks to see if the given chunk is connected to any other chunk owned by the faction, also true if the player has no land in that dimension
+     * @param Dim The dimension of the chunk to check
+     * @param X The X Coord of the chunk
+     * @param Z The Z Coord of the chunl
+     * @return If the chuck is connected to another owned chunk, or the faction has no land
+     */
     public boolean checkLandTouches(int Dim, int X, int Z){
         if (land.size() == 0){
             return true;
@@ -167,6 +174,10 @@ public class Faction {
         return false;
     }
 
+    /**
+     * Builds a message giving information about the faction
+     * @return a long message detailing public information about the faction
+     */
     public String printFactionInfo(){
         FactionManager fman = FactionManager.getInstance();
 

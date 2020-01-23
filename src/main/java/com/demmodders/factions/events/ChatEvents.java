@@ -35,9 +35,9 @@ public class ChatEvents {
 
             // Make message
             ITextComponent message = (new TextComponentString(ChatFormatting.DARK_GREEN + "[Faction Chat]" + ChatFormatting.RESET + "[" + fMan.getFaction(factionID).name + ChatFormatting.RESET + "]")).appendSibling(e.getComponent());
-
             fMan.sendFactionwideMessage(factionID, message);
 
+            // Send to allies if enabled
             if (fMan.getPlayer(playerID).factionChat == FactionChatMode.ALLY) {
                 HashMap<UUID, Relationship> relationships = fMan.getFaction(factionID).relationships;
                 for(UUID otherFaction : relationships.keySet()){

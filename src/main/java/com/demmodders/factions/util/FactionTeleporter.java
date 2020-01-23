@@ -18,6 +18,7 @@ public class FactionTeleporter implements ITeleporter {
     @Override
     public void placeEntity(World world, Entity entity, float yaw) {
         if (entity instanceof EntityPlayerMP){
+            // We only need to update their position
             ((EntityPlayerMP)entity).setPositionAndUpdate(x, y, z);
         }
     }

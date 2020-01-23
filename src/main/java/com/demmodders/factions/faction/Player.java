@@ -26,6 +26,9 @@ public class Player {
         this.lastKnownName = name;
     }
 
+    /**
+     * Removes any faction stuff from the player
+     */
     public void clearFaction(){
         this.faction = null;
         this.factionRank = null;
