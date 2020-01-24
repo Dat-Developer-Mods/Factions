@@ -123,6 +123,11 @@ public class FactionManager {
         return null;
     }
 
+    @Nullable
+    public static EntityPlayerMP getPlayerMPFromUUID(UUID PlayerID){
+        return FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayerByUUID(PlayerID);
+    }
+
     // Setters
     /**
      * Sets the last known name of the player
@@ -169,7 +174,8 @@ public class FactionManager {
         if (!FactionMap.get(FactionID).invites.contains(PlayerID)) {
             FactionMap.get(FactionID).invites.add(PlayerID);
             PlayerMap.get(PlayerID).invites.add(FactionID);
-            removePlayerInvite(PlayerID, FactionID);
+            saveFaction(FactionID);
+            getPlayerMPFromUUID(PlayerID).sendMessage(new TextComponentString(TextFormatting.GOLD + FactionMap.get(FactionID).name + " Has invited you to join!, accept their invite with /faction join " + TextFormatting.DARK_GREEN + FactionMap.get(FactionID).name));
             return true;
         } else {
             return false;
@@ -372,7 +378,7 @@ public class FactionManager {
      */
     public void sendFactionwideMessage(UUID FactionID, ITextComponent Message){
         for(UUID playerID : FactionMap.get(FactionID).members){
-            EntityPlayerMP player = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayerByUUID(playerID);
+            EntityPlayerMP player = getPlayerMPFromUUID(playerID);
             if (player != null){
                 player.sendMessage(Message);
             }

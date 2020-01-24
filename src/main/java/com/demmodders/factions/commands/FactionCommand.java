@@ -215,9 +215,14 @@ public class FactionCommand extends CommandBase {
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
                         if (factionID != null) {
                             if (fMan.getFaction(factionID).homePos != null) {
-                                EntityPlayerMP posSource =  (EntityPlayerMP) sender;
-                                TeleportHandler.getInstance().addTeleportEvent((EntityPlayerMP) sender, fMan.getFaction(factionID).homePos, FactionConfig.playerSubCat.teleportDelay, posSource.posX, posSource.posY, posSource.posZ);
-                                replyMessage = TextFormatting.GOLD + "Teleporting in " + FactionConfig.playerSubCat.teleportDelay + " Seconds";
+                                int age = (int)(Utils.calculateAge(fMan.getPlayer(playerID).lastTeleport) / 1000);
+                                if (age > FactionConfig.playerSubCat.reTeleportDelay) {
+                                    EntityPlayerMP posSource = (EntityPlayerMP) sender;
+                                    TeleportHandler.getInstance().addTeleportEvent((EntityPlayerMP) sender, fMan.getFaction(factionID).homePos, FactionConfig.playerSubCat.teleportDelay, posSource.posX, posSource.posY, posSource.posZ);
+                                    replyMessage = TextFormatting.GOLD + "Teleporting in " + FactionConfig.playerSubCat.teleportDelay + " Seconds";
+                                } else {
+                                    replyMessage = TextFormatting.GOLD + "You must wait " + (FactionConfig.playerSubCat.teleportDelay - age) + " more seconds before you can do that again";
+                                }
                             } else {
                                 replyMessage = TextFormatting.GOLD + "Your faction doesn't have a home";
                             }
@@ -488,7 +493,43 @@ public class FactionCommand extends CommandBase {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
                                 if (args.length > 1) {
+                                    UUID otherPlayer = fMan.getPlayerIDFromName(args[1]);
+                                    if (otherPlayer != null){
+                                        if (fMan.invitePlayerToFaction(otherPlayer, factionID)){
+                                            replyMessage = TextFormatting.GOLD + args[1] + " was successfully invited to the faction";
+                                        } else {
+                                            replyMessage = TextFormatting.GOLD + args[1] + " already has an invite from you";
+                                        }
+                                    } else {
+                                        replyMessage = TextFormatting.GOLD + "The factions system doesn't know who that is, they must have joined the server before to be invited to a faction";
+                                    }
+                                } else {
+                                    commandResult = CommandResult.BADARGUMENT;
+                                }
+                            }
+                        } else {
+                            commandResult = CommandResult.NOFACTION;
+                        }
+                    } else {
+                        commandResult = CommandResult.NOPERMISSION;
+                    }
+                    break;
 
+                case "uninvite":
+                    if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
+                        if (factionID != null){
+                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
+                                if (args.length > 1) {
+                                    UUID otherPlayer = fMan.getPlayerIDFromName(args[1]);
+                                    if (otherPlayer != null){
+                                        if (fMan.removePlayerInvite(otherPlayer, factionID)){
+                                            replyMessage = TextFormatting.GOLD + "Successfully removed invite to " + args[1];
+                                        } else {
+                                            replyMessage = TextFormatting.GOLD + args[1] + " doesn't have an invite from you";
+                                        }
+                                    } else {
+                                        replyMessage = TextFormatting.GOLD + "The factions system doesn't know who that is, they must have joined the server before to be invited to a faction";
+                                    }
                                 } else {
                                     commandResult = CommandResult.BADARGUMENT;
                                 }
@@ -506,7 +547,11 @@ public class FactionCommand extends CommandBase {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
                                 if (args.length > 1) {
-
+                                    StringBuilder mOTD = new StringBuilder();
+                                    for (int i = 1; i < mOTD.length(); i++){
+                                        mOTD.append(args[i] + " ");
+                                    }
+                                    fMan.getFaction(factionID).motd = mOTD.toString();
                                 } else {
                                     commandResult = CommandResult.BADARGUMENT;
                                 }
@@ -593,7 +638,11 @@ public class FactionCommand extends CommandBase {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
                                 if (args.length > 1) {
-
+                                    StringBuilder desc = new StringBuilder();
+                                    for (int i = 1; i < desc.length(); i++){
+                                        desc.append(args[i] + " ");
+                                    }
+                                    fMan.getFaction(factionID).desc = desc.toString();
                                 } else {
                                     commandResult = CommandResult.BADARGUMENT;
                                 }

@@ -1,5 +1,6 @@
 package com.demmodders.factions.commands;
 
+import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.FactionTeleporter;
 import com.demmodders.factions.util.Utils;
 import com.demmodders.factions.util.structures.Location;
@@ -79,6 +80,7 @@ public class TeleportHandler {
                             tele.playerMP.changeDimension(tele.destination.dim, new FactionTeleporter(tele.destination));
                         else
                             tele.playerMP.connection.setPlayerLocation(tele.destination.x, tele.destination.y, tele.destination.z, tele.destination.yaw, tele.destination.pitch);
+                        FactionManager.getInstance().getPlayer(tele.playerMP.getUniqueID()).lastTeleport = System.currentTimeMillis();
                         handler.teleportItems.remove(teleportID);
                     } else if (distance > 1){
                         // Remove from the queue if they've moved further than a block away
