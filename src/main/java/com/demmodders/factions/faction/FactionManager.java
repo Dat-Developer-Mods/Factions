@@ -3,9 +3,9 @@ package com.demmodders.factions.faction;
 import com.demmodders.factions.Factions;
 import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.FileHelper;
-import com.demmodders.factions.util.Utils;
 import com.demmodders.factions.util.enums.FactionRank;
 import com.demmodders.factions.util.enums.RelationState;
+import com.demmodders.factions.util.structures.ChunkLocation;
 import com.demmodders.factions.util.structures.Location;
 import com.demmodders.factions.util.structures.Power;
 import com.demmodders.factions.util.structures.Relationship;
@@ -14,7 +14,6 @@ import com.google.gson.reflect.TypeToken;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentBase;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -22,7 +21,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
-import javax.management.relation.Relation;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -32,6 +30,9 @@ import java.util.UUID;
 
 public class FactionManager {
     public static final Logger LOGGER = LogManager.getLogger(Factions.MODID);
+    public static final UUID WILDID = new UUID(0L, 0L);
+    public static final UUID SAFEID = new UUID(0L, 1L);
+    public static final UUID WARID = new UUID(0L, 2L);
 
     // Singleton
     private static FactionManager instance = null;
@@ -47,6 +48,11 @@ public class FactionManager {
         LOGGER.info(Factions.MODID + " Loading Factions");
         LOGGER.debug(Factions.MODID + " Loading Faction data");
         loadFactions();
+
+        LOGGER.debug(Factions.MODID + " Loading Default faction data");
+        loadDefaultFactions();
+
+
         LOGGER.debug(Factions.MODID + " Loading Player data");
         loadPlayers();
         LOGGER.debug(Factions.MODID + " Loading Claimed Chunks data");
@@ -135,12 +141,13 @@ public class FactionManager {
      * @param FactionID the faction the player is being added to
      */
     public void setPlayerFaction(UUID PlayerID, UUID FactionID){
-        UUID faction = PlayerMap.get(PlayerID).faction;
-        if (faction != null){
-            FactionMap.get(faction).removePlayer(PlayerID);
+        UUID oldFaction = PlayerMap.get(PlayerID).faction;
+        if (oldFaction != null){
+            FactionMap.get(oldFaction).removePlayer(PlayerID);
         }
 
         PlayerMap.get(PlayerID).faction = FactionID;
+        PlayerMap.get(PlayerID).factionRank = FactionRank.GRUNT;
         if (FactionID != null) FactionMap.get(FactionID).addPlayer(PlayerID);
         savePlayer(PlayerID);
     }
@@ -271,8 +278,7 @@ public class FactionManager {
      */
     public boolean canAddPlayerToFaction(UUID PlayerID, UUID FactionID){
         Faction faction = FactionMap.get(FactionID);
-        if (faction.hasFlag("Open")) return true;
-        else if (faction.invites.contains(PlayerID)) return true;
+        if ((FactionConfig.factionSubCat.maxMembers == 0 || faction.members.size() < FactionConfig.factionSubCat.maxMembers) && (faction.invites.contains(PlayerID) || faction.hasFlag("Open"))) return true;
         else return false;
     }
 
@@ -397,9 +403,6 @@ public class FactionManager {
      * @return The result of the claim (0: Success, 1:Success, but stolen, 2: Not enough power, 3: Must touch other land, 4: Faction owns it, 5: You own it)
      */
     public int claimLand(UUID FactionID, int Dim, int ChunkX, int ChunkZ){
-        // Check they can afford it
-        if (!FactionMap.get(FactionID).calculateLandCost(1)) return 2;
-
         String chunkKey = makeChunkKey(ChunkX, ChunkZ);
 
         // Check it isn't owned, or owned by someone who can't afford it
@@ -410,7 +413,7 @@ public class FactionManager {
                 UUID owner = ClaimedLand.get(Dim).get(chunkKey);
 
                 if (owner == FactionID) return 5;
-                if ((FactionMap.get(owner).calculatePower() >= FactionMap.get(owner).calculateLandCost())) {
+                if (FactionMap.get(owner).hasFlag("StrongBorders") || FactionMap.get(owner).calculatePower() >= FactionMap.get(owner).checkCanAffordLand()) {
                     return 4;
                 }
             }
@@ -418,6 +421,8 @@ public class FactionManager {
             // Create dimension
             ClaimedLand.put(Dim, new HashMap<>());
         }
+        // Check they can afford it
+        if (!(FactionMap.get(FactionID).checkCanAffordLand(1)) && !(FactionMap.get(FactionID).hasFlag("UnlimitedLand"))) return 2;
 
         // Check the land is connected
         if (FactionConfig.landSubCat.landRequireConnect && !(FactionConfig.landSubCat.landRequireConnectWhenStealing && owned) && !getFaction(FactionID).checkLandTouches(Dim, ChunkX, ChunkZ)) return 3;
@@ -432,11 +437,12 @@ public class FactionManager {
      * Attempts to add the other faction as an ally to the given faction
      * @param FactionID The faction creating the alliance
      * @param OtherFaction the faction the alliance is with
-     * @return The result of the alliance (0: Success them pending, 1: Success both allies, 2: Success but enemy, 3: Already allies, 4: That's you)
+     * @return The result of the alliance (0: Success them pending, 1: Success both allies, 2: Success but enemy, 3: Already allies, 4: That's you, 5: No)
      */
     public int addAlly(UUID FactionID, UUID OtherFaction){
         Relationship currentRelation = FactionMap.get(FactionID).relationships.getOrDefault(OtherFaction, null);
         if (FactionID == OtherFaction) return 4;
+        if (FactionMap.get(FactionID).hasFlag("Unrelateable")) return 5;
         if (currentRelation != null && currentRelation.relation == RelationState.ALLY) return 3;
         FactionMap.get(FactionID).relationships.put(OtherFaction, new Relationship(RelationState.ALLY));
         saveFaction(FactionID);
@@ -458,11 +464,12 @@ public class FactionManager {
      * Attempts to add the other faction as an enemy to the given faction
      * @param FactionID The faction declaring the enemy
      * @param OtherFaction The faction becoming an enemy
-     * @return The result of the declaration (0: Success, 1: Success enemies all round, 2: Success but you're an ally to them, 3: already enemies, 4: That's you)
+     * @return The result of the declaration (0: Success, 1: Success enemies all round, 2: Success but you're an ally to them, 3: already enemies, 4: That's you, 5: No)
      */
     public int addEnemy(UUID FactionID, UUID OtherFaction){
         Relationship currentRelation = FactionMap.get(FactionID).relationships.getOrDefault(OtherFaction, null);
         if (FactionID == OtherFaction) return 4;
+        if (FactionMap.get(OtherFaction).hasFlag("Unrelateable")) return 5;
         if (currentRelation != null && currentRelation.relation == RelationState.ENEMY) return 3;
         FactionMap.get(FactionID).relationships.put(OtherFaction, new Relationship(RelationState.ENEMY));
         saveFaction(FactionID);
@@ -519,8 +526,22 @@ public class FactionManager {
         }
     }
 
-    public int setFactionHome(Location position, ){
-
+    /**
+     * Attempts to set the faction home to the given position
+     * @param FactionID The ID of the faction creating the home
+     * @param position The position of the home
+     * @return Whether the claim was a success
+     */
+    public boolean setFactionHome(UUID FactionID, Location position){
+        ChunkLocation chunk = ChunkLocation.coordsToChunkCoords(position.dim, position.x, position.z);
+        String chunkKey = makeChunkKey(chunk.x, chunk.z);
+        if (ClaimedLand.containsKey(position.dim) && ClaimedLand.get(position.dim).containsKey(chunkKey)){
+            if (ClaimedLand.get(position.dim).get(chunkKey) == FactionID) {
+                FactionMap.get(FactionID).homePos = position;
+                return true;
+            }
+        }
+        return false;
     }
 
     // Player Functions
@@ -541,7 +562,7 @@ public class FactionManager {
     public void saveFaction(UUID FactionID){
         if (FactionMap.containsKey(FactionID)) {
             Gson gson = new Gson();
-            File factionFile = FileHelper.openFile(new File(FileHelper.getFactionsDir(), FactionID.toString()));
+            File factionFile = FileHelper.openFile(new File(FileHelper.getFactionsDir(), FactionID.toString()  + ".json"));
             if (factionFile == null){
                 return;
             }
@@ -559,7 +580,7 @@ public class FactionManager {
     public void savePlayer(UUID PlayerID){
         if (PlayerMap.containsKey(PlayerID)){
             Gson gson = new Gson();
-            File playerFile = FileHelper.openFile(new File(FileHelper.getPlayerDir(), PlayerID.toString()));
+            File playerFile = FileHelper.openFile(new File(FileHelper.getPlayerDir(), PlayerID.toString()  + ".json"));
             if (playerFile == null){
                 return;
             }
@@ -577,7 +598,7 @@ public class FactionManager {
     public void saveClaimedChunks(int dim){
         if (ClaimedLand.containsKey(dim)){
             Gson gson = new Gson();
-            File dimFile = FileHelper.openFile(new File(FileHelper.getClaimedDir(), String.valueOf(dim)));
+            File dimFile = FileHelper.openFile(new File(FileHelper.getClaimedDir(), dim + ".json"));
             if (dimFile == null){
                 return;
             }
@@ -592,7 +613,76 @@ public class FactionManager {
         }
     }
 
+    // Generate default factions
+    public void generateWild(){
+        ArrayList<String> flags = new ArrayList<>();
+        flags.add("Default");
+        flags.add("Permanent");
+        flags.add("StrongBorders");
+        flags.add("InfinitePower");
+        flags.add("UnlimitedLand");
+        flags.add("Unrelateable");
+        Faction wild = new Faction("Wild", "Everywhere that isn't owned by a faction", flags);
+        FactionMap.put(WILDID, wild);
+        saveFaction(WILDID);
+    }
+
+    public void generateSafeZone(){
+        ArrayList<String> flags = new ArrayList<>();
+        flags.add("Default");
+        flags.add("Permanent");
+        flags.add("StrongBorders");
+        flags.add("InfinitePower");
+        flags.add("UnlimitedLand");
+        flags.add("Unrelateable");
+        flags.add("NoDamage");
+        Faction wild = new Faction("Safe Zone", "You're safe here", flags);
+        FactionMap.put(SAFEID, wild);
+        saveFaction(SAFEID);
+    }
+
+    public void generateWarZone(){
+        ArrayList<String> flags = new ArrayList<>();
+        flags.add("Default");
+        flags.add("Permanent");
+        flags.add("StrongBorders");
+        flags.add("InfinitePower");
+        flags.add("UnlimitedLand");
+        flags.add("Unrelateable");
+        flags.add("BonusPower");
+        Faction wild = new Faction("War Zone", "You're not safe here, you will lose more power when you die, but will gain more power when you kill", flags);
+        FactionMap.put(WARID, wild);
+        saveFaction(WARID);
+    }
+
     // Load
+    public void loadDefaultFactions(){
+        File factionFile;
+        // Wild
+        factionFile = new File(FileHelper.getDefaultFactionDir(), "Wild.json");
+        if (factionFile.exists()) {
+            loadFaction(factionFile, WILDID);
+        } else {
+            generateWild();
+        }
+
+        // SafeZone
+        factionFile = new File(FileHelper.getDefaultFactionDir(), "SafeZone.json");
+        if (factionFile.exists()) {
+            loadFaction(factionFile, SAFEID);
+        } else {
+            generateSafeZone();
+        }
+
+        // WarZone
+        factionFile = new File(FileHelper.getDefaultFactionDir(), "WarZone.json");
+        if (factionFile.exists()) {
+            loadFaction(factionFile, WARID);
+        } else {
+            generateWarZone();
+        }
+    }
+
     public void loadFactions(){
         File[] factions = FileHelper.getFactionsDir().listFiles();
         if (factions != null) {
@@ -603,12 +693,16 @@ public class FactionManager {
     }
 
     public void loadFaction(File factionFile){
+        loadFaction(factionFile, UUID.fromString(FileHelper.getBaseName(factionFile.getName())));
+    }
+
+    public void loadFaction(File factionFile, UUID ID){
         Gson gson = new Gson();
         try {
             Reader reader = new FileReader(factionFile);
             Faction factionObject = gson.fromJson(reader, Faction.class);
             if (factionObject != null){
-                FactionMap.put(UUID.fromString(factionFile.getName()), factionObject);
+                FactionMap.put(ID, factionObject);
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -616,7 +710,7 @@ public class FactionManager {
     }
 
     public void loadFaction(UUID id){
-        File theFile = new File(FileHelper.getFactionsDir(), id.toString());
+        File theFile = new File(FileHelper.getFactionsDir(), id.toString() + ".json");
         if (theFile.exists()) loadFaction(theFile);
     }
 
@@ -635,7 +729,7 @@ public class FactionManager {
             Reader reader = new FileReader(playerFile);
             Player playerObject = gson.fromJson(reader, Player.class);
             if (playerObject != null){
-                PlayerMap.put(UUID.fromString(playerFile.getName()), playerObject);
+                PlayerMap.put(UUID.fromString(FileHelper.getBaseName(playerFile.getName())), playerObject);
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -643,7 +737,7 @@ public class FactionManager {
     }
 
     public void loadPlayer(UUID id){
-        File theFile = new File(FileHelper.getPlayerDir(), id.toString());
+        File theFile = new File(FileHelper.getPlayerDir(), id.toString()  + ".json");
         if (theFile.exists()) loadFaction(theFile);
     }
 
@@ -662,14 +756,14 @@ public class FactionManager {
             Reader reader = new FileReader(dimFile);
             Type typeOfHashMap = new TypeToken<HashMap<String, UUID>>(){}.getType();
             HashMap<String, UUID> dimChunks = gson.fromJson(reader, typeOfHashMap);
-            ClaimedLand.put(Integer.parseInt(dimFile.getName()), dimChunks);
+            ClaimedLand.put(Integer.parseInt(FileHelper.getBaseName(dimFile.getName())), dimChunks);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
     }
 
     public void loadClaimedChunkDim(String dim){
-        File theFile = new File(FileHelper.getClaimedDir(), dim);
+        File theFile = new File(FileHelper.getClaimedDir(), dim  + ".json");
         if (theFile.exists()) loadClaimedChunkDim(theFile);
     }
 }

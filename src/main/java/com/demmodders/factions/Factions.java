@@ -11,6 +11,8 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.UUID;
+
 @Mod(modid = Factions.MODID, name = Factions.NAME, version = Factions.VERSION, acceptedMinecraftVersions = "*")
 public class Factions {
     public static final String MODID = "demfactions";

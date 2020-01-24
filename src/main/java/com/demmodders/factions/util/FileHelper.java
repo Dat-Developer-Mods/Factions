@@ -80,4 +80,27 @@ public class FileHelper{
         }
         return dir;
     }
+
+    /**
+     * Gets the directory the default factions data is stored in
+     * @return A file object at the directory the default faction data is stored in
+     */
+    public static File getDefaultFactionDir(){
+        File dir = new File(getBaseDir(), "DefaultFactions");
+        if(!dir.exists()){
+            boolean success = dir.mkdirs();
+            assert success : "Unable to create Player Directory";
+        }
+        return dir;
+    }
+
+    /**
+     * Gets the base name of the file (the name without the extension)
+     * @param FileName The name of the file with the extension
+     * @return The name of the file without the extension
+     */
+    public static String getBaseName(String FileName){
+        int index = FileName.lastIndexOf('.');
+        return (index != -1 ? FileName.substring(0, index) : FileName);
+    }
 }

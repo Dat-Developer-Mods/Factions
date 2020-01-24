@@ -12,6 +12,7 @@ public class FactionConfig {
     public static Faction factionSubCat = new Faction();
     public static Player playerSubCat = new Player();
     public static Land landSubCat = new Land();
+    public static Flags FlagSubCat = new Flags();
 
     public static class Faction {
         @Config.Name("Max Faction Name Length")
@@ -50,6 +51,11 @@ public class FactionConfig {
         @Config.Name("Allow enemy build")
         @Config.Comment("Permit enemies to build on each other's land")
         public boolean enemyBuild = false;
+
+        @Config.Name("Max Faction Members")
+        @Config.RangeInt(min = 0)
+        @Config.Comment("The maximum amount of members each faction is allowed (0 for infinite)")
+        public int maxMembers = 0;
     }
 
     public static class Player {
@@ -71,19 +77,19 @@ public class FactionConfig {
         @Config.Name("Faction home Delay")
         @Config.RangeInt()
         @Config.Comment("The delay in seconds before a player teleports when using /faction home")
-        public int teleportDelay = 5;
+        public int teleportDelay = 3;
 
         @Config.Name("Faction home again Delay")
         @Config.RangeInt()
         @Config.Comment("The delay in seconds before a player can teleport when using /faction home another time")
-        public int reTeleportDelay = 5;
+        public int reTeleportDelay = 0;
     }
 
     public static class Land {
         @Config.Name("Land Power worth")
         @Config.RangeInt(min = 1)
         @Config.Comment("The amount of power each chunk takes up when claimed")
-        public int landPowerCost = 5;
+        public int landPowerCost = 2;
 
         @Config.Name("Require land to connect")
         @Config.Comment("Require newly claimed land to be right next to previously claimed land")
@@ -92,6 +98,12 @@ public class FactionConfig {
         @Config.Name("Require land to connect when stealing")
         @Config.Comment("Require newly claimed land to be right next to previously claimed land when stealing the land of other factions")
         public boolean landRequireConnectWhenStealing = true;
+    }
+
+    public static class Flags {
+        @Config.Name("Bonus Power Multiplier")
+        @Config.Comment("The multiplier for the amount of power you lose/gain in factions with the BonusPower tag (Such as the War Zone)")
+        public float bonusPowerMultiplier = 1.5f;
     }
 
     @Mod.EventBusSubscriber(modid = Factions.MODID)

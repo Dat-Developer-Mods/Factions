@@ -11,7 +11,7 @@ public class Location {
     public Location(){
 
     }
-    public Location(int Dim, float x, float y, float z, float pitch, float yaw){
+    public Location(int Dim, double x, double y, double z, float pitch, float yaw){
         this.dim = Dim;
         this.x = x;
         this.y = y;

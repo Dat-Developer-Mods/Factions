@@ -22,14 +22,22 @@ public class Faction {
     public Location homePos= null;
     public Long foundingTime = 0L;
     public Power power = null;
-    public ArrayList<UUID> invites;
-    public HashMap<String, Boolean> flags;
+    public ArrayList<UUID> invites = new ArrayList<>();
+    public ArrayList<String>flags = new ArrayList<>();
     public HashMap<UUID, Relationship> relationships = new HashMap<>();
-    public transient ArrayList<UUID> members;
-    public transient HashMap<Integer, ArrayList<String>> land;
+    public transient ArrayList<UUID> members = new ArrayList<>();
+    public transient HashMap<Integer, ArrayList<String>> land = new HashMap<>();
 
     Faction(){
 
+    }
+
+    Faction(String Name, String Desc, ArrayList<String> Flags){
+        name = Name;
+        desc = Desc;
+
+        power = new Power();
+        flags = flags;
     }
 
     public Faction(String name, UUID playerID){
@@ -39,11 +47,10 @@ public class Faction {
         power = new Power();
         invites = new ArrayList<>();
 
-        flags = new HashMap<>();
+        flags = new ArrayList<>();
         relationships = new HashMap<>();
 
         this.land = new HashMap<>();
-        this.members = new ArrayList<>();
         this.members.add(playerID);
     }
 
@@ -94,7 +101,7 @@ public class Faction {
      * @return Whether the faction has the flag
      */
     public boolean hasFlag(String Flag){
-        return flags.getOrDefault(Flag, false);
+        return flags.contains(Flag);
     }
 
     /**
@@ -102,6 +109,7 @@ public class Faction {
      * @return The amount of power the faction has
      */
     public int calculatePower(){
+        if (hasFlag("InfinitePower")) return Integer.MAX_VALUE;
         int factionPower = power.power;
         FactionManager fMan = FactionManager.getInstance();
         for (UUID memberID : members) {
@@ -115,6 +123,7 @@ public class Faction {
      * @return the maximum amount of power the faction can have
      */
     public int calculateMaxPower(){
+        if (hasFlag("InfinitePower")) return Integer.MAX_VALUE;
         int factionMaxPower = power.maxPower;
         FactionManager fMan = FactionManager.getInstance();
         for (UUID memberID : members) {
@@ -127,7 +136,7 @@ public class Faction {
      * Calculates the cost of all the land this faction owns
      * @return the cost of the land this faction owns
      */
-    public int calculateLandCost(){
+    public int checkCanAffordLand(){
         int landCount = 0;
         for (int dim: land.keySet()) {
             landCount += land.get(dim).size();
@@ -140,12 +149,12 @@ public class Faction {
      * @param extraLand the amount more land to test
      * @return Whether the faction can claim the amount of land given
      */
-    public boolean calculateLandCost(int extraLand){
+    public boolean checkCanAffordLand(int extraLand){
         int landCount = extraLand;
         for (int dim: land.keySet()) {
             landCount += land.get(dim).size();
         }
-        return landCount * FactionConfig.landSubCat.landPowerCost < calculatePower();
+        return landCount * FactionConfig.landSubCat.landPowerCost <= calculatePower();
     }
 
 
@@ -172,6 +181,10 @@ public class Faction {
             }
         }
         return false;
+    }
+
+    public String getLandTag(){
+        return name + " - " + desc;
     }
 
     /**
@@ -238,7 +251,7 @@ public class Faction {
         message.append(TextFormatting.GOLD).append("Description: ").append(TextFormatting.RESET).append(desc).append("\n");
         message.append(TextFormatting.GOLD).append("Age: ").append(TextFormatting.RESET).append(age).append("\n");
         message.append(TextFormatting.GOLD).append("Invitation Policy: ").append(TextFormatting.RESET).append(invitePolicy).append("\n");
-        message.append(TextFormatting.GOLD).append("Land worth: ").append(TextFormatting.RESET).append(calculateLandCost()).append("\n");
+        message.append(TextFormatting.GOLD).append("Land worth: ").append(TextFormatting.RESET).append(checkCanAffordLand()).append("\n");
         message.append(TextFormatting.GOLD).append("Power: ").append(TextFormatting.RESET).append(calculatePower()).append("\n");
         message.append(TextFormatting.GOLD).append("Max Power: ").append(TextFormatting.RESET).append(calculateMaxPower()).append("\n");
         message.append(TextFormatting.GOLD).append("Members: ").append(memberText.toString()).append("\n");

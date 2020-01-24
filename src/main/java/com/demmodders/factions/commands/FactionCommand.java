@@ -1,11 +1,14 @@
 package com.demmodders.factions.commands;
 
+import com.demmodders.factions.Factions;
 import com.demmodders.factions.faction.Faction;
 import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.Utils;
 import com.demmodders.factions.util.enums.FactionChatMode;
 import com.demmodders.factions.util.enums.FactionRank;
+import com.demmodders.factions.util.structures.ChunkLocation;
+import com.demmodders.factions.util.structures.Location;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -17,6 +20,7 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.server.permission.PermissionAPI;
 
 import javax.annotation.Nullable;
+import javax.xml.soap.Text;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -50,6 +54,8 @@ public class FactionCommand extends CommandBase {
         } else {
             switch (args[0].toLowerCase()) {
                 // Global
+                case "help":
+                    break;
                 case "list":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.info")) {
                         try {
@@ -130,6 +136,7 @@ public class FactionCommand extends CommandBase {
                         commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
+
                 case "invites":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
 
@@ -154,6 +161,7 @@ public class FactionCommand extends CommandBase {
                         commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
+
                 case "reject":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
                         if (args.length == 1) {
@@ -170,6 +178,7 @@ public class FactionCommand extends CommandBase {
                         commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
+
                 case "create":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.create")) {
                         if (args.length == 1) {
@@ -179,16 +188,16 @@ public class FactionCommand extends CommandBase {
                                 int result = fMan.createFaction(args[1], playerID);
                                 switch (result){
                                     case 0:
-                                        replyMessage = TextFormatting.GOLD + "Faction " + args[1] + " successfully created, add a description with \"/faction desc\", and invite players with \"/faction invite <Player>\"";
+                                        replyMessage = TextFormatting.GOLD + "Faction " + TextFormatting.DARK_GREEN + args[1] + TextFormatting.GOLD + " successfully created, add a description with \"/faction desc\", and invite players with \"/faction invite <Player>\"";
                                         break;
                                     case 1:
-                                        replyMessage = TextFormatting.GOLD + "Failed to create faction: name too long";
+                                        replyMessage = TextFormatting.GOLD + "That name is too long";
                                         break;
                                     case 2:
-                                        replyMessage = TextFormatting.GOLD + "Failed to create faction: name too short";
+                                        replyMessage = TextFormatting.GOLD + "That name is too short";
                                         break;
                                     case 3:
-                                        replyMessage = TextFormatting.GOLD + "Failed to create faction: a faction with that name already exists";
+                                        replyMessage = TextFormatting.GOLD + "A faction with that name already exists";
                                         break;
                                 }
                             } else {
@@ -219,6 +228,7 @@ public class FactionCommand extends CommandBase {
                         commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
+
                 case "leave":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
                         if (factionID != null) {
@@ -235,6 +245,7 @@ public class FactionCommand extends CommandBase {
                         commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
+
                 case "motd":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
                         if (factionID != null) {
@@ -247,6 +258,7 @@ public class FactionCommand extends CommandBase {
                         commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
+
                 case "chat":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
                         if (factionID != null) {
@@ -281,7 +293,7 @@ public class FactionCommand extends CommandBase {
                                         fMan.getPlayer(playerID).lastFactionLand = factionID;
                                         break;
                                     case 1:
-                                        replyMessage = TextFormatting.GOLD + "Successfully claimed chunk for your faction off of " + fMan.getFaction(currentOwner).name;
+                                        replyMessage = TextFormatting.GOLD + "Successfully claimed this chunk for your faction off of " + fMan.getFaction(currentOwner).name;
                                         fMan.getPlayer(playerID).lastFactionLand = factionID;
                                         break;
                                     case 2:
@@ -334,6 +346,9 @@ public class FactionCommand extends CommandBase {
                                             case 4:
                                                 replyMessage = TextFormatting.GOLD + "That's your faction";
                                                 break;
+                                            case 5:
+                                                replyMessage = TextFormatting.GOLD + "You cannot add that faction as an ally";
+                                                break;
                                         }
                                     } else {
                                         replyMessage = TextFormatting.GOLD + "That faction does not exist";
@@ -351,6 +366,7 @@ public class FactionCommand extends CommandBase {
                         commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
+
                 case "enemy":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
@@ -376,6 +392,9 @@ public class FactionCommand extends CommandBase {
                                             case 4:
                                                 replyMessage = TextFormatting.GOLD + "That's your faction";
                                                 break;
+                                            case 5:
+                                                replyMessage = TextFormatting.GOLD + "You cannot add that faction as an enemy";
+                                                break;
                                         }
                                     } else {
                                         replyMessage = TextFormatting.GOLD + "That faction does not exist";
@@ -391,6 +410,7 @@ public class FactionCommand extends CommandBase {
                         commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
+
                 case "neutral":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
@@ -428,15 +448,14 @@ public class FactionCommand extends CommandBase {
                         commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
+
                 case "sethome":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
-                                if (args.length > 1) {
-
-                                } else {
-                                    commandResult = CommandResult.BADARGUMENT;
-                                }
+                                boolean result = fMan.setFactionHome(factionID, new Location(((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).posX, ((EntityPlayerMP) sender).posY, ((EntityPlayerMP) sender).posZ, ((EntityPlayerMP) sender).rotationPitch, ((EntityPlayerMP) sender).rotationYaw));
+                                if (result) replyMessage = TextFormatting.GOLD + "Successfully set faction home, you and your members can travel to it with /faction home";
+                                else replyMessage = TextFormatting.GOLD + "Unable to set faction home, you don't own this land";
                             }
                         } else {
                             commandResult = CommandResult.NOFACTION;
@@ -445,6 +464,7 @@ public class FactionCommand extends CommandBase {
                         commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
+
                 case "kick":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
@@ -462,6 +482,7 @@ public class FactionCommand extends CommandBase {
                         commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
+
                 case "invite":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
@@ -479,6 +500,7 @@ public class FactionCommand extends CommandBase {
                         commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
+
                 case "setmotd":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
@@ -511,6 +533,7 @@ public class FactionCommand extends CommandBase {
                         commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
+
                 case "promote":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
@@ -528,6 +551,7 @@ public class FactionCommand extends CommandBase {
                         commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
+
                 case "demote":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
@@ -545,6 +569,7 @@ public class FactionCommand extends CommandBase {
                         commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
+
                 case "setrank":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
@@ -562,6 +587,7 @@ public class FactionCommand extends CommandBase {
                         commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
+
                 case "setdesc":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
@@ -579,6 +605,8 @@ public class FactionCommand extends CommandBase {
                         commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
+                default:
+                    replyMessage = TextFormatting.GOLD + "Unknown command, use /faction help for a list of available commands";
             }
             switch (commandResult){
                 case NOPERMISSION:

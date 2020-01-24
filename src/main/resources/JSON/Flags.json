@@ -1,0 +1,18 @@
+{
+  "playerFlags":{
+    "Open" : "The faction doesn't require any invites",
+    "FriendlyFire" : "The faction doesn't require any invites"
+  },
+  "adminFlags":{
+    "NoPowerLoss" : "You don't lose power when you die in this zone",
+    "Permanent" : "The faction cannot be deleted",
+    "Silent" : "The faction isn't mentioned when you cross its border",
+    "StrongBorders" : "The faction's land cannot be claimed",
+    "InfinitePower" : "The faction has unlimited power",
+    "UnlimitedLand" : "The faction has no limit to the amount of land it can have",
+    "Unrelateable" : "The faction cannot have relations",
+    "Default" : "The faction is one of the default factions",
+    "NoDamage" : "You cannot take damage on this faction's land",
+    "BonusPower" : "You lose/gain more power when you die/kill on this faction's land"
+  }
+}
