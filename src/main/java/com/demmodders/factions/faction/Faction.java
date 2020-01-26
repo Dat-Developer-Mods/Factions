@@ -11,6 +11,7 @@ import net.minecraft.server.management.PlayerList;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
@@ -93,6 +94,20 @@ public class Faction {
         } else {
             Factions.LOGGER.info("Tried to add claimed land " + Land + " in Dim " + Dimension + " to faction " + name + " when it already has that land, ignoring");
         }
+    }
+
+    /**
+     * Get the relation with the given faction ID
+     * @param FactionID The faction to check the relation with
+     * @return The relation with the other faction, null if neutral
+     */
+    @Nullable
+    public RelationState getRelation(UUID FactionID){
+        Relationship relation = relationships.getOrDefault(FactionID, null);
+        if (relation != null){
+            return relation.relation;
+        }
+        return null;
     }
 
     /**
@@ -239,15 +254,15 @@ public class Faction {
             if (relationships.get(factionID).relation == RelationState.ALLY){
                 if (!first) allies.append(TextFormatting.RESET).append(", ");
                 else first = false;
-                allies.append(TextFormatting.GREEN);
-            } else {
+                allies.append(TextFormatting.GREEN).append(fman.getFaction(factionID).name);
+            } else if (relationships.get(factionID).relation == RelationState.ENEMY){
                 if (!enemyFirst) allies.append(TextFormatting.RESET).append(", ");
                 else enemyFirst = false;
-                enemies.append(TextFormatting.RED);
+                enemies.append(TextFormatting.RED).append(fman.getFaction(factionID).name);
             }
         }
 
-        message.append(TextFormatting.GOLD).append("==").append(TextFormatting.DARK_GREEN).append(TextFormatting.GOLD).append(name).append("==\n");
+        message.append(TextFormatting.GOLD).append("======").append(TextFormatting.DARK_GREEN).append(TextFormatting.GOLD).append(name).append("======\n");
         message.append(TextFormatting.GOLD).append("Description: ").append(TextFormatting.RESET).append(desc).append("\n");
         message.append(TextFormatting.GOLD).append("Age: ").append(TextFormatting.RESET).append(age).append("\n");
         message.append(TextFormatting.GOLD).append("Invitation Policy: ").append(TextFormatting.RESET).append(invitePolicy).append("\n");

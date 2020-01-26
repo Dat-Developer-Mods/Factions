@@ -146,20 +146,43 @@ public class FactionManager {
      * @param FactionID the faction the player is being added to
      */
     public void setPlayerFaction(UUID PlayerID, UUID FactionID){
-        UUID oldFaction = PlayerMap.get(PlayerID).faction;
-        if (oldFaction != null){
-            FactionMap.get(oldFaction).removePlayer(PlayerID);
-        }
+        Player player = PlayerMap.get(PlayerID);
+        player.faction = FactionID;
 
-        PlayerMap.get(PlayerID).faction = FactionID;
-        PlayerMap.get(PlayerID).factionRank = FactionRank.GRUNT;
-        if (FactionID != null) FactionMap.get(FactionID).addPlayer(PlayerID);
+        if (FactionID != null) {
+            FactionMap.get(FactionID).addPlayer(PlayerID);
+            player.factionRank = FactionRank.GRUNT;
+            if (player.invites.contains(FactionID)){
+                player.invites.remove(FactionID);
+                FactionMap.get(FactionID).invites.remove(PlayerID);
+            }
+        } else {
+            player.factionRank = null;
+        }
         savePlayer(PlayerID);
     }
 
     public void setPlayerRank(UUID PlayerID, FactionRank Rank){
         PlayerMap.get(PlayerID).factionRank = Rank;
         savePlayer(PlayerID);
+        String rank = "";
+        switch (Rank){
+            case GRUNT:
+                rank = "a Grunt";
+                break;
+            case LIEUTENANT:
+                rank = "a Lieutenant";
+                break;
+            case OFFICER:
+                rank = "an Officer";
+                break;
+            case OWNER:
+                rank = "";
+                break;
+        }
+        if (!rank.isEmpty()) {
+            FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayerByUUID(PlayerID).sendMessage(new TextComponentString(TextFormatting.GOLD + "You are now " + rank));
+        }
     }
 
     // Utilities
@@ -175,7 +198,7 @@ public class FactionManager {
             FactionMap.get(FactionID).invites.add(PlayerID);
             PlayerMap.get(PlayerID).invites.add(FactionID);
             saveFaction(FactionID);
-            getPlayerMPFromUUID(PlayerID).sendMessage(new TextComponentString(TextFormatting.GOLD + FactionMap.get(FactionID).name + " Has invited you to join!, accept their invite with /faction join " + TextFormatting.DARK_GREEN + FactionMap.get(FactionID).name));
+            getPlayerMPFromUUID(PlayerID).sendMessage(new TextComponentString(TextFormatting.GOLD + FactionMap.get(FactionID).name + " Has invited you to join, accept their invite with /faction join " + TextFormatting.DARK_GREEN + FactionMap.get(FactionID).name));
             return true;
         } else {
             return false;
@@ -341,6 +364,28 @@ public class FactionManager {
         return null;
     }
 
+    public boolean checkPlayerCanBuild(int Dim, int ChunkX, int ChunkZ, UUID PlayerID){
+        String chunkKey = makeChunkKey(ChunkX, ChunkZ);
+        if (ClaimedLand.containsKey(Dim) && ClaimedLand.get(Dim).containsKey(chunkKey)){
+            UUID owningFaction = ClaimedLand.get(Dim).get(chunkKey);
+            UUID playerFaction = getPlayersFactionID(PlayerID);
+            if (owningFaction.equals(playerFaction)) {
+                return true;
+            } else {
+                RelationState relation = FactionMap.get(owningFaction).getRelation(playerFaction);
+                if (relation != null){
+                    if (relation == RelationState.ALLY && FactionConfig.factionSubCat.allyBuild) return true;
+                    else if (relation == RelationState.ENEMY && FactionConfig.factionSubCat.enemyBuild) return true;
+                    else return false;
+                } else {
+                    return false;
+                }
+            }
+        } else {
+            return true;
+        }
+    }
+
     // Faction Functions
     /**
      * Creates a faction
@@ -371,6 +416,31 @@ public class FactionManager {
         return 0;
     }
 
+    public boolean disbandFaction(UUID FactionID){
+        Faction faction = FactionMap.get(FactionID);
+        if (!faction.hasFlag("Permanent")) {
+            releaseAllFactionLand(FactionID);
+
+            for (UUID playerID : faction.members) {
+                setPlayerFaction(playerID, null);
+            }
+
+            for (UUID invitedPlayerID : faction.invites){
+                PlayerMap.get(invitedPlayerID).invites.remove(FactionID);
+            }
+
+            for (UUID otherFactionID : faction.relationships.keySet()){
+                FactionMap.get(otherFactionID).relationships.remove(FactionID);
+            }
+
+            FactionMap.remove(FactionID);
+            deleteFactionFile(FactionID);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     /**
      * Sends the given message to all the online members of the given faction
      * @param FactionID The ID of the faction
@@ -392,12 +462,13 @@ public class FactionManager {
     public void releaseAllFactionLand(UUID FactionID){
         for (int dim : ClaimedLand.keySet()){
             for (String land : ClaimedLand.get(dim).keySet()){
-                if (ClaimedLand.get(dim).get(land) == FactionID) {
+                if (ClaimedLand.get(dim).get(land).equals(FactionID)) {
                     ClaimedLand.get(dim).remove(land);
                 }
             }
             saveClaimedChunks(dim);
         }
+        if(FactionMap.containsKey(FactionID)) FactionMap.get(FactionID).land.clear();
     }
 
     /**
@@ -418,7 +489,7 @@ public class FactionManager {
                 owned = true;
                 UUID owner = ClaimedLand.get(Dim).get(chunkKey);
 
-                if (owner == FactionID) return 5;
+                if (owner.equals(FactionID)) return 5;
                 if (FactionMap.get(owner).hasFlag("StrongBorders") || FactionMap.get(owner).calculatePower() >= FactionMap.get(owner).checkCanAffordLand()) {
                     return 4;
                 }
@@ -447,7 +518,7 @@ public class FactionManager {
      */
     public int addAlly(UUID FactionID, UUID OtherFaction){
         Relationship currentRelation = FactionMap.get(FactionID).relationships.getOrDefault(OtherFaction, null);
-        if (FactionID == OtherFaction) return 4;
+        if (FactionID.equals(OtherFaction)) return 4;
         if (FactionMap.get(FactionID).hasFlag("Unrelateable")) return 5;
         if (currentRelation != null && currentRelation.relation == RelationState.ALLY) return 3;
         FactionMap.get(FactionID).relationships.put(OtherFaction, new Relationship(RelationState.ALLY));
@@ -456,10 +527,10 @@ public class FactionManager {
             FactionMap.get(OtherFaction).relationships.put(FactionID, new Relationship(RelationState.PENDINGALLY));
             saveFaction(OtherFaction);
             sendFactionwideMessage(OtherFaction, new TextComponentString(TextFormatting.DARK_GREEN + FactionMap.get(FactionID).name + " has made you their allies" + (FactionConfig.factionSubCat.allyBuild ? ", this means you can build on their land, but they can't build on yours" : "") + ", add them back with /faction ally " + FactionMap.get(FactionID).name));
-            return 1;
-        } else if (FactionMap.get(OtherFaction).relationships.get(FactionID).relation == RelationState.ALLY){
-            sendFactionwideMessage(OtherFaction, new TextComponentString(TextFormatting.DARK_GREEN + FactionMap.get(FactionID).name + " has added you as their allies as well" + (FactionConfig.factionSubCat.allyBuild ? ", this means you can build on their land" : "")));
             return 0;
+        } else if (FactionMap.get(OtherFaction).relationships.get(FactionID).relation == RelationState.ALLY){
+            sendFactionwideMessage(OtherFaction, new TextComponentString(TextFormatting.DARK_GREEN + FactionMap.get(FactionID).name + " has added you backc  as an ally, " + (FactionConfig.factionSubCat.allyBuild ? ", this means you can build on their land" : "")));
+            return 1;
         } else {
             sendFactionwideMessage(OtherFaction, new TextComponentString(TextFormatting.DARK_GREEN + FactionMap.get(FactionID).name + " has added you as their allies," + TextFormatting.DARK_RED + " you still think they're enemies though"));
             return 2;
@@ -474,7 +545,7 @@ public class FactionManager {
      */
     public int addEnemy(UUID FactionID, UUID OtherFaction){
         Relationship currentRelation = FactionMap.get(FactionID).relationships.getOrDefault(OtherFaction, null);
-        if (FactionID == OtherFaction) return 4;
+        if (FactionID.equals(OtherFaction)) return 4;
         if (FactionMap.get(OtherFaction).hasFlag("Unrelateable")) return 5;
         if (currentRelation != null && currentRelation.relation == RelationState.ENEMY) return 3;
         FactionMap.get(FactionID).relationships.put(OtherFaction, new Relationship(RelationState.ENEMY));
@@ -501,7 +572,7 @@ public class FactionManager {
      */
     public int addNeutral(UUID FactionID, UUID OtherFaction){
         Relationship currentRelation = FactionMap.get(FactionID).relationships.getOrDefault(OtherFaction, null);
-        if (FactionID == OtherFaction) return 5;
+        if (FactionID.equals(OtherFaction)) return 5;
         if (currentRelation == null) return 4;
         if (currentRelation.relation == RelationState.PENDINGALLY || currentRelation.relation == RelationState.PENDINGENEMY) return 3;
         FactionMap.get(FactionID).relationships.remove(OtherFaction);
@@ -542,7 +613,7 @@ public class FactionManager {
         ChunkLocation chunk = ChunkLocation.coordsToChunkCoords(position.dim, position.x, position.z);
         String chunkKey = makeChunkKey(chunk.x, chunk.z);
         if (ClaimedLand.containsKey(position.dim) && ClaimedLand.get(position.dim).containsKey(chunkKey)){
-            if (ClaimedLand.get(position.dim).get(chunkKey) == FactionID) {
+            if (ClaimedLand.get(position.dim).get(chunkKey).equals(FactionID)) {
                 FactionMap.get(FactionID).homePos = position;
                 return true;
             }
@@ -568,7 +639,11 @@ public class FactionManager {
     public void saveFaction(UUID FactionID){
         if (FactionMap.containsKey(FactionID)) {
             Gson gson = new Gson();
-            File factionFile = FileHelper.openFile(new File(FileHelper.getFactionsDir(), FactionID.toString()  + ".json"));
+            File factionFile;
+            if (FactionID.equals(WILDID)) factionFile = FileHelper.openFile(new File(FileHelper.getDefaultFactionDir(), "Wild.json"));
+            else if (FactionID.equals(SAFEID)) factionFile = FileHelper.openFile(new File(FileHelper.getDefaultFactionDir(), "SafeZone.json"));
+            else if (FactionID.equals(WARID)) factionFile = FileHelper.openFile(new File(FileHelper.getDefaultFactionDir(), "WarZone.json"));
+            else factionFile = FileHelper.openFile(new File(FileHelper.getFactionsDir(), FactionID.toString()  + ".json"));
             if (factionFile == null){
                 return;
             }
@@ -715,13 +790,20 @@ public class FactionManager {
         }
     }
 
+    public void deleteFactionFile(UUID FactionID){
+        File factionFile = new File(FileHelper.getFactionsDir(), FactionID + ".json");
+        if (factionFile.exists()){
+            factionFile.delete();
+        }
+    }
+
     public void loadFaction(UUID id){
         File theFile = new File(FileHelper.getFactionsDir(), id.toString() + ".json");
         if (theFile.exists()) loadFaction(theFile);
     }
 
     public void loadPlayers(){
-        File[] players = FileHelper.getFactionsDir().listFiles();
+        File[] players = FileHelper.getPlayerDir().listFiles();
         if (players != null) {
             for (File player : players){
                 loadPlayer(player);

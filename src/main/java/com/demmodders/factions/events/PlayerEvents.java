@@ -1,11 +1,11 @@
 package com.demmodders.factions.events;
 
 import com.demmodders.factions.Factions;
-import com.demmodders.factions.commands.TeleportHandler;
 import com.demmodders.factions.faction.FactionManager;
-import com.demmodders.factions.util.structures.Location;
+import com.demmodders.factions.util.enums.RelationState;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -25,6 +25,7 @@ public class PlayerEvents {
             // record username for use when they're offline
             FactionManager.getInstance().setPlayerLastKnownName(e.player.getUniqueID(), e.player.getName());
         } else {
+            LOGGER.info(e.player.getName() + " is not registered, ammending");
             FactionManager.getInstance().registerPlayer(e.player);
         }
     }
@@ -32,10 +33,37 @@ public class PlayerEvents {
     @SubscribeEvent
     public static void chunkTraversal(EntityEvent.EnteringChunk e){
         if(e.getEntity() instanceof EntityPlayer && (e.getOldChunkX() != e.getNewChunkX() || e.getOldChunkZ() != e.getNewChunkZ())) {
-            UUID factionID = FactionManager.getInstance().getChunkOwningFaction(e.getEntity().dimension, e.getNewChunkX(), e.getNewChunkZ());
-            if(factionID != null){
-                LOGGER.info(e.getEntity().getName() + " Crossed into " + FactionManager.getInstance().getFaction(factionID).name);
+            FactionManager fMan = FactionManager.getInstance();
+            UUID factionID = fMan.getChunkOwningFaction(e.getEntity().dimension, e.getNewChunkX(), e.getNewChunkZ());
+            if (fMan.isPlayerRegistered(e.getEntity().getUniqueID()) && fMan.getPlayer(e.getEntity().getUniqueID()).lastFactionLand != factionID) {
+
+                UUID playerFaction = fMan.getPlayersFactionID(e.getEntity().getUniqueID());
+                String message = "";
+                if (factionID == null) {
+                    message = TextFormatting.GOLD + FactionManager.getInstance().getFaction(FactionManager.WILDID).getLandTag();
+                } else if (playerFaction != null) {
+                    if (playerFaction.equals(factionID)) {
+                        message = TextFormatting.DARK_GREEN + "your land";
+                    } else {
+                        RelationState relation = fMan.getFaction(playerFaction).getRelation(factionID);
+                        if (relation != null) {
+                            if (relation == RelationState.ALLY) message += TextFormatting.GREEN;
+                            else if (relation == RelationState.ENEMY) message += TextFormatting.RED;
+                        } else {
+                            message += TextFormatting.GOLD;
+                        }
+                        message += FactionManager.getInstance().getFaction(factionID).getLandTag();
+                    }
+                } else {
+                    message += TextFormatting.GOLD + FactionManager.getInstance().getFaction(factionID).getLandTag();
+                }
+                e.getEntity().sendMessage(new TextComponentString("Now entering " + message));
+                fMan.getPlayer(e.getEntity().getUniqueID()).lastFactionLand = factionID;
             }
         }
     }
+
+    // TODO: Block Break
+    // TODO: Block Place
+    // TODO: Death
 }

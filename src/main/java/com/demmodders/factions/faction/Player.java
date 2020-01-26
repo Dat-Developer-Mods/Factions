@@ -8,11 +8,11 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 public class Player {
-    public UUID faction;
-    public FactionRank factionRank;
-    public Power power;
-    public String lastKnownName;
-    public transient UUID lastFactionLand;
+    public UUID faction = null;
+    public FactionRank factionRank = null;
+    public Power power = null;
+    public String lastKnownName = "";
+    public transient UUID lastFactionLand  = null;
     public transient ArrayList<UUID> invites = new ArrayList<>();
     public transient FactionChatMode factionChat = FactionChatMode.NORMAL;
 

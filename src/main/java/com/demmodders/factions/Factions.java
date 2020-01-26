@@ -13,7 +13,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.UUID;
 
-@Mod(modid = Factions.MODID, name = Factions.NAME, version = Factions.VERSION, acceptedMinecraftVersions = "*")
+@Mod(modid = Factions.MODID, name = Factions.NAME, serverSideOnly = true, version = Factions.VERSION, acceptableRemoteVersions  = "*")
 public class Factions {
     public static final String MODID = "demfactions";
     public static final String NAME = "Factions";

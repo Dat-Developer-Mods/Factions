@@ -1,13 +1,11 @@
 package com.demmodders.factions.commands;
 
-import com.demmodders.factions.Factions;
 import com.demmodders.factions.faction.Faction;
 import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.Utils;
 import com.demmodders.factions.util.enums.FactionChatMode;
 import com.demmodders.factions.util.enums.FactionRank;
-import com.demmodders.factions.util.structures.ChunkLocation;
 import com.demmodders.factions.util.structures.Location;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
@@ -17,6 +15,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.server.permission.PermissionAPI;
 
 import javax.annotation.Nullable;
@@ -71,11 +70,11 @@ public class FactionCommand extends CommandBase {
                                 factionText.append(TextFormatting.DARK_GREEN).append("Showing factions page ").append(page).append(" of ").append( (int)Math.ceil(factions.size() / 10f)).append("\n").append(TextFormatting.RESET);
 
                                 // First faction, without comma
-                                if (factions.get((page - 1) * 10) == factionID) factionText.append(TextFormatting.GREEN).append(fMan.getFaction(factions.get((page - 1) * 10)).name).append(TextFormatting.RESET);
+                                if (factions.get((page - 1) * 10).equals(factionID)) factionText.append(TextFormatting.GREEN).append(fMan.getFaction(factions.get((page - 1) * 10)).name).append(TextFormatting.RESET);
                                 else factionText.append(fMan.getFaction(factions.get((page - 1) * 10)).name);
                                 for (int i = ((page - 1) * 10) + 1; i < factions.size() && i < ((10 * page)); i++) {
                                     // Highlight green if their own faction
-                                    if (factions.get(i) == factionID) factionText.append(", ").append(TextFormatting.GREEN).append(fMan.getFaction(factions.get(i)).name).append(TextFormatting.RESET);
+                                    if (factions.get(i).equals(factionID)) factionText.append(", ").append(TextFormatting.GREEN).append(fMan.getFaction(factions.get(i)).name).append(TextFormatting.RESET);
                                     else factionText.append(", ").append(fMan.getFaction(factions.get(i)).name);
                                 }
                                 replyMessage = factionText.toString();
@@ -145,7 +144,7 @@ public class FactionCommand extends CommandBase {
                             int page = ((args.length == 1) ? 1 : Integer.parseInt(args[1]));
                             StringBuilder inviteText = new StringBuilder();
                             // Header
-                            inviteText.append(TextFormatting.DARK_GREEN).append("Showing factions page ").append(page).append(" of ").append( (int)Math.ceil(invites.size() / 10f)).append("\n").append(TextFormatting.RESET);
+                            inviteText.append(TextFormatting.DARK_GREEN).append("Showing invites page ").append(page).append(" of ").append( (int)Math.ceil(invites.size() / 10f)).append("\n").append(TextFormatting.RESET);
 
                             // First faction, without comma
                             inviteText.append(fMan.getFaction(invites.get((page - 1) * 10)).name);
@@ -170,6 +169,8 @@ public class FactionCommand extends CommandBase {
                             factionID = fMan.getFactionIDFromName(args[1].toLowerCase());
                             if (factionID != null) {
                                 fMan.removePlayerInvite(playerID, factionID);
+                                fMan.sendFactionwideMessage(factionID,new TextComponentString(TextFormatting.GOLD + sender.getName() + " has rejected your invite"));
+                                replyMessage = TextFormatting.GOLD + "You have successfully rejected your invite from " + args[1];
                             } else {
                                 replyMessage = TextFormatting.GOLD + "You don't have an invite from that faction";
                             }
@@ -188,7 +189,7 @@ public class FactionCommand extends CommandBase {
                                 int result = fMan.createFaction(args[1], playerID);
                                 switch (result){
                                     case 0:
-                                        replyMessage = TextFormatting.GOLD + "Faction " + TextFormatting.DARK_GREEN + args[1] + TextFormatting.GOLD + " successfully created, add a description with \"/faction desc\", and invite players with \"/faction invite <Player>\"";
+                                        replyMessage = TextFormatting.GOLD + "Faction " + TextFormatting.DARK_GREEN + args[1] + TextFormatting.GOLD + " successfully created, add a description with \"/faction desc <Description>\", and invite players with \"/faction invite <Player>\"";
                                         break;
                                     case 1:
                                         replyMessage = TextFormatting.GOLD + "That name is too long";
@@ -201,7 +202,7 @@ public class FactionCommand extends CommandBase {
                                         break;
                                 }
                             } else {
-                                replyMessage = "You cannot create a faction while you're part of a faction";
+                                replyMessage = TextFormatting.RED + "You cannot create a faction while you're part of a faction";
                             }
                         }
                     } else {
@@ -211,7 +212,6 @@ public class FactionCommand extends CommandBase {
 
                 // Faction member
                 case "home":
-                    //TODO: Check delay has happened
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
                         if (factionID != null) {
                             if (fMan.getFaction(factionID).homePos != null) {
@@ -241,7 +241,9 @@ public class FactionCommand extends CommandBase {
                                 replyMessage = TextFormatting.GOLD + "You are the leader of this faction, you must disband it";
                             } else {
                                 fMan.setPlayerFaction(playerID, null);
+                                fMan.getFaction(factionID).members.remove(playerID);
                                 replyMessage = TextFormatting.GOLD + "You have successfully left your faction";
+                                fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.GOLD + fMan.getPlayer(playerID).lastKnownName + " has left the faction"));
                             }
                         } else {
                             commandResult = CommandResult.NOFACTION;
@@ -284,6 +286,8 @@ public class FactionCommand extends CommandBase {
                         commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
+
+                //TODO: Members command, check members and ranks
 
                 // Faction Lieutenant
                 case "claim":
@@ -389,7 +393,7 @@ public class FactionCommand extends CommandBase {
                                                 fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.RED + fMan.getFaction(otherFaction).name + TextFormatting.GOLD + " is now your mutual enemy" + (FactionConfig.factionSubCat.allyBuild ? ", this means you can build on their land, and they can build on yours too" : "")));
                                                 break;
                                             case 2:
-                                                fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.RED + fMan.getFaction(otherFaction).name + TextFormatting.GOLD + " is now you enemy" + (FactionConfig.factionSubCat.allyBuild ? ", this means you can build on their land, and they can build on yours too" : "") + TextFormatting.DARK_RED + ", however, they still regard you as an ally"));
+                                                fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.RED + fMan.getFaction(otherFaction).name + TextFormatting.GOLD + " is now your enemy" + (FactionConfig.factionSubCat.allyBuild ? ", this means you can build on their land, and they can build on yours too" : "") + TextFormatting.DARK_RED + ", however, they still regard you as an ally"));
                                                 break;
                                             case 3:
                                                 replyMessage = TextFormatting.GOLD + "That faction is already an enemy";
@@ -407,6 +411,8 @@ public class FactionCommand extends CommandBase {
                                 } else {
                                     commandResult = CommandResult.BADARGUMENT;
                                 }
+                            } else {
+                                commandResult = CommandResult.NOFACTIONPERMISSION;
                             }
                         } else {
                             commandResult = CommandResult.NOFACTION;
@@ -429,10 +435,10 @@ public class FactionCommand extends CommandBase {
                                             fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.GOLD + "You no longer have any relations with " + fMan.getFaction(otherFaction).name));
                                             break;
                                         case 1:
-                                            fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.GOLD + "You're no longer regard " + fMan.getFaction(otherFaction).name + " as an ally"));
+                                            fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.GOLD + "You're no longer regard " + fMan.getFaction(otherFaction).name + " as an enemy"));
                                             break;
                                         case 2:
-                                            fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.GOLD  + "You no longer regard " + fMan.getFaction(otherFaction).name + " as an enemy"));                                        break;
+                                            fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.GOLD  + "You no longer regard " + fMan.getFaction(otherFaction).name + " as an ally"));                                        break;
                                         case 3:
                                         case 4:
                                             replyMessage = TextFormatting.GOLD + "You do not have relation with that faction";
@@ -444,7 +450,8 @@ public class FactionCommand extends CommandBase {
                                 } else {
                                     commandResult = CommandResult.BADARGUMENT;
                                 }
-
+                            } else {
+                                commandResult = CommandResult.NOFACTIONPERMISSION;
                             }
                         } else {
                             commandResult = CommandResult.NOFACTION;
@@ -461,6 +468,8 @@ public class FactionCommand extends CommandBase {
                                 boolean result = fMan.setFactionHome(factionID, new Location(((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).posX, ((EntityPlayerMP) sender).posY, ((EntityPlayerMP) sender).posZ, ((EntityPlayerMP) sender).rotationPitch, ((EntityPlayerMP) sender).rotationYaw));
                                 if (result) replyMessage = TextFormatting.GOLD + "Successfully set faction home, you and your members can travel to it with /faction home";
                                 else replyMessage = TextFormatting.GOLD + "Unable to set faction home, you don't own this land";
+                            } else {
+                                commandResult = CommandResult.NOFACTIONPERMISSION;
                             }
                         } else {
                             commandResult = CommandResult.NOFACTION;
@@ -475,7 +484,18 @@ public class FactionCommand extends CommandBase {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
                                 if (args.length > 1) {
-
+                                    UUID otherPlayer = fMan.getPlayerIDFromName(args[1]);
+                                    if (otherPlayer == null || !fMan.getPlayer(otherPlayer).faction.equals(factionID)){
+                                        replyMessage = TextFormatting.GOLD + "That player is not in your faction";
+                                    } else if (otherPlayer.equals(playerID)) {
+                                        replyMessage = TextFormatting.GOLD + "If you want to leave the faction, use /faction leave";
+                                    } else if (fMan.getPlayer(otherPlayer).factionRank == FactionRank.OWNER) {
+                                        replyMessage = TextFormatting.GOLD + "You cannot kick the owner of the faction";
+                                    } else {
+                                        fMan.setPlayerFaction(otherPlayer, null);
+                                        fMan.getFaction(factionID).members.remove(otherPlayer);
+                                        fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.GOLD + fMan.getPlayer(otherPlayer).lastKnownName + " has been kicked from the faction"));
+                                    }
                                 } else {
                                     commandResult = CommandResult.BADARGUMENT;
                                 }
@@ -501,11 +521,13 @@ public class FactionCommand extends CommandBase {
                                             replyMessage = TextFormatting.GOLD + args[1] + " already has an invite from you";
                                         }
                                     } else {
-                                        replyMessage = TextFormatting.GOLD + "The factions system doesn't know who that is, they must have joined the server before to be invited to a faction";
+                                        replyMessage = TextFormatting.GOLD + "The factions system doesn't know who that is, they must have joined the server before they can be invited to a faction";
                                     }
                                 } else {
                                     commandResult = CommandResult.BADARGUMENT;
                                 }
+                            } else {
+                                commandResult = CommandResult.NOFACTIONPERMISSION;
                             }
                         } else {
                             commandResult = CommandResult.NOFACTION;
@@ -528,11 +550,13 @@ public class FactionCommand extends CommandBase {
                                             replyMessage = TextFormatting.GOLD + args[1] + " doesn't have an invite from you";
                                         }
                                     } else {
-                                        replyMessage = TextFormatting.GOLD + "The factions system doesn't know who that is, they must have joined the server before to be invited to a faction";
+                                        replyMessage = TextFormatting.GOLD + "The factions system doesn't know who that is";
                                     }
                                 } else {
                                     commandResult = CommandResult.BADARGUMENT;
                                 }
+                            } else {
+                                commandResult = CommandResult.NOFACTIONPERMISSION;
                             }
                         } else {
                             commandResult = CommandResult.NOFACTION;
@@ -548,13 +572,16 @@ public class FactionCommand extends CommandBase {
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
                                 if (args.length > 1) {
                                     StringBuilder mOTD = new StringBuilder();
-                                    for (int i = 1; i < mOTD.length(); i++){
-                                        mOTD.append(args[i] + " ");
+                                    for (int i = 1; i < args.length; i++){
+                                        mOTD.append(args[i]).append(" ");
                                     }
                                     fMan.getFaction(factionID).motd = mOTD.toString();
+                                    replyMessage = TextFormatting.GOLD + "Successfully set MOTD to " + mOTD.toString();
                                 } else {
                                     commandResult = CommandResult.BADARGUMENT;
                                 }
+                            } else {
+                                commandResult = CommandResult.NOFACTIONPERMISSION;
                             }
                         } else {
                             commandResult = CommandResult.NOFACTION;
@@ -569,7 +596,22 @@ public class FactionCommand extends CommandBase {
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
-
+                                if (args.length == 1){
+                                    replyMessage = TextFormatting.RED + "Are you sure? type /faction disband " + fMan.getFaction(factionID).name;
+                                } else {
+                                    String factionName = fMan.getFaction(factionID).name;
+                                    if (args[1].equals(factionName)){
+                                        if (fMan.disbandFaction(factionID)){
+                                            FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendMessage(new TextComponentString(TextFormatting.GOLD + factionName + " Has been disbanded"));
+                                        } else {
+                                            replyMessage = TextFormatting.GOLD + "Failed to delete faction";
+                                        }
+                                    } else {
+                                        replyMessage = TextFormatting.RED + "Failed to disband faction, to disband your faction type /faction disband " + fMan.getFaction(factionID).name;
+                                    }
+                                }
+                            } else {
+                                commandResult = CommandResult.NOFACTIONPERMISSION;
                             }
                         } else {
                             commandResult = CommandResult.NOFACTION;
@@ -584,10 +626,33 @@ public class FactionCommand extends CommandBase {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
                                 if (args.length > 1) {
-
+                                    UUID otherPlayer = fMan.getPlayerIDFromName(args[1]);
+                                    if (otherPlayer == null || !fMan.getPlayer(otherPlayer).faction.equals(factionID)){
+                                        replyMessage = TextFormatting.GOLD + "That player is not in your faction";
+                                    } else if (otherPlayer.equals(playerID)) {
+                                        replyMessage = TextFormatting.GOLD + "You can't promote yourself";
+                                    } else {
+                                        switch (fMan.getPlayer(otherPlayer).factionRank){
+                                            case GRUNT:
+                                                fMan.setPlayerRank(otherPlayer, FactionRank.LIEUTENANT);
+                                                replyMessage = TextFormatting.GOLD + "Promoted " + args[1] + " to Lieutenant";
+                                                break;
+                                            case LIEUTENANT:
+                                                fMan.setPlayerRank(otherPlayer, FactionRank.OFFICER);
+                                                replyMessage = TextFormatting.GOLD + "Promoted " + args[1] + " to Officer";
+                                                break;
+                                            case OFFICER:
+                                                replyMessage = TextFormatting.GOLD + "That player has the highest rank you can promote them to";
+                                                break;
+                                            case OWNER:
+                                                replyMessage = TextFormatting.GOLD + "That player is the maximum rank possible";
+                                        }
+                                    }
                                 } else {
                                     commandResult = CommandResult.BADARGUMENT;
                                 }
+                            } else {
+                                commandResult = CommandResult.NOFACTIONPERMISSION;
                             }
                         } else {
                             commandResult = CommandResult.NOFACTION;
@@ -602,10 +667,33 @@ public class FactionCommand extends CommandBase {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
                                 if (args.length > 1) {
-
+                                    UUID otherPlayer = fMan.getPlayerIDFromName(args[1]);
+                                    if (otherPlayer == null || !fMan.getPlayer(otherPlayer).faction.equals(factionID)){
+                                        replyMessage = TextFormatting.GOLD + "That player is not in your faction";
+                                    } else if (otherPlayer.equals(playerID)) {
+                                        replyMessage = TextFormatting.GOLD + "You can't demote yourself";
+                                    } else {
+                                        switch (fMan.getPlayer(otherPlayer).factionRank){
+                                            case GRUNT:
+                                                replyMessage = TextFormatting.GOLD + "That player is the minimum rank possible";
+                                                break;
+                                            case LIEUTENANT:
+                                                fMan.setPlayerRank(otherPlayer, FactionRank.GRUNT);
+                                                replyMessage = TextFormatting.GOLD + "Demoted " + args[1] + " to Grunt";
+                                                break;
+                                            case OFFICER:
+                                                fMan.setPlayerRank(otherPlayer, FactionRank.LIEUTENANT);
+                                                replyMessage = TextFormatting.GOLD + "Demoted " + args[1] + " to Lieutenant";
+                                                break;
+                                            case OWNER:
+                                                replyMessage = TextFormatting.GOLD + "You cannot demote the owner";
+                                        }
+                                    }
                                 } else {
                                     commandResult = CommandResult.BADARGUMENT;
                                 }
+                            } else {
+                                commandResult = CommandResult.NOFACTIONPERMISSION;
                             }
                         } else {
                             commandResult = CommandResult.NOFACTION;
@@ -619,8 +707,53 @@ public class FactionCommand extends CommandBase {
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
-                                if (args.length > 1) {
+                                if (args.length > 2) {
+                                    try {
+                                        UUID otherPlayer = fMan.getPlayerIDFromName(args[1]);
+                                        FactionRank rank = FactionRank.valueOf(args[2].toUpperCase());
 
+                                        if (otherPlayer == null || !fMan.getPlayer(otherPlayer).faction.equals(factionID)){
+                                            replyMessage = TextFormatting.GOLD + "That player is not in your faction";
+                                        } else if (otherPlayer.equals(playerID)){
+                                            replyMessage = TextFormatting.GOLD + "You cannot set your own rank";
+                                        } else if (rank == FactionRank.OWNER) {
+                                            replyMessage = TextFormatting.GOLD + "To set a player as the owner, use /faction setowner <player>";
+                                        } else {
+                                            fMan.setPlayerRank(otherPlayer, rank);
+                                            replyMessage = TextFormatting.GOLD + "Set " + args[1] + " to " + rank.toString().toLowerCase();
+                                        }
+                                    } catch (IllegalArgumentException e){
+                                        replyMessage = TextFormatting.GOLD + "Unknown rank, available ranks are: grunt, lieutenant, and officer";
+                                    }
+                                } else {
+                                    commandResult = CommandResult.BADARGUMENT;
+                                }
+                            } else {
+                                commandResult = CommandResult.NOFACTIONPERMISSION;
+                            }
+                        } else {
+                            commandResult = CommandResult.NOFACTION;
+                        }
+                    } else {
+                        commandResult = CommandResult.NOPERMISSION;
+                    }
+                    break;
+
+                case "setowner":
+                    if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
+                        if (factionID != null){
+                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
+                                if (args.length > 1) {
+                                    UUID otherPlayer = fMan.getPlayerIDFromName(args[1]);
+                                    if (otherPlayer == null || !fMan.getPlayer(otherPlayer).faction.equals(factionID)){
+                                        replyMessage = TextFormatting.GOLD + "That player is not in your faction";
+                                    } else if (otherPlayer.equals(playerID)){
+                                        replyMessage = TextFormatting.GOLD + "You are already the owner";
+                                    } else {
+                                        fMan.setPlayerRank(playerID, FactionRank.OFFICER);
+                                        fMan.setPlayerRank(otherPlayer, FactionRank.OWNER);
+                                        fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.GOLD + fMan.getPlayer(otherPlayer).lastKnownName + " is now the new leader of " + fMan.getFaction(factionID).name));
+                                    }
                                 } else {
                                     commandResult = CommandResult.BADARGUMENT;
                                 }
@@ -633,19 +766,22 @@ public class FactionCommand extends CommandBase {
                     }
                     break;
 
-                case "setdesc":
+                case "desc":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
                                 if (args.length > 1) {
                                     StringBuilder desc = new StringBuilder();
-                                    for (int i = 1; i < desc.length(); i++){
-                                        desc.append(args[i] + " ");
+                                    for (int i = 1; i < args.length; i++){
+                                        desc.append(args[i]).append(" ");
                                     }
                                     fMan.getFaction(factionID).desc = desc.toString();
+                                    replyMessage = TextFormatting.GOLD + "Successfully set description to " + desc.toString();
                                 } else {
                                     commandResult = CommandResult.BADARGUMENT;
                                 }
+                            } else {
+                                commandResult = CommandResult.NOFACTIONPERMISSION;
                             }
                         } else {
                             commandResult = CommandResult.NOFACTION;
