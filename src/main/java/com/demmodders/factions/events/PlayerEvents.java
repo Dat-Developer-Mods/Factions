@@ -10,6 +10,8 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
@@ -39,25 +41,48 @@ public class PlayerEvents {
             FactionManager fMan = FactionManager.getInstance();
             UUID killedFaction = fMan.getPlayersFactionID(e.getEntity().getUniqueID());
             UUID killerFaction = fMan.getPlayersFactionID(e.getSource().getTrueSource().getUniqueID());
-            int powerLoss = FactionConfig.powerSubCat.deathPowerLoss;
-            int powerGain = 0;
-            int powerMaxGain = 0;
+            double powerLossMultiplier = -1;
+            double powerGainMultiplier = 0;
+            double powerMaxGainMultipler = 0;
+
             if (killedFaction != null) {
-                powerGain = FactionConfig.powerSubCat.killPowerGain;
-                powerMaxGain = FactionConfig.powerSubCat.killMaxPowerGain;
+                powerGainMultiplier = FactionConfig.powerSubCat.killPowerGain;
+                powerMaxGainMultipler = FactionConfig.powerSubCat.killMaxPowerGain;
                 if (killerFaction != null) {
                     if (fMan.getFaction(killedFaction).relationships.get(killerFaction).relation == RelationState.ENEMY || fMan.getFaction(killerFaction).relationships.get(killedFaction).relation == RelationState.ENEMY) {
-                        powerGain = (int)Math.ceil(powerGain * FactionConfig.powerSubCat.enemyKillMultiplier);
-                        powerMaxGain = (int)Math.ceil(powerMaxGain * FactionConfig.powerSubCat.enemyKillMultiplier);
-                        powerLoss = (int)Math.ceil(powerLoss * FactionConfig.powerSubCat.deathByEnemyMultiplier);
+                        powerGainMultiplier = powerGainMultiplier * FactionConfig.powerSubCat.enemyKillMultiplier;
+                        powerMaxGainMultipler = FactionConfig.powerSubCat.enemyKillMultiplier;
+                        powerLossMultiplier = FactionConfig.powerSubCat.deathByEnemyMultiplier;
                     }
                 }
             }
-            int killerCurrentMaxPower = fMan.getFaction(killerFaction).power.maxPower;
-            fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).addMaxPower(powerMaxGain);
-            fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).addPower(powerGain);
-            fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).addPower(powerLoss * -1);
-            // TODO: tell player
+
+            switch(fMan.getPlayer(e.getEntity().getUniqueID()).factionRank){
+                case LIEUTENANT:
+                    powerGainMultiplier = FactionConfig.powerSubCat.lieutenantMultiplier * powerGainMultiplier;
+                    powerLossMultiplier = FactionConfig.powerSubCat.lieutenantMultiplier * powerLossMultiplier;
+                    powerMaxGainMultipler = FactionConfig.powerSubCat.lieutenantMultiplier * powerMaxGainMultipler;
+                    break;
+                case OFFICER:
+                    powerGainMultiplier = FactionConfig.powerSubCat.officerMultiplier * powerGainMultiplier;
+                    powerLossMultiplier = FactionConfig.powerSubCat.officerMultiplier * powerLossMultiplier;
+                    powerMaxGainMultipler = FactionConfig.powerSubCat.officerMultiplier * powerMaxGainMultipler;
+                    break;
+                case OWNER:
+                    powerGainMultiplier = FactionConfig.powerSubCat.ownerMultiplier * powerGainMultiplier;
+                    powerLossMultiplier = FactionConfig.powerSubCat.ownerMultiplier * powerLossMultiplier;
+                    powerMaxGainMultipler = FactionConfig.powerSubCat.ownerMultiplier * powerMaxGainMultipler;
+                    break;
+            }
+
+            fMan.getPlayer(e.getEntity().getUniqueID()).addPower((int) Math.ceil(FactionConfig.powerSubCat.deathPowerLoss * powerLossMultiplier));
+            e.getEntity().sendMessage(new TextComponentString(TextFormatting.RED + "You've lost power, your power is now: " + fMan.getPlayer(e.getEntity().getUniqueID()).power.power + "/" + fMan.getPlayer(e.getEntity().getUniqueID()).power.maxPower));
+            if (powerGainMultiplier != 0){
+                fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).addMaxPower((int) Math.ceil(FactionConfig.powerSubCat.killMaxPowerGain * powerMaxGainMultipler));
+                fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).addPower((int) Math.ceil(FactionConfig.powerSubCat.killPowerGain * powerGainMultiplier));
+                e.getSource().getTrueSource().sendMessage(new TextComponentString(TextFormatting.GREEN + "You've gained power, your power is now: " + fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).power.power + "/" + fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).power.maxPower));
+            }
+
         }
     }
 
@@ -94,7 +119,21 @@ public class PlayerEvents {
         }
     }
 
-    // TODO: Block Break
-    // TODO: Block Place
+    @SubscribeEvent
+    public static void blockBreak(BlockEvent.BreakEvent e){
+        // TODO: Block Break
+    }
+
+    @SubscribeEvent
+    public static void blockPlace(BlockEvent.EntityPlaceEvent e){
+        // TODO: Block Place
+    }
+
+    @SubscribeEvent
+    public static void explosion(ExplosionEvent.Detonate e){
+
+    }
+
+    // TODO: BLOCK EXPLOSIONS!?!?!
     // TODO: Death
 }

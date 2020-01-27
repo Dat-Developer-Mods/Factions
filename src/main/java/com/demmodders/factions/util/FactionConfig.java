@@ -38,12 +38,12 @@ public class FactionConfig {
         @Config.Name("Faction Starting Power")
         @Config.RangeInt(min = 1)
         @Config.Comment("The amount of power the faction starts with when it's created")
-        public int factionStartingPower = 10;
+        public int factionStartingPower = 100;
 
         @Config.Name("Faction Starting Max Power")
         @Config.RangeInt(min = 1)
         @Config.Comment("The maximum amount of power the player can have when they it's created")
-        public int factionStartingMaxPower = 10;
+        public int factionStartingMaxPower = 100;
 
         @Config.Name("Allow ally build")
         @Config.Comment("Permit allies to build on each other's land")
@@ -63,17 +63,17 @@ public class FactionConfig {
         @Config.Name("Player Starting Power")
         @Config.RangeInt(min = 1)
         @Config.Comment("The amount of power the player starts with when they first join the server")
-        public int playerStartingPower = 10;
+        public int playerStartingPower = 100;
 
         @Config.Name("Player Starting Max Power")
         @Config.RangeInt(min = 1)
         @Config.Comment("The maximum amount of power the player can have when they first join the server")
-        public int playerStartingMaxPower = 10;
+        public int playerStartingMaxPower = 100;
 
         @Config.Name("Player Starting Max Power cap")
         @Config.RangeInt(min = 1)
         @Config.Comment("The maximum amount of power the player can ever have")
-        public int playerMaxPowerCap = 100;
+        public int playerMaxPowerCap = 1000;
 
         @Config.Name("Faction home Delay")
         @Config.RangeInt()
@@ -90,12 +90,12 @@ public class FactionConfig {
         @Config.Name("Kill power gain")
         @Config.Comment("The amount of power gained for killing someone")
         @Config.RangeInt(min=0)
-        public int killPowerGain = 1;
+        public int killPowerGain = 10;
 
         @Config.Name("Kill max power gain")
         @Config.Comment("The amount of max power increases by when killing someone")
         @Config.RangeInt(min=0)
-        public int killMaxPowerGain = 2;
+        public int killMaxPowerGain = 20;
 
         @Config.Name("Enemy kill multiplier")
         @Config.Comment("How much more power & max power is gained by killing")
@@ -105,18 +105,34 @@ public class FactionConfig {
         @Config.Name("Death power Loss")
         @Config.Comment("The amount of power lost for dying")
         @Config.RangeInt(min=0)
-        public int deathPowerLoss = 1;
+        public int deathPowerLoss = 10;
 
         @Config.Name("Death by enemy loss multiplier")
+        @Config.RangeDouble(min=0f)
         @Config.Comment("How much more power lost for dying")
         public double deathByEnemyMultiplier = 2f;
+
+        @Config.Name("Lieutenant Multiplier")
+        @Config.RangeDouble(min=0f)
+        @Config.Comment("How much extra power is gained/lost for killing/dying as a lieutenant")
+        public double lieutenantMultiplier = 1.5f;
+
+        @Config.Name("Officer Multiplier")
+        @Config.RangeDouble(min=0f)
+        @Config.Comment("How much extra power is gained/lost for killing/dying as a officer")
+        public double officerMultiplier = 2f;
+
+        @Config.Name("Owner Multiplier")
+        @Config.RangeDouble(min=0f)
+        @Config.Comment("How much extra power is gained/lost for killing/dying as the owner of a faction")
+        public double ownerMultiplier = 3f;
     }
 
     public static class Land {
         @Config.Name("Land Power worth")
         @Config.RangeInt(min = 1)
         @Config.Comment("The amount of power each chunk takes up when claimed")
-        public int landPowerCost = 2;
+        public int landPowerCost = 20;
 
         @Config.Name("Require land to connect")
         @Config.Comment("Require newly claimed land to be right next to previously claimed land")

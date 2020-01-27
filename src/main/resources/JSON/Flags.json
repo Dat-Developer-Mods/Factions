@@ -1,7 +1,7 @@
 {
   "playerFlags":{
     "Open" : "The faction doesn't require any invites",
-    "FriendlyFire" : "The faction doesn't require any invites"
+    "FriendlyFire" : "The faction doesn't prevent the members from killing each other"
   },
   "adminFlags":{
     "NoPowerLoss" : "You don't lose power when you die in this zone",

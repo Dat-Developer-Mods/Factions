@@ -726,6 +726,8 @@ public class FactionManager {
         flags.add("UnlimitedLand");
         flags.add("Unrelateable");
         flags.add("NoDamage");
+        flags.add("NoExplode");
+        flags.add("NoBuild");
         Faction wild = new Faction("Safe Zone", "You're safe here", flags);
         FactionMap.put(SAFEID, wild);
         saveFaction(SAFEID);
