@@ -122,6 +122,7 @@ public class PlayerEvents {
     @SubscribeEvent
     public static void blockBreak(BlockEvent.BreakEvent e){
         // TODO: Block Break
+        Factions.LOGGER.info("EXPLOSION");
     }
 
     @SubscribeEvent
@@ -131,7 +132,7 @@ public class PlayerEvents {
 
     @SubscribeEvent
     public static void explosion(ExplosionEvent.Detonate e){
-
+        Factions.LOGGER.info("EXPLOSION");
     }
 
     // TODO: BLOCK EXPLOSIONS!?!?!
