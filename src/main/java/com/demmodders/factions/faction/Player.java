@@ -1,5 +1,6 @@
 package com.demmodders.factions.faction;
 
+import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.enums.FactionChatMode;
 import com.demmodders.factions.util.enums.FactionRank;
 import com.demmodders.factions.util.structures.Power;
@@ -35,6 +36,15 @@ public class Player {
         this.faction = null;
         this.factionRank = null;
         factionChat = FactionChatMode.NORMAL;
+    }
+
+    public void addPower(int Power){
+        power.setPower(Power + power.power);
+    }
+
+    public void addMaxPower(int MaxPower){
+        if (MaxPower + power.maxPower > FactionConfig.playerSubCat.playerMaxPowerCap) power.maxPower = FactionConfig.playerSubCat.playerMaxPowerCap;
+        else power.maxPower = MaxPower + power.maxPower;
     }
 }
 

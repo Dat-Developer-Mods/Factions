@@ -3,7 +3,7 @@ package com.demmodders.factions.commands;
 import com.demmodders.factions.faction.Faction;
 import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.FactionConfig;
-import com.demmodders.factions.util.Utils;
+import com.demmodders.factions.util.DemUtils;
 import com.demmodders.factions.util.enums.FactionChatMode;
 import com.demmodders.factions.util.enums.FactionRank;
 import com.demmodders.factions.util.structures.Location;
@@ -19,7 +19,6 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.server.permission.PermissionAPI;
 
 import javax.annotation.Nullable;
-import javax.xml.soap.Text;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -215,7 +214,7 @@ public class FactionCommand extends CommandBase {
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
                         if (factionID != null) {
                             if (fMan.getFaction(factionID).homePos != null) {
-                                int age = (int)(Utils.calculateAge(fMan.getPlayer(playerID).lastTeleport) / 1000);
+                                int age = (int)(DemUtils.calculateAge(fMan.getPlayer(playerID).lastTeleport) / 1000);
                                 if (age > FactionConfig.playerSubCat.reTeleportDelay) {
                                     EntityPlayerMP posSource = (EntityPlayerMP) sender;
                                     TeleportHandler.getInstance().addTeleportEvent((EntityPlayerMP) sender, fMan.getFaction(factionID).homePos, FactionConfig.playerSubCat.teleportDelay, posSource.posX, posSource.posY, posSource.posZ);

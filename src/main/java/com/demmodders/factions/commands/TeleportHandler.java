@@ -2,7 +2,7 @@ package com.demmodders.factions.commands;
 
 import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.FactionTeleporter;
-import com.demmodders.factions.util.Utils;
+import com.demmodders.factions.util.DemUtils;
 import com.demmodders.factions.util.structures.Location;
 import com.demmodders.factions.util.structures.TeleportEvent;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -74,7 +74,7 @@ public class TeleportHandler {
 
                     double distance = Math.pow(dx, 2) + Math.pow(dy, 2) + Math.pow(dz, 2);
 
-                    if ((int) (Utils.calculateAge(tele.startTime) / 1000) > tele.delay){
+                    if ((int) (DemUtils.calculateAge(tele.startTime) / 1000) > tele.delay){
                         // Make sure we only teleport them cross dimensionally if we need to
                         if (tele.playerMP.dimension != tele.destination.dim)
                             tele.playerMP.changeDimension(tele.destination.dim, new FactionTeleporter(tele.destination));

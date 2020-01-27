@@ -2,7 +2,7 @@ package com.demmodders.factions.faction;
 
 import com.demmodders.factions.Factions;
 import com.demmodders.factions.util.FactionConfig;
-import com.demmodders.factions.util.Utils;
+import com.demmodders.factions.util.DemUtils;
 import com.demmodders.factions.util.enums.RelationState;
 import com.demmodders.factions.util.structures.Location;
 import com.demmodders.factions.util.structures.Power;
@@ -213,7 +213,7 @@ public class Faction {
         StringBuilder message = new StringBuilder();
         String age;
 
-        long minutes = Utils.calculateAge(foundingTime) / 60000;
+        long minutes = DemUtils.calculateAge(foundingTime) / 60000;
         if (minutes < 60){
             age = Math.round(minutes) + " Minutes";
         } else if (minutes < 1440){

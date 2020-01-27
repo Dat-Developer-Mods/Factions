@@ -12,7 +12,8 @@ public class FactionConfig {
     public static Faction factionSubCat = new Faction();
     public static Player playerSubCat = new Player();
     public static Land landSubCat = new Land();
-    public static Flags FlagSubCat = new Flags();
+    public static Flags flagSubCat = new Flags();
+    public static PowerConfig powerSubCat = new PowerConfig();
 
     public static class Faction {
         @Config.Name("Max Faction Name Length")
@@ -83,6 +84,32 @@ public class FactionConfig {
         @Config.RangeInt()
         @Config.Comment("The delay in seconds before a player can teleport when using /faction home another time")
         public int reTeleportDelay = 0;
+    }
+
+    public static class PowerConfig {
+        @Config.Name("Kill power gain")
+        @Config.Comment("The amount of power gained for killing someone")
+        @Config.RangeInt(min=0)
+        public int killPowerGain = 1;
+
+        @Config.Name("Kill max power gain")
+        @Config.Comment("The amount of max power increases by when killing someone")
+        @Config.RangeInt(min=0)
+        public int killMaxPowerGain = 2;
+
+        @Config.Name("Enemy kill multiplier")
+        @Config.Comment("How much more power & max power is gained by killing")
+        @Config.RangeDouble(min=0f)
+        public double enemyKillMultiplier = 2f;
+
+        @Config.Name("Death power Loss")
+        @Config.Comment("The amount of power lost for dying")
+        @Config.RangeInt(min=0)
+        public int deathPowerLoss = 1;
+
+        @Config.Name("Death by enemy loss multiplier")
+        @Config.Comment("How much more power lost for dying")
+        public double deathByEnemyMultiplier = 2f;
     }
 
     public static class Land {

@@ -2,11 +2,14 @@ package com.demmodders.factions.events;
 
 import com.demmodders.factions.Factions;
 import com.demmodders.factions.faction.FactionManager;
+import com.demmodders.factions.util.FactionConfig;
+import com.demmodders.factions.util.DemUtils;
 import com.demmodders.factions.util.enums.RelationState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.event.entity.EntityEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
@@ -27,6 +30,34 @@ public class PlayerEvents {
         } else {
             LOGGER.info(e.player.getName() + " is not registered, ammending");
             FactionManager.getInstance().registerPlayer(e.player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void playerKilled(LivingDeathEvent e){
+        if (e.getEntity() instanceof EntityPlayer && e.getSource().getTrueSource() instanceof EntityPlayer) {
+            FactionManager fMan = FactionManager.getInstance();
+            UUID killedFaction = fMan.getPlayersFactionID(e.getEntity().getUniqueID());
+            UUID killerFaction = fMan.getPlayersFactionID(e.getSource().getTrueSource().getUniqueID());
+            int powerLoss = FactionConfig.powerSubCat.deathPowerLoss;
+            int powerGain = 0;
+            int powerMaxGain = 0;
+            if (killedFaction != null) {
+                powerGain = FactionConfig.powerSubCat.killPowerGain;
+                powerMaxGain = FactionConfig.powerSubCat.killMaxPowerGain;
+                if (killerFaction != null) {
+                    if (fMan.getFaction(killedFaction).relationships.get(killerFaction).relation == RelationState.ENEMY || fMan.getFaction(killerFaction).relationships.get(killedFaction).relation == RelationState.ENEMY) {
+                        powerGain = (int)Math.ceil(powerGain * FactionConfig.powerSubCat.enemyKillMultiplier);
+                        powerMaxGain = (int)Math.ceil(powerMaxGain * FactionConfig.powerSubCat.enemyKillMultiplier);
+                        powerLoss = (int)Math.ceil(powerLoss * FactionConfig.powerSubCat.deathByEnemyMultiplier);
+                    }
+                }
+            }
+            int killerCurrentMaxPower = fMan.getFaction(killerFaction).power.maxPower;
+            fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).addMaxPower(powerMaxGain);
+            fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).addPower(powerGain);
+            fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).addPower(powerLoss * -1);
+            // TODO: tell player
         }
     }
 

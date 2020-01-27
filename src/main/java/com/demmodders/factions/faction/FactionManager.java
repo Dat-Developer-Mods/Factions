@@ -123,6 +123,11 @@ public class FactionManager {
         return null;
     }
 
+    /**
+     * Gets the player object from the player's uuid
+     * @param PlayerID The ID of the player
+     * @return The player object of the player
+     */
     @Nullable
     public static EntityPlayerMP getPlayerMPFromUUID(UUID PlayerID){
         return FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayerByUUID(PlayerID);
@@ -181,7 +186,7 @@ public class FactionManager {
                 break;
         }
         if (!rank.isEmpty()) {
-            FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayerByUUID(PlayerID).sendMessage(new TextComponentString(TextFormatting.GOLD + "You are now " + rank));
+            getPlayerMPFromUUID(PlayerID).sendMessage(new TextComponentString(TextFormatting.GOLD + "You are now " + rank));
         }
     }
 
@@ -384,6 +389,10 @@ public class FactionManager {
         } else {
             return true;
         }
+    }
+
+    public void playerKilled(UUID KilledID, UUID KillerID){
+
     }
 
     // Faction Functions

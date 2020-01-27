@@ -13,6 +13,8 @@
     "Unrelateable" : "The faction cannot have relations",
     "Default" : "The faction is one of the default factions",
     "NoDamage" : "You cannot take damage on this faction's land",
+    "NoExplode" : "Blocks in this land can't explode",
+    "NoBuild" : "Players can't break of place blocks in this region",
     "BonusPower" : "You lose/gain more power when you die/kill on this faction's land"
   }
 }
