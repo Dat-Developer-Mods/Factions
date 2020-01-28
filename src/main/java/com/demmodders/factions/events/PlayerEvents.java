@@ -3,7 +3,6 @@ package com.demmodders.factions.events;
 import com.demmodders.factions.Factions;
 import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.FactionConfig;
-import com.demmodders.factions.util.DemUtils;
 import com.demmodders.factions.util.enums.RelationState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.text.TextComponentString;
@@ -122,12 +121,13 @@ public class PlayerEvents {
     @SubscribeEvent
     public static void blockBreak(BlockEvent.BreakEvent e){
         // TODO: Block Break
-        Factions.LOGGER.info("EXPLOSION");
+        Factions.LOGGER.info("Break");
     }
 
     @SubscribeEvent
     public static void blockPlace(BlockEvent.EntityPlaceEvent e){
         // TODO: Block Place
+        Factions.LOGGER.info("place");
     }
 
     @SubscribeEvent
