@@ -1,0 +1,30 @@
+{
+  "commands": {
+    "help" : "View a list and description of all the commands",
+    "list" : "View a list all of the factions on the server",
+    "info" : "View info on a given faction",
+    "invites" : "View a list of all the invites to join factions",
+    "join" : "Become a member of the given faction",
+    "reject" : "Reject an invite from the given faction",
+    "create" : "Create a faction",
+    "leave" : "Leave your faction",
+    "home" : "Teleport to your faction home",
+    "motd" : "View your faction's message of the day",
+    "chat" : "Switch your chat so only members of your faction or allies can see your chat messages",
+    "claim" : "Claim a chunk for your faction",
+    "ally" : "Make a given faction an ally of your faction",
+    "enemy" : "Make a given faction an enemy of your faction",
+    "neutral" : "Make your relationship with a given faction neutral",
+    "kick" : "Remove a given member from your faction",
+    "invite" : "Invite a player to your faction",
+    "uninvite" : "Remove an invite to a given player",
+    "setmotd" : "Set your faction's message of the day",
+    "sethome" : "Set the home location for your faction",
+    "desc" : "Set the description of your faction",
+    "promote" : "Promote a member of your faction to a higher rank",
+    "demote" : "Demote a member of your faction to a lower rank",
+    "setrank" : "Set the rank of a member of your faction",
+    "setowner" : "Hand over ownership of your faction to another member",
+    "disband" : "permanently disband your faction"
+  }
+}

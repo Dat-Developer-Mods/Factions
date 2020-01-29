@@ -13,7 +13,7 @@ public class FlagDescriptions {
 
     public static FlagDescriptions loadFlagDescriptions(){
         Gson gson = new Gson();
-        InputStream json = FlagDescriptions.class.getClassLoader().getResourceAsStream("JSON.Flags.json");
+        InputStream json = FlagDescriptions.class.getClassLoader().getResourceAsStream("JSON/Flags.json");
         if (json != null) {
             return gson.fromJson(json.toString(), FlagDescriptions.class);
         }

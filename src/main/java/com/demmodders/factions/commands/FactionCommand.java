@@ -1,5 +1,6 @@
 package com.demmodders.factions.commands;
 
+import akka.util.Index;
 import com.demmodders.factions.faction.Faction;
 import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.FactionConfig;
@@ -19,9 +20,7 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.server.permission.PermissionAPI;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class FactionCommand extends CommandBase {
     @Override
@@ -32,9 +31,91 @@ public class FactionCommand extends CommandBase {
     @Override
     public String getUsage(ICommandSender sender) {
         if (sender instanceof EntityPlayerMP) {
-            return "test";
+            return printHelp(1);
         }
         return "Only a player can use these commands";
+    }
+
+    @Override
+    public List<String> getAliases() {
+        ArrayList<String> aliases = new ArrayList<>();
+        aliases.add("f");
+        return aliases;
+    }
+
+    @Override
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
+
+        List<String> possibilities = new ArrayList<>();
+        FactionManager fMan = FactionManager.getInstance();
+        UUID factionID = fMan.getPlayersFactionID(((EntityPlayerMP) sender).getUniqueID());
+        if (args.length == 1) {
+            HashMap<String, String> commands = FactionCommandList.getCommands();
+            if (commands != null) possibilities = new ArrayList<>(commands.keySet());
+        } else if (args.length == 2){
+            switch(args[0].toLowerCase()) {
+                case "help":
+                    possibilities.add("1");
+                    possibilities.add("2");
+                    possibilities.add("3");
+                    break;
+                case "list":
+                    int factionCount = fMan.getListOfFactionsUUIDs().size();
+                    for (int i = 1; i <= (int) Math.ceil(factionCount / 10f); i++) {
+                        possibilities.add(String.valueOf(i));
+                    }
+                    break;
+                case "info":
+                case "join":
+                case "reject":
+                case "neutral":
+                case "ally":
+                case "enemy":
+                    possibilities = fMan.getListOfFactionsNames();
+                    break;
+                case "chat":
+                    possibilities.add("normal");
+                    possibilities.add("faction");
+                    possibilities.add("ally");
+                    break;
+                case "kick":
+                case "setrank":
+                case "demote":
+                case "promote":
+                case "setowner":
+                    possibilities = fMan.getFaction(factionID).getMemberNames();
+                    break;
+                case "invite":
+                case "uninvite":
+                    possibilities = Arrays.asList(server.getOnlinePlayerNames());
+                    break;
+            }
+        } else if (args.length == 3) {
+            if ("setrank".equals(args[0].toLowerCase())) {
+                possibilities.add("grunt");
+                possibilities.add("lieutenant");
+                possibilities.add("sergeant");
+            }
+        }
+        return getListOfStringsMatchingLastWord(args, possibilities);
+    }
+
+    private String printHelp(int Page) throws IndexOutOfBoundsException {
+        LinkedHashMap<String, String> commands = FactionCommandList.getCommands();
+        if (commands != null) {
+            List<String> keyList = new ArrayList<>(commands.keySet());
+            StringBuilder helpText = new StringBuilder();
+            // Header
+            helpText.append(TextFormatting.DARK_GREEN).append("Showing help page ").append(Page).append(" of ").append((int) Math.ceil(commands.size() / 10f)).append("\n").append(TextFormatting.GOLD);
+            // First faction, without comma
+            int firstIndex = (Page - 1) * 10;
+            helpText.append(keyList.get(firstIndex)).append(" - ").append(commands.get(keyList.get(firstIndex))).append("\n");
+            for (int i = firstIndex + 1; i < commands.size() && i < ((10 * Page)); i++) {
+                helpText.append(TextFormatting.GOLD).append(keyList.get(i)).append(" - ").append(commands.get(keyList.get(i))).append("\n");
+            }
+            return helpText.toString();
+        }
+        return TextFormatting.RED + "Could not generate help";
     }
 
     @Override
@@ -53,6 +134,14 @@ public class FactionCommand extends CommandBase {
             switch (args[0].toLowerCase()) {
                 // Global
                 case "help":
+                    try {
+                        int page = ((args.length == 1) ? 1 : Integer.parseInt(args[1]));
+                        replyMessage = printHelp(page);
+                    } catch  (NumberFormatException e) {
+                        commandResult = CommandResult.BADARGUMENT;
+                    } catch (IndexOutOfBoundsException e){
+                        replyMessage = TextFormatting.GOLD + "There aren't that many pages";
+                    }
                     break;
                 case "list":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.info")) {
@@ -199,6 +288,9 @@ public class FactionCommand extends CommandBase {
                                     case 3:
                                         replyMessage = TextFormatting.GOLD + "A faction with that name already exists";
                                         break;
+                                    case 4:
+                                        replyMessage = TextFormatting.GOLD + "Failed to create faction";
+                                        break;
                                 }
                             } else {
                                 replyMessage = TextFormatting.RED + "You cannot create a faction while you're part of a faction";
@@ -294,7 +386,7 @@ public class FactionCommand extends CommandBase {
                         if (factionID != null){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.LIEUTENANT.ordinal()) {
                                 UUID currentOwner = fMan.getChunkOwningFaction(((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ);
-                                int result = fMan.claimLand(factionID, ((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ);
+                                int result = fMan.claimLand(factionID, playerID, ((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ);
                                 switch(result){
                                     case 0:
                                         replyMessage = TextFormatting.GOLD + "Successfully claimed chunk for your faction";
@@ -316,6 +408,9 @@ public class FactionCommand extends CommandBase {
                                     case 5:
                                         replyMessage = TextFormatting.GOLD + "You already own this chunk";
                                         break;
+                                    case 6:
+                                        replyMessage = TextFormatting.GOLD + "Failed to claim chunk";
+                                        break;
                                 }
                             } else {
                                 commandResult = CommandResult.NOFACTIONPERMISSION;
@@ -336,7 +431,7 @@ public class FactionCommand extends CommandBase {
                                 if (args.length > 1) {
                                     UUID otherFaction = fMan.getFactionIDFromName(args[1]);
                                     if (otherFaction != null) {
-                                        int result = fMan.addAlly(factionID, otherFaction);
+                                        int result = fMan.addAlly(factionID, otherFaction, playerID);
                                         switch (result) {
                                             //TODO: Replace with string building kinda thing
                                             case 0:
@@ -356,6 +451,9 @@ public class FactionCommand extends CommandBase {
                                                 break;
                                             case 5:
                                                 replyMessage = TextFormatting.GOLD + "You cannot add that faction as an ally";
+                                                break;
+                                            case 6:
+                                                replyMessage = TextFormatting.GOLD + "Failed to add that faction as an ally";
                                                 break;
                                         }
                                     } else {
@@ -382,7 +480,7 @@ public class FactionCommand extends CommandBase {
                                 if (args.length > 1) {
                                     UUID otherFaction = fMan.getFactionIDFromName(args[1]);
                                     if (otherFaction != null) {
-                                        int result = fMan.addEnemy(factionID, otherFaction);
+                                        int result = fMan.addEnemy(factionID, otherFaction, playerID);
                                         switch (result) {
                                             //TODO: Replace with string building kinda thing
                                             case 0:
@@ -402,6 +500,9 @@ public class FactionCommand extends CommandBase {
                                                 break;
                                             case 5:
                                                 replyMessage = TextFormatting.GOLD + "You cannot add that faction as an enemy";
+                                                break;
+                                            case 6:
+                                                replyMessage = TextFormatting.GOLD + "Failed to add that faction as an enemy";
                                                 break;
                                         }
                                     } else {
@@ -427,7 +528,7 @@ public class FactionCommand extends CommandBase {
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
                                 if (args.length > 1) {
                                     UUID otherFaction = fMan.getFactionIDFromName(args[1]);
-                                    int result = fMan.addNeutral(factionID, otherFaction);
+                                    int result = fMan.addNeutral(factionID, otherFaction, playerID);
                                     switch (result) {
                                         //TODO: Replace with string building kinda thing
                                         case 0:
@@ -445,6 +546,8 @@ public class FactionCommand extends CommandBase {
                                         case 5:
                                             replyMessage = TextFormatting.GOLD + "That's your faction";
                                             break;
+                                        case 6:
+                                            replyMessage = TextFormatting.GOLD + "Failed to set that faction as neutral";
                                     }
                                 } else {
                                     commandResult = CommandResult.BADARGUMENT;
@@ -514,10 +617,14 @@ public class FactionCommand extends CommandBase {
                                 if (args.length > 1) {
                                     UUID otherPlayer = fMan.getPlayerIDFromName(args[1]);
                                     if (otherPlayer != null){
-                                        if (fMan.invitePlayerToFaction(otherPlayer, factionID)){
-                                            replyMessage = TextFormatting.GOLD + args[1] + " was successfully invited to the faction";
+                                        if (otherPlayer != playerID) {
+                                            if (fMan.invitePlayerToFaction(otherPlayer, factionID)) {
+                                                replyMessage = TextFormatting.GOLD + args[1] + " was successfully invited to the faction";
+                                            } else {
+                                                replyMessage = TextFormatting.GOLD + args[1] + " already has an invite from you";
+                                            }
                                         } else {
-                                            replyMessage = TextFormatting.GOLD + args[1] + " already has an invite from you";
+                                            replyMessage = TextFormatting.GOLD + "That's you";
                                         }
                                     } else {
                                         replyMessage = TextFormatting.GOLD + "The factions system doesn't know who that is, they must have joined the server before they can be invited to a faction";
@@ -600,10 +707,10 @@ public class FactionCommand extends CommandBase {
                                 } else {
                                     String factionName = fMan.getFaction(factionID).name;
                                     if (args[1].equals(factionName)){
-                                        if (fMan.disbandFaction(factionID)){
+                                        if (fMan.disbandFaction(factionID, playerID)){
                                             FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendMessage(new TextComponentString(TextFormatting.GOLD + factionName + " Has been disbanded"));
                                         } else {
-                                            replyMessage = TextFormatting.GOLD + "Failed to delete faction";
+                                            replyMessage = TextFormatting.GOLD + "Failed to disband faction";
                                         }
                                     } else {
                                         replyMessage = TextFormatting.RED + "Failed to disband faction, to disband your faction type /faction disband " + fMan.getFaction(factionID).name;
@@ -816,20 +923,8 @@ public class FactionCommand extends CommandBase {
     }
 
     @Override
-    public List<String> getAliases() {
-        ArrayList<String> aliases = new ArrayList<>();
-        aliases.add("f");
-        return aliases;
-    }
-
-    @Override
     public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
         return true;
-    }
-
-    @Override
-    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
-        return super.getTabCompletions(server, sender, args, targetPos);
     }
 }
 

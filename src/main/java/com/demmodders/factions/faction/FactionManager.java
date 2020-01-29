@@ -1,6 +1,9 @@
 package com.demmodders.factions.faction;
 
 import com.demmodders.factions.Factions;
+import com.demmodders.factions.api.event.FactionEvent;
+import com.demmodders.factions.api.event.InFactionEvent;
+import com.demmodders.factions.api.event.OutFactionEvent;
 import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.FileHelper;
 import com.demmodders.factions.util.enums.FactionRank;
@@ -16,6 +19,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -294,6 +298,14 @@ public class FactionManager {
         return new ArrayList<UUID>(FactionMap.keySet());
     }
 
+    public List<String> getListOfFactionsNames(){
+        ArrayList<String> names = new ArrayList<>();
+        for (UUID faction : FactionMap.keySet()){
+            names.add(FactionMap.get(faction).name);
+        }
+        return names;
+    }
+
     // Players
     /**
      * Checks if a player is registered to the factions system
@@ -400,7 +412,7 @@ public class FactionManager {
      * Creates a faction
      * @param Name The name of the faction
      * @param PlayerID The ID of the player who's creating the faction
-     * @return The result of creating the faction (0 for success, 1 for name too long, 2 for name too short, 3 for faction exists)
+     * @return The result of creating the faction (0 for success, 1 for name too long, 2 for name too short, 3 for faction exists, 4 cancelled)
      */
     public int createFaction(String Name, UUID PlayerID) {
         if (Name.length() > FactionConfig.factionSubCat.maxFactionNameLength) {
@@ -413,6 +425,10 @@ public class FactionManager {
             LOGGER.warn(Factions.MODID + " Failed to create faction, Faction already exists");
             return 3;
         }
+        OutFactionEvent.FactionCreateEvent event = new OutFactionEvent.FactionCreateEvent(PlayerID, Name);
+        MinecraftForge.EVENT_BUS.post(event);
+        if (event.isCanceled()) return 4;
+
         UUID factionID = UUID.randomUUID();
         FactionMap.put(factionID, new Faction(Name, PlayerID));
 
@@ -425,29 +441,31 @@ public class FactionManager {
         return 0;
     }
 
-    public boolean disbandFaction(UUID FactionID){
+    public boolean disbandFaction(UUID FactionID, @Nullable UUID PlayerID){
         Faction faction = FactionMap.get(FactionID);
-        if (!faction.hasFlag("Permanent")) {
-            releaseAllFactionLand(FactionID);
+        if (faction.hasFlag("Permanent")) return false;
 
-            for (UUID playerID : faction.members) {
-                setPlayerFaction(playerID, null);
-            }
+        InFactionEvent.FactionDisbandEvent event = new InFactionEvent.FactionDisbandEvent(PlayerID, FactionID);
+        MinecraftForge.EVENT_BUS.post(event);
+        if (event.isCanceled()) return false;
 
-            for (UUID invitedPlayerID : faction.invites){
-                PlayerMap.get(invitedPlayerID).invites.remove(FactionID);
-            }
+        releaseAllFactionLand(FactionID);
 
-            for (UUID otherFactionID : faction.relationships.keySet()){
-                FactionMap.get(otherFactionID).relationships.remove(FactionID);
-            }
-
-            FactionMap.remove(FactionID);
-            deleteFactionFile(FactionID);
-            return true;
-        } else {
-            return false;
+        for (UUID playerID : faction.members) {
+            setPlayerFaction(playerID, null);
         }
+
+        for (UUID invitedPlayerID : faction.invites){
+            PlayerMap.get(invitedPlayerID).invites.remove(FactionID);
+        }
+
+        for (UUID otherFactionID : faction.relationships.keySet()){
+            FactionMap.get(otherFactionID).relationships.remove(FactionID);
+        }
+
+        FactionMap.remove(FactionID);
+        deleteFactionFile(FactionID);
+        return true;
     }
 
     /**
@@ -486,9 +504,9 @@ public class FactionManager {
      * @param Dim The dimention the chunk is in
      * @param ChunkX The X Coord of the chunk
      * @param ChunkZ The Z Coord of the chunk
-     * @return The result of the claim (0: Success, 1:Success, but stolen, 2: Not enough power, 3: Must touch other land, 4: Faction owns it, 5: You own it)
+     * @return The result of the claim (0: Success, 1:Success, but stolen, 2: Not enough power, 3: Must touch other land, 4: Faction owns it, 5: You own it, 6: Nope)
      */
-    public int claimLand(UUID FactionID, int Dim, int ChunkX, int ChunkZ){
+    public int claimLand(UUID FactionID, @Nullable UUID PlayerID, int Dim, int ChunkX, int ChunkZ){
         String chunkKey = makeChunkKey(ChunkX, ChunkZ);
 
         // Check it isn't owned, or owned by someone who can't afford it
@@ -513,6 +531,10 @@ public class FactionManager {
         // Check the land is connected
         if (FactionConfig.landSubCat.landRequireConnect && !(FactionConfig.landSubCat.landRequireConnectWhenStealing && owned) && !getFaction(FactionID).checkLandTouches(Dim, ChunkX, ChunkZ)) return 3;
 
+        InFactionEvent.FactionClaimEvent event = new InFactionEvent.FactionClaimEvent(new ChunkLocation(Dim, ChunkX, ChunkZ), PlayerID, FactionID);
+        MinecraftForge.EVENT_BUS.post(event);
+        if (event.isCanceled()) return 6;
+
         ClaimedLand.get(Dim).put(chunkKey, FactionID);
         saveClaimedChunks(Dim);
         FactionMap.get(FactionID).addLandToFaction(Dim, chunkKey);
@@ -525,13 +547,19 @@ public class FactionManager {
      * @param OtherFaction the faction the alliance is with
      * @return The result of the alliance (0: Success them pending, 1: Success both allies, 2: Success but enemy, 3: Already allies, 4: That's you, 5: No)
      */
-    public int addAlly(UUID FactionID, UUID OtherFaction){
+    public int addAlly(UUID FactionID, UUID OtherFaction, @Nullable UUID PlayerID){
         Relationship currentRelation = FactionMap.get(FactionID).relationships.getOrDefault(OtherFaction, null);
         if (FactionID.equals(OtherFaction)) return 4;
         if (FactionMap.get(FactionID).hasFlag("Unrelateable")) return 5;
         if (currentRelation != null && currentRelation.relation == RelationState.ALLY) return 3;
+
+        InFactionEvent.FactionRelationEvent event = new InFactionEvent.FactionRelationEvent(PlayerID, FactionID, OtherFaction, RelationState.ALLY);
+        MinecraftForge.EVENT_BUS.post(event);
+        if (event.isCanceled()) return 6;
+
         FactionMap.get(FactionID).relationships.put(OtherFaction, new Relationship(RelationState.ALLY));
         saveFaction(FactionID);
+
         if (!FactionMap.get(OtherFaction).relationships.containsKey(FactionID)) {
             FactionMap.get(OtherFaction).relationships.put(FactionID, new Relationship(RelationState.PENDINGALLY));
             saveFaction(OtherFaction);
@@ -552,13 +580,19 @@ public class FactionManager {
      * @param OtherFaction The faction becoming an enemy
      * @return The result of the declaration (0: Success, 1: Success enemies all round, 2: Success but you're an ally to them, 3: already enemies, 4: That's you, 5: No)
      */
-    public int addEnemy(UUID FactionID, UUID OtherFaction){
+    public int addEnemy(UUID FactionID, UUID OtherFaction, UUID PlayerID){
         Relationship currentRelation = FactionMap.get(FactionID).relationships.getOrDefault(OtherFaction, null);
         if (FactionID.equals(OtherFaction)) return 4;
         if (FactionMap.get(OtherFaction).hasFlag("Unrelateable")) return 5;
         if (currentRelation != null && currentRelation.relation == RelationState.ENEMY) return 3;
+
+        InFactionEvent.FactionRelationEvent event = new InFactionEvent.FactionRelationEvent(PlayerID, FactionID, OtherFaction, RelationState.ALLY);
+        MinecraftForge.EVENT_BUS.post(event);
+        if (event.isCanceled()) return 6;
+
         FactionMap.get(FactionID).relationships.put(OtherFaction, new Relationship(RelationState.ENEMY));
         saveFaction(FactionID);
+
         if (!FactionMap.get(OtherFaction).relationships.containsKey(FactionID) || FactionMap.get(OtherFaction).relationships.get(FactionID).relation == RelationState.PENDINGALLY) {
             FactionMap.get(OtherFaction).relationships.put(FactionID, new Relationship(RelationState.PENDINGENEMY));
             saveFaction(OtherFaction);
@@ -579,11 +613,16 @@ public class FactionManager {
      * @param OtherFaction The faction to become neutral with
      * @return The result of the declaration (0: Success, 1: Removed enemy, 2: Removed ally, 3: cannot deny request, 4: no relation, 5: that's you
      */
-    public int addNeutral(UUID FactionID, UUID OtherFaction){
+    public int addNeutral(UUID FactionID, UUID OtherFaction, UUID PlayerID){
         Relationship currentRelation = FactionMap.get(FactionID).relationships.getOrDefault(OtherFaction, null);
         if (FactionID.equals(OtherFaction)) return 5;
         if (currentRelation == null) return 4;
         if (currentRelation.relation == RelationState.PENDINGALLY || currentRelation.relation == RelationState.PENDINGENEMY) return 3;
+
+        InFactionEvent.FactionRelationEvent event = new InFactionEvent.FactionRelationEvent(PlayerID, FactionID, OtherFaction, RelationState.ALLY);
+        MinecraftForge.EVENT_BUS.post(event);
+        if (event.isCanceled()) return 6;
+
         FactionMap.get(FactionID).relationships.remove(OtherFaction);
         saveFaction(FactionID);
         if (FactionMap.get(OtherFaction).relationships.containsKey(FactionID)) {
@@ -728,7 +767,7 @@ public class FactionManager {
         flags.add("NoDamage");
         flags.add("NoExplode");
         flags.add("NoBuild");
-        Faction wild = new Faction("Safe Zone", "You're safe here", flags);
+        Faction wild = new Faction("SafeZone", "You're safe here", flags);
         FactionMap.put(SAFEID, wild);
         saveFaction(SAFEID);
     }
@@ -742,7 +781,7 @@ public class FactionManager {
         flags.add("UnlimitedLand");
         flags.add("Unrelateable");
         flags.add("BonusPower");
-        Faction wild = new Faction("War Zone", "You're not safe here, you will lose more power when you die, but will gain more power when you kill", flags);
+        Faction wild = new Faction("WarZone", "You're not safe here, you will lose more power when you die, but will gain more power when you kill", flags);
         FactionMap.put(WARID, wild);
         saveFaction(WARID);
     }

@@ -14,6 +14,7 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 public class Faction {
@@ -108,6 +109,14 @@ public class Faction {
             return relation.relation;
         }
         return null;
+    }
+
+    public List<String> getMemberNames(){
+        List<String> memberList = new ArrayList<>();
+        for (UUID member : members){
+            memberList.add(FactionManager.getInstance().getPlayer(member).lastKnownName);
+        }
+        return memberList;
     }
 
     /**
