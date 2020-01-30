@@ -2,11 +2,12 @@ package com.demmodders.factions.faction;
 
 import com.demmodders.datmoddingapi.structures.ChunkLocation;
 import com.demmodders.datmoddingapi.structures.Location;
+import com.demmodders.datmoddingapi.util.FileHelper;
 import com.demmodders.factions.Factions;
 import com.demmodders.factions.api.event.InFactionEvent;
 import com.demmodders.factions.api.event.OutFactionEvent;
 import com.demmodders.factions.util.FactionConfig;
-import com.demmodders.factions.util.FileHelper;
+import com.demmodders.factions.util.FactionFileHelper;
 import com.demmodders.factions.util.enums.FactionRank;
 import com.demmodders.factions.util.enums.RelationState;
 import com.demmodders.factions.util.structures.Power;
@@ -687,10 +688,10 @@ public class FactionManager {
         if (FactionMap.containsKey(FactionID)) {
             Gson gson = new Gson();
             File factionFile;
-            if (FactionID.equals(WILDID)) factionFile = FileHelper.openFile(new File(FileHelper.getDefaultFactionDir(), "Wild.json"));
-            else if (FactionID.equals(SAFEID)) factionFile = FileHelper.openFile(new File(FileHelper.getDefaultFactionDir(), "SafeZone.json"));
-            else if (FactionID.equals(WARID)) factionFile = FileHelper.openFile(new File(FileHelper.getDefaultFactionDir(), "WarZone.json"));
-            else factionFile = FileHelper.openFile(new File(FileHelper.getFactionsDir(), FactionID.toString()  + ".json"));
+            if (FactionID.equals(WILDID)) factionFile = FileHelper.openFile(new File(FactionFileHelper.getDefaultFactionDir(), "Wild.json"));
+            else if (FactionID.equals(SAFEID)) factionFile = FileHelper.openFile(new File(FactionFileHelper.getDefaultFactionDir(), "SafeZone.json"));
+            else if (FactionID.equals(WARID)) factionFile = FileHelper.openFile(new File(FactionFileHelper.getDefaultFactionDir(), "WarZone.json"));
+            else factionFile = FileHelper.openFile(new File(FactionFileHelper.getFactionsDir(), FactionID.toString()  + ".json"));
             if (factionFile == null){
                 return;
             }
@@ -708,7 +709,7 @@ public class FactionManager {
     public void savePlayer(UUID PlayerID){
         if (PlayerMap.containsKey(PlayerID)){
             Gson gson = new Gson();
-            File playerFile = FileHelper.openFile(new File(FileHelper.getPlayerDir(), PlayerID.toString()  + ".json"));
+            File playerFile = FileHelper.openFile(new File(FactionFileHelper.getPlayerDir(), PlayerID.toString()  + ".json"));
             if (playerFile == null){
                 return;
             }
@@ -726,7 +727,7 @@ public class FactionManager {
     public void saveClaimedChunks(int dim){
         if (ClaimedLand.containsKey(dim)){
             Gson gson = new Gson();
-            File dimFile = FileHelper.openFile(new File(FileHelper.getClaimedDir(), dim + ".json"));
+            File dimFile = FileHelper.openFile(new File(FactionFileHelper.getClaimedDir(), dim + ".json"));
             if (dimFile == null){
                 return;
             }
@@ -789,7 +790,7 @@ public class FactionManager {
     public void loadDefaultFactions(){
         File factionFile;
         // Wild
-        factionFile = new File(FileHelper.getDefaultFactionDir(), "Wild.json");
+        factionFile = new File(FactionFileHelper.getDefaultFactionDir(), "Wild.json");
         if (factionFile.exists()) {
             loadFaction(factionFile, WILDID);
         } else {
@@ -797,7 +798,7 @@ public class FactionManager {
         }
 
         // SafeZone
-        factionFile = new File(FileHelper.getDefaultFactionDir(), "SafeZone.json");
+        factionFile = new File(FactionFileHelper.getDefaultFactionDir(), "SafeZone.json");
         if (factionFile.exists()) {
             loadFaction(factionFile, SAFEID);
         } else {
@@ -805,7 +806,7 @@ public class FactionManager {
         }
 
         // WarZone
-        factionFile = new File(FileHelper.getDefaultFactionDir(), "WarZone.json");
+        factionFile = new File(FactionFileHelper.getDefaultFactionDir(), "WarZone.json");
         if (factionFile.exists()) {
             loadFaction(factionFile, WARID);
         } else {
@@ -814,7 +815,7 @@ public class FactionManager {
     }
 
     public void loadFactions(){
-        File[] factions = FileHelper.getFactionsDir().listFiles();
+        File[] factions = FactionFileHelper.getFactionsDir().listFiles();
         if (factions != null) {
             for (File faction : factions){
                 loadFaction(faction);
@@ -840,19 +841,19 @@ public class FactionManager {
     }
 
     public void deleteFactionFile(UUID FactionID){
-        File factionFile = new File(FileHelper.getFactionsDir(), FactionID + ".json");
+        File factionFile = new File(FactionFileHelper.getFactionsDir(), FactionID + ".json");
         if (factionFile.exists()){
             factionFile.delete();
         }
     }
 
     public void loadFaction(UUID id){
-        File theFile = new File(FileHelper.getFactionsDir(), id.toString() + ".json");
+        File theFile = new File(FactionFileHelper.getFactionsDir(), id.toString() + ".json");
         if (theFile.exists()) loadFaction(theFile);
     }
 
     public void loadPlayers(){
-        File[] players = FileHelper.getPlayerDir().listFiles();
+        File[] players = FactionFileHelper.getPlayerDir().listFiles();
         if (players != null) {
             for (File player : players){
                 loadPlayer(player);
@@ -874,12 +875,12 @@ public class FactionManager {
     }
 
     public void loadPlayer(UUID id){
-        File theFile = new File(FileHelper.getPlayerDir(), id.toString()  + ".json");
+        File theFile = new File(FactionFileHelper.getPlayerDir(), id.toString()  + ".json");
         if (theFile.exists()) loadFaction(theFile);
     }
 
     public void loadClaimedChunks(){
-        File[] dims = FileHelper.getClaimedDir().listFiles();
+        File[] dims = FactionFileHelper.getClaimedDir().listFiles();
         if (dims != null) {
             for (File dim : dims){
                 loadClaimedChunkDim(dim);
@@ -900,7 +901,7 @@ public class FactionManager {
     }
 
     public void loadClaimedChunkDim(String dim){
-        File theFile = new File(FileHelper.getClaimedDir(), dim  + ".json");
+        File theFile = new File(FactionFileHelper.getClaimedDir(), dim  + ".json");
         if (theFile.exists()) loadClaimedChunkDim(theFile);
     }
 }

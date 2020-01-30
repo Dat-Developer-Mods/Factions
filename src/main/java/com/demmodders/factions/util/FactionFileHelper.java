@@ -7,28 +7,8 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 
-public class FileHelper{
+public class FactionFileHelper {
     public static final Logger LOGGER = LogManager.getLogger(Factions.MODID);
-
-    /**
-     * Safely opens the given file, creating the required directories and file if needed
-     * @param theFile The file to open
-     * @return The opened file
-     */
-    public static File openFile(File theFile){
-        try {
-            boolean success = true;
-            if (!theFile.getParentFile().exists()) success = theFile.getParentFile().mkdirs();
-            if (!theFile.exists()) success = theFile.createNewFile();
-            if (!success) throw new IOException();
-            return theFile;
-        } catch (IOException e) {
-            e.printStackTrace();
-            LOGGER.error(com.demmodders.factions.Factions.MODID + " Unable to create file " + theFile.getPath() + "\n This faction data will not persist past a server restart");
-        }
-        return null;
-    }
-
     /**
      * Gets the base directory the faction data is stored in
      * @return A File object at the base directory
@@ -51,6 +31,19 @@ public class FileHelper{
         if(!dir.exists()){
             boolean success = dir.mkdirs();
             assert success : "Unable to create factions Directory";
+        }
+        return dir;
+    }
+
+    /**
+     * Gets the directory the default faction data is stored in
+     * @return A file object at the directory the faction data is stored in
+     */
+    public static File getDefaultFactionDir(){
+        File dir = new File(getBaseDir(), "DefaultFactions");
+        if(!dir.exists()){
+            boolean success = dir.mkdirs();
+            assert success : "Unable to create Default Factions Directory";
         }
         return dir;
     }
@@ -79,28 +72,5 @@ public class FileHelper{
             assert success : "Unable to create Player Directory";
         }
         return dir;
-    }
-
-    /**
-     * Gets the directory the default factions data is stored in
-     * @return A file object at the directory the default faction data is stored in
-     */
-    public static File getDefaultFactionDir(){
-        File dir = new File(getBaseDir(), "DefaultFactions");
-        if(!dir.exists()){
-            boolean success = dir.mkdirs();
-            assert success : "Unable to create Player Directory";
-        }
-        return dir;
-    }
-
-    /**
-     * Gets the base name of the file (the name without the extension)
-     * @param FileName The name of the file with the extension
-     * @return The name of the file without the extension
-     */
-    public static String getBaseName(String FileName){
-        int index = FileName.lastIndexOf('.');
-        return (index != -1 ? FileName.substring(0, index) : FileName);
     }
 }
