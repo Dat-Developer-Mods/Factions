@@ -1,10 +1,10 @@
 package com.demmodders.factions.faction;
 
+import com.demmodders.datmoddingapi.structures.Location;
 import com.demmodders.factions.Factions;
 import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.DemUtils;
 import com.demmodders.factions.util.enums.RelationState;
-import com.demmodders.factions.util.structures.Location;
 import com.demmodders.factions.util.structures.Power;
 import com.demmodders.factions.util.structures.Relationship;
 import net.minecraft.server.management.PlayerList;

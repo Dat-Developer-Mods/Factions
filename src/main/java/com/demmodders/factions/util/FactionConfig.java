@@ -157,7 +157,6 @@ public class FactionConfig {
                 ConfigManager.sync(Factions.MODID, Config.Type.INSTANCE);
             }
         }
-
     }
 
 

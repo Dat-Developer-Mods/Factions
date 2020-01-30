@@ -1,8 +1,9 @@
 package com.demmodders.factions.util;
 
+import com.demmodders.factions.commands.FactionCommandList;
 import com.google.gson.Gson;
 
-import java.io.InputStream;
+import java.io.*;
 import java.util.HashMap;
 
 public class FlagDescriptions {
@@ -12,10 +13,13 @@ public class FlagDescriptions {
     public FlagDescriptions(){}
 
     public static FlagDescriptions loadFlagDescriptions(){
-        Gson gson = new Gson();
-        InputStream json = FlagDescriptions.class.getClassLoader().getResourceAsStream("JSON/Flags.json");
-        if (json != null) {
-            return gson.fromJson(json.toString(), FlagDescriptions.class);
+        try {
+            Gson gson = new Gson();
+            File json = new File(FactionCommandList.class.getClassLoader().getResource("JSON/Flags.json").getFile());
+            Reader reader = new FileReader(json);
+            return gson.fromJson(reader, FlagDescriptions.class);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
         return null;
     }

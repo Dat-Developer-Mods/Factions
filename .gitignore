@@ -24,4 +24,6 @@ hs_err_pid*
 build/
 
 production/
+
 !gradle/wrapper/gradle-wrapper.jar
+!lib/**

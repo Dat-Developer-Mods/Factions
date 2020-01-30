@@ -1,15 +1,14 @@
 package com.demmodders.factions.faction;
 
+import com.demmodders.datmoddingapi.structures.ChunkLocation;
+import com.demmodders.datmoddingapi.structures.Location;
 import com.demmodders.factions.Factions;
-import com.demmodders.factions.api.event.FactionEvent;
 import com.demmodders.factions.api.event.InFactionEvent;
 import com.demmodders.factions.api.event.OutFactionEvent;
 import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.FileHelper;
 import com.demmodders.factions.util.enums.FactionRank;
 import com.demmodders.factions.util.enums.RelationState;
-import com.demmodders.factions.util.structures.ChunkLocation;
-import com.demmodders.factions.util.structures.Location;
 import com.demmodders.factions.util.structures.Power;
 import com.demmodders.factions.util.structures.Relationship;
 import com.google.gson.Gson;

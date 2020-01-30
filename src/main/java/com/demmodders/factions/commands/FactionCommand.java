@@ -1,13 +1,14 @@
 package com.demmodders.factions.commands;
 
-import akka.util.Index;
+import com.demmodders.datmoddingapi.delayedexecution.DelayHandler;
+import com.demmodders.datmoddingapi.delayedexecution.delayedevents.DelayedTeleportEvent;
+import com.demmodders.datmoddingapi.structures.Location;
 import com.demmodders.factions.faction.Faction;
 import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.DemUtils;
 import com.demmodders.factions.util.enums.FactionChatMode;
 import com.demmodders.factions.util.enums.FactionRank;
-import com.demmodders.factions.util.structures.Location;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -308,8 +309,8 @@ public class FactionCommand extends CommandBase {
                             if (fMan.getFaction(factionID).homePos != null) {
                                 int age = (int)(DemUtils.calculateAge(fMan.getPlayer(playerID).lastTeleport) / 1000);
                                 if (age > FactionConfig.playerSubCat.reTeleportDelay) {
-                                    EntityPlayerMP posSource = (EntityPlayerMP) sender;
-                                    TeleportHandler.getInstance().addTeleportEvent((EntityPlayerMP) sender, fMan.getFaction(factionID).homePos, FactionConfig.playerSubCat.teleportDelay, posSource.posX, posSource.posY, posSource.posZ);
+                                    EntityPlayerMP playerMP = (EntityPlayerMP) sender;
+                                    DelayHandler.addEvent(new DelayedTeleportEvent(fMan.getFaction(factionID).homePos, playerMP, FactionConfig.playerSubCat.teleportDelay));
                                     replyMessage = TextFormatting.GOLD + "Teleporting in " + FactionConfig.playerSubCat.teleportDelay + " Seconds";
                                 } else {
                                     replyMessage = TextFormatting.GOLD + "You must wait " + (FactionConfig.playerSubCat.teleportDelay - age) + " more seconds before you can do that again";

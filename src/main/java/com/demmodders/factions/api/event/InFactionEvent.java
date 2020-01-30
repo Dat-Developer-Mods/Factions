@@ -1,9 +1,9 @@
 package com.demmodders.factions.api.event;
 
+import com.demmodders.datmoddingapi.structures.ChunkLocation;
 import com.demmodders.factions.faction.Faction;
 import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.enums.RelationState;
-import com.demmodders.factions.util.structures.ChunkLocation;
 import net.minecraftforge.fml.common.eventhandler.Cancelable;
 
 import java.util.UUID;
