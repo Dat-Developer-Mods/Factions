@@ -381,6 +381,16 @@ public class FactionManager {
         return null;
     }
 
+    /**
+     * Gets the owner of the chunk at the given ChunkLocation
+     * @param Chunk the ChunkLocation
+     * @return The UUID of the faction that owns the chunk
+     */
+    @Nullable
+    public UUID getChunkOwningFaction(ChunkLocation Chunk) {
+        return getChunkOwningFaction(Chunk.dim, Chunk.x, Chunk.z);
+    }
+
     public boolean checkPlayerCanBuild(int Dim, int ChunkX, int ChunkZ, UUID PlayerID){
         String chunkKey = makeChunkKey(ChunkX, ChunkZ);
         if (ClaimedLand.containsKey(Dim) && ClaimedLand.get(Dim).containsKey(chunkKey)){
@@ -488,11 +498,7 @@ public class FactionManager {
      */
     public void releaseAllFactionLand(UUID FactionID){
         for (int dim : ClaimedLand.keySet()){
-            for (String land : ClaimedLand.get(dim).keySet()){
-                if (ClaimedLand.get(dim).get(land).equals(FactionID)) {
-                    ClaimedLand.get(dim).remove(land);
-                }
-            }
+            ClaimedLand.get(dim).values().removeIf(value -> value.equals(FactionID));
             saveClaimedChunks(dim);
         }
         if(FactionMap.containsKey(FactionID)) FactionMap.get(FactionID).land.clear();

@@ -1,5 +1,6 @@
 package com.demmodders.factions.events;
 
+import com.demmodders.datmoddingapi.structures.ChunkLocation;
 import com.demmodders.factions.Factions;
 import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.FactionConfig;
@@ -8,9 +9,9 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.event.entity.EntityEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.world.BlockEvent;
-import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
@@ -29,28 +30,29 @@ public class PlayerEvents {
             // record username for use when they're offline
             FactionManager.getInstance().setPlayerLastKnownName(e.player.getUniqueID(), e.player.getName());
         } else {
-            LOGGER.info(e.player.getName() + " is not registered, ammending");
+            LOGGER.info(e.player.getName() + " is not registered with factions, amending");
             FactionManager.getInstance().registerPlayer(e.player);
         }
     }
 
     @SubscribeEvent
     public static void playerKilled(LivingDeathEvent e){
+        // TODO: CHECK
         if (e.getEntity() instanceof EntityPlayer && e.getSource().getTrueSource() instanceof EntityPlayer) {
             FactionManager fMan = FactionManager.getInstance();
             UUID killedFaction = fMan.getPlayersFactionID(e.getEntity().getUniqueID());
             UUID killerFaction = fMan.getPlayersFactionID(e.getSource().getTrueSource().getUniqueID());
             double powerLossMultiplier = -1;
             double powerGainMultiplier = 0;
-            double powerMaxGainMultipler = 0;
+            double powerMaxGainMultiplier = 0;
 
             if (killedFaction != null) {
                 powerGainMultiplier = FactionConfig.powerSubCat.killPowerGain;
-                powerMaxGainMultipler = FactionConfig.powerSubCat.killMaxPowerGain;
+                powerMaxGainMultiplier = FactionConfig.powerSubCat.killMaxPowerGain;
                 if (killerFaction != null) {
                     if (fMan.getFaction(killedFaction).relationships.get(killerFaction).relation == RelationState.ENEMY || fMan.getFaction(killerFaction).relationships.get(killedFaction).relation == RelationState.ENEMY) {
                         powerGainMultiplier = powerGainMultiplier * FactionConfig.powerSubCat.enemyKillMultiplier;
-                        powerMaxGainMultipler = FactionConfig.powerSubCat.enemyKillMultiplier;
+                        powerMaxGainMultiplier = FactionConfig.powerSubCat.enemyKillMultiplier;
                         powerLossMultiplier = FactionConfig.powerSubCat.deathByEnemyMultiplier;
                     }
                 }
@@ -60,24 +62,24 @@ public class PlayerEvents {
                 case LIEUTENANT:
                     powerGainMultiplier = FactionConfig.powerSubCat.lieutenantMultiplier * powerGainMultiplier;
                     powerLossMultiplier = FactionConfig.powerSubCat.lieutenantMultiplier * powerLossMultiplier;
-                    powerMaxGainMultipler = FactionConfig.powerSubCat.lieutenantMultiplier * powerMaxGainMultipler;
+                    powerMaxGainMultiplier = FactionConfig.powerSubCat.lieutenantMultiplier * powerMaxGainMultiplier;
                     break;
                 case OFFICER:
                     powerGainMultiplier = FactionConfig.powerSubCat.officerMultiplier * powerGainMultiplier;
                     powerLossMultiplier = FactionConfig.powerSubCat.officerMultiplier * powerLossMultiplier;
-                    powerMaxGainMultipler = FactionConfig.powerSubCat.officerMultiplier * powerMaxGainMultipler;
+                    powerMaxGainMultiplier = FactionConfig.powerSubCat.officerMultiplier * powerMaxGainMultiplier;
                     break;
                 case OWNER:
                     powerGainMultiplier = FactionConfig.powerSubCat.ownerMultiplier * powerGainMultiplier;
                     powerLossMultiplier = FactionConfig.powerSubCat.ownerMultiplier * powerLossMultiplier;
-                    powerMaxGainMultipler = FactionConfig.powerSubCat.ownerMultiplier * powerMaxGainMultipler;
+                    powerMaxGainMultiplier = FactionConfig.powerSubCat.ownerMultiplier * powerMaxGainMultiplier;
                     break;
             }
 
             fMan.getPlayer(e.getEntity().getUniqueID()).addPower((int) Math.ceil(FactionConfig.powerSubCat.deathPowerLoss * powerLossMultiplier));
             e.getEntity().sendMessage(new TextComponentString(TextFormatting.RED + "You've lost power, your power is now: " + fMan.getPlayer(e.getEntity().getUniqueID()).power.power + "/" + fMan.getPlayer(e.getEntity().getUniqueID()).power.maxPower));
             if (powerGainMultiplier != 0){
-                fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).addMaxPower((int) Math.ceil(FactionConfig.powerSubCat.killMaxPowerGain * powerMaxGainMultipler));
+                fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).addMaxPower((int) Math.ceil(FactionConfig.powerSubCat.killMaxPowerGain * powerMaxGainMultiplier));
                 fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).addPower((int) Math.ceil(FactionConfig.powerSubCat.killPowerGain * powerGainMultiplier));
                 e.getSource().getTrueSource().sendMessage(new TextComponentString(TextFormatting.GREEN + "You've gained power, your power is now: " + fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).power.power + "/" + fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).power.maxPower));
             }
@@ -86,7 +88,7 @@ public class PlayerEvents {
     }
 
     @SubscribeEvent
-    public static void chunkTraversal(EntityEvent.EnteringChunk e){
+    public static void enterChunk(EntityEvent.EnteringChunk e){
         if(e.getEntity() instanceof EntityPlayer && (e.getOldChunkX() != e.getNewChunkX() || e.getOldChunkZ() != e.getNewChunkZ())) {
             FactionManager fMan = FactionManager.getInstance();
             UUID factionID = fMan.getChunkOwningFaction(e.getEntity().dimension, e.getNewChunkX(), e.getNewChunkZ());
@@ -120,21 +122,61 @@ public class PlayerEvents {
 
     @SubscribeEvent
     public static void blockBreak(BlockEvent.BreakEvent e){
-        // TODO: Block Break
-        Factions.LOGGER.info("Break");
+        FactionManager fMan = FactionManager.getInstance();
+        ChunkLocation chunk = ChunkLocation.coordsToChunkCoords(e.getPlayer().dimension, e.getPos().getX(), e.getPos().getZ());
+        UUID chunkOwner = fMan.getChunkOwningFaction(chunk);
+        // Check the chunk is owned
+        if (chunkOwner != null) {
+            UUID playerFaction = fMan.getPlayersFactionID(e.getPlayer().getUniqueID());
+            // Check the chunk isn't owned by the player breaking
+            if (!chunkOwner.equals(playerFaction)) {
+
+                RelationState relation = fMan.getFaction(chunkOwner).getRelation(playerFaction);
+                // Check the relations
+                if (relation == null || (!(FactionConfig.factionSubCat.allyBuild && relation == RelationState.ALLY) && !(FactionConfig.factionSubCat.enemyBuild && (relation == RelationState.ENEMY && fMan.getFaction(playerFaction).getRelation(chunkOwner) == RelationState.ENEMY)))) {
+                    e.getPlayer().sendMessage(new TextComponentString(TextFormatting.RED + "You're not allowed to build on " + fMan.getFaction(chunkOwner).name + "'s Land"));
+                    e.setCanceled(true);
+                }
+            }
+        }
     }
 
     @SubscribeEvent
     public static void blockPlace(BlockEvent.EntityPlaceEvent e){
-        // TODO: Block Place
-        Factions.LOGGER.info("place");
+        if (e.getEntity() instanceof EntityPlayer) {
+            FactionManager fMan = FactionManager.getInstance();
+            ChunkLocation chunk = ChunkLocation.coordsToChunkCoords(e.getEntity().dimension, e.getPos().getX(), e.getPos().getZ());
+            UUID chunkOwner = fMan.getChunkOwningFaction(chunk);
+            // Check the chunk is owned
+            if (chunkOwner != null) {
+                UUID playerFaction = fMan.getPlayersFactionID(e.getEntity().getUniqueID());
+                // Check the chunk isn't owned by the player placing
+                if (!chunkOwner.equals(playerFaction)) {
+                    RelationState relation = fMan.getFaction(chunkOwner).getRelation(playerFaction);
+                    // Check the relations
+                    if (relation == null || (!(FactionConfig.factionSubCat.allyBuild && relation == RelationState.ALLY) && !(FactionConfig.factionSubCat.enemyBuild && (relation == RelationState.ENEMY && fMan.getFaction(playerFaction).getRelation(chunkOwner) == RelationState.ENEMY)))) {
+                        e.getEntity().sendMessage(new TextComponentString(TextFormatting.RED + "You're not allowed to build on " + fMan.getFaction(chunkOwner).name + "'s Land"));
+                        e.setCanceled(true);
+                    }
+                }
+            }
+        }
     }
 
     @SubscribeEvent
-    public static void explosion(ExplosionEvent.Detonate e){
-        Factions.LOGGER.info("EXPLOSION");
-    }
+    public static void playerAttack(LivingAttackEvent e){
 
-    // TODO: BLOCK EXPLOSIONS!?!?!
-    // TODO: Death
+        if (e.getEntity() instanceof EntityPlayer) {
+            FactionManager fMan = FactionManager.getInstance();
+            UUID playerFaction = fMan.getPlayersFactionID(e.getEntity().getUniqueID());
+            if (playerFaction != null && e.getSource().getTrueSource() instanceof EntityPlayer){
+                UUID sourcePlayerFaction = fMan.getPlayersFactionID(e.getSource().getTrueSource().getUniqueID());
+                if (sourcePlayerFaction.equals(playerFaction) && !fMan.getFaction(playerFaction).hasFlag("FriendlyFire")){
+                    e.getSource().getTrueSource().sendMessage(new TextComponentString(TextFormatting.RED + "You cannot damage other members of your faction"));
+                    e.setCanceled(true);
+                }
+            }
+        }
+    }
+    // TODO: Damage
 }
