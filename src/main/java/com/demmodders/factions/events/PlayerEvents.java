@@ -47,34 +47,36 @@ public class PlayerEvents {
             double powerMaxGainMultiplier = 0;
 
             if (killedFaction != null) {
-                powerGainMultiplier = FactionConfig.powerSubCat.killPowerGain;
-                powerMaxGainMultiplier = FactionConfig.powerSubCat.killMaxPowerGain;
-                if (killerFaction != null) {
+                powerGainMultiplier = 1;
+                powerMaxGainMultiplier = 1;
+                if (killerFaction != null && fMan.getFaction(killedFaction).relationships.containsKey(killerFaction)) {
                     if (fMan.getFaction(killedFaction).relationships.get(killerFaction).relation == RelationState.ENEMY || fMan.getFaction(killerFaction).relationships.get(killedFaction).relation == RelationState.ENEMY) {
-                        powerGainMultiplier = powerGainMultiplier * FactionConfig.powerSubCat.enemyKillMultiplier;
-                        powerMaxGainMultiplier = FactionConfig.powerSubCat.enemyKillMultiplier;
-                        powerLossMultiplier = FactionConfig.powerSubCat.deathByEnemyMultiplier;
+                        powerGainMultiplier *= FactionConfig.powerSubCat.enemyKillMultiplier;
+                        powerMaxGainMultiplier *= FactionConfig.powerSubCat.enemyKillMultiplier;
+                        powerLossMultiplier *= FactionConfig.powerSubCat.deathByEnemyMultiplier;
                     }
+                }
+
+                switch(fMan.getPlayer(e.getEntity().getUniqueID()).factionRank){
+                    case LIEUTENANT:
+                        powerGainMultiplier *= FactionConfig.powerSubCat.lieutenantMultiplier;
+                        powerLossMultiplier *= FactionConfig.powerSubCat.lieutenantMultiplier;
+                        powerMaxGainMultiplier *= FactionConfig.powerSubCat.lieutenantMultiplier;
+                        break;
+                    case OFFICER:
+                        powerGainMultiplier *= FactionConfig.powerSubCat.officerMultiplier;
+                        powerLossMultiplier *= FactionConfig.powerSubCat.officerMultiplier;
+                        powerMaxGainMultiplier *= FactionConfig.powerSubCat.officerMultiplier;
+                        break;
+                    case OWNER:
+                        powerGainMultiplier *= FactionConfig.powerSubCat.ownerMultiplier;
+                        powerLossMultiplier *= FactionConfig.powerSubCat.ownerMultiplier;
+                        powerMaxGainMultiplier *= FactionConfig.powerSubCat.ownerMultiplier;
+                        break;
                 }
             }
 
-            switch(fMan.getPlayer(e.getEntity().getUniqueID()).factionRank){
-                case LIEUTENANT:
-                    powerGainMultiplier = FactionConfig.powerSubCat.lieutenantMultiplier * powerGainMultiplier;
-                    powerLossMultiplier = FactionConfig.powerSubCat.lieutenantMultiplier * powerLossMultiplier;
-                    powerMaxGainMultiplier = FactionConfig.powerSubCat.lieutenantMultiplier * powerMaxGainMultiplier;
-                    break;
-                case OFFICER:
-                    powerGainMultiplier = FactionConfig.powerSubCat.officerMultiplier * powerGainMultiplier;
-                    powerLossMultiplier = FactionConfig.powerSubCat.officerMultiplier * powerLossMultiplier;
-                    powerMaxGainMultiplier = FactionConfig.powerSubCat.officerMultiplier * powerMaxGainMultiplier;
-                    break;
-                case OWNER:
-                    powerGainMultiplier = FactionConfig.powerSubCat.ownerMultiplier * powerGainMultiplier;
-                    powerLossMultiplier = FactionConfig.powerSubCat.ownerMultiplier * powerLossMultiplier;
-                    powerMaxGainMultiplier = FactionConfig.powerSubCat.ownerMultiplier * powerMaxGainMultiplier;
-                    break;
-            }
+
 
             fMan.getPlayer(e.getEntity().getUniqueID()).addPower((int) Math.ceil(FactionConfig.powerSubCat.deathPowerLoss * powerLossMultiplier));
             e.getEntity().sendMessage(new TextComponentString(TextFormatting.RED + "You've lost power, your power is now: " + fMan.getPlayer(e.getEntity().getUniqueID()).power.power + "/" + fMan.getPlayer(e.getEntity().getUniqueID()).power.maxPower));
@@ -165,13 +167,12 @@ public class PlayerEvents {
 
     @SubscribeEvent
     public static void playerAttack(LivingAttackEvent e){
-
-        if (e.getEntity() instanceof EntityPlayer) {
+        if (e.getEntity() instanceof EntityPlayer && e.getSource().getTrueSource() instanceof EntityPlayer) {
             FactionManager fMan = FactionManager.getInstance();
-            UUID playerFaction = fMan.getPlayersFactionID(e.getEntity().getUniqueID());
-            if (playerFaction != null && e.getSource().getTrueSource() instanceof EntityPlayer){
-                UUID sourcePlayerFaction = fMan.getPlayersFactionID(e.getSource().getTrueSource().getUniqueID());
-                if (sourcePlayerFaction.equals(playerFaction) && !fMan.getFaction(playerFaction).hasFlag("FriendlyFire")){
+            UUID attackedPlayerFaction = fMan.getPlayersFactionID(e.getEntity().getUniqueID());
+            UUID attackingPlayerFaction = fMan.getPlayersFactionID(e.getSource().getTrueSource().getUniqueID());
+            if (attackedPlayerFaction != null && attackingPlayerFaction != null){
+                if (attackingPlayerFaction.equals(attackedPlayerFaction) && !fMan.getFaction(attackedPlayerFaction).hasFlag("FriendlyFire")){
                     e.getSource().getTrueSource().sendMessage(new TextComponentString(TextFormatting.RED + "You cannot damage other members of your faction"));
                     e.setCanceled(true);
                 }
