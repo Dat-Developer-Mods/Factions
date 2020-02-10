@@ -45,5 +45,7 @@ public class Factions {
     public void serverLoad(FMLServerStartingEvent e){
         // register commands
         CommandRegister.RegisterCommands(e);
+
+        // TODO: Start delayed player points event
     }
 }

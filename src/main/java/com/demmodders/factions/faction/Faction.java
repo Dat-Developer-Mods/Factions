@@ -76,7 +76,7 @@ public class Faction {
         if (members.contains(PlayerID)) {
             members.remove(PlayerID);
         } else {
-            Factions.LOGGER.info("Tried to remove player " + PlayerID + " from faction " + name + " when it already has that player, ignoring");
+            Factions.LOGGER.info("Tried to remove player " + PlayerID + " from faction " + name + " when it didn't have that player, ignoring");
         }
     }
 
@@ -216,7 +216,7 @@ public class Faction {
      * @return a long message detailing public information about the faction
      */
     public String printFactionInfo(){
-        FactionManager fman = FactionManager.getInstance();
+        FactionManager fMan = FactionManager.getInstance();
 
         // Work out age to display
         StringBuilder message = new StringBuilder();
@@ -226,9 +226,9 @@ public class Faction {
         if (minutes < 60){
             age = Math.round(minutes) + " Minutes";
         } else if (minutes < 1440){
-            age = String.valueOf(minutes / 60) + " Hours";
+            age = (minutes / 60) + " Hours";
         } else {
-            age = String.valueOf(minutes / 1440) + " Days";
+            age = (minutes / 1440) + " Days";
         }
 
         // Work out invitation policy to display
@@ -241,7 +241,7 @@ public class Faction {
 
         // Format Members
         StringBuilder memberText = new StringBuilder();
-        Boolean first = true;
+        boolean first = true;
         PlayerList playerList = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList();
         for (UUID player : members){
             if(!first) {
@@ -249,9 +249,11 @@ public class Faction {
             } else {
                 first = false;
             }
+
+            //noinspection ConstantConditions
             if(playerList.getPlayerByUUID(player) != null) memberText.append(TextFormatting.GREEN);
             else memberText.append(TextFormatting.RED);
-            memberText.append(fman.getPlayer(player).lastKnownName);
+            memberText.append(fMan.getPlayer(player).lastKnownName);
         }
 
         StringBuilder allies = new StringBuilder();
@@ -263,11 +265,11 @@ public class Faction {
             if (relationships.get(factionID).relation == RelationState.ALLY){
                 if (!first) allies.append(TextFormatting.RESET).append(", ");
                 else first = false;
-                allies.append(TextFormatting.GREEN).append(fman.getFaction(factionID).name);
+                allies.append(TextFormatting.GREEN).append(fMan.getFaction(factionID).name);
             } else if (relationships.get(factionID).relation == RelationState.ENEMY){
                 if (!enemyFirst) allies.append(TextFormatting.RESET).append(", ");
                 else enemyFirst = false;
-                enemies.append(TextFormatting.RED).append(fman.getFaction(factionID).name);
+                enemies.append(TextFormatting.RED).append(fMan.getFaction(factionID).name);
             }
         }
 

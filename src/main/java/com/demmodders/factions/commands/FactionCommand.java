@@ -120,7 +120,7 @@ public class FactionCommand extends CommandBase {
     }
 
     @Override
-    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+    public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
         if(!(sender instanceof EntityPlayerMP)) return;
 
         CommandResult commandResult = CommandResult.SUCCESS;
@@ -333,7 +333,7 @@ public class FactionCommand extends CommandBase {
                                 replyMessage = TextFormatting.GOLD + "You are the leader of this faction, you must disband it";
                             } else {
                                 fMan.setPlayerFaction(playerID, null);
-                                fMan.getFaction(factionID).members.remove(playerID);
+                                fMan.getFaction(factionID).removePlayer(playerID);
                                 replyMessage = TextFormatting.GOLD + "You have successfully left your faction";
                                 fMan.sendFactionwideMessage(factionID, new TextComponentString(TextFormatting.GOLD + fMan.getPlayer(playerID).lastKnownName + " has left the faction"));
                             }
