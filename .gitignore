@@ -25,5 +25,5 @@ build/
 
 production/
 
-!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/**
 !lib/**
