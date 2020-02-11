@@ -9,10 +9,7 @@ buildscript {
 }
 
 repositories {
-    maven {
-        name = "CurseForge"
-        url = "https://minecraft.curseforge.com/api/maven/"
-    }
+    maven { url 'https://jitpack.io' }
 }
 
 apply plugin: 'net.minecraftforge.gradle.forge'
@@ -54,7 +51,7 @@ dependencies {
     // the 'provided' configuration is for optional dependencies that exist at compile-time but might not at runtime.
     //provided 'com.mod-buildcraft:buildcraft:6.0.8:dev'
 
-    compile 'dat-modding-api:datmoddingapi:latest'
+    compile 'com.github.jtljac:DatModdingAPI:1.+'
 
     // the deobf configurations:  'deobfCompile' and 'deobfProvided' are the same as the normal compile and provided,
     // except that these dependencies get remapped to your current MCP mappings
