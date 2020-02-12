@@ -30,6 +30,7 @@ public class FAdminCommand extends CommandBase {
     @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         Factions.LOGGER.info(PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.admin.test"));
+        // TODO
     }
 
     @Override

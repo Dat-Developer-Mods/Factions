@@ -39,6 +39,7 @@ public class PlayerEvents {
     @SubscribeEvent
     public static void playerKilled(LivingDeathEvent e){
         // TODO: CHECK
+        // TODO: Change based on land
         if (e.getEntity() instanceof EntityPlayer && e.getSource().getTrueSource() instanceof EntityPlayer) {
             FactionManager fMan = FactionManager.getInstance();
             UUID killedFaction = fMan.getPlayersFactionID(e.getEntity().getUniqueID());

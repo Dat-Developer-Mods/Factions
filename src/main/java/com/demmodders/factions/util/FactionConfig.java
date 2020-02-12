@@ -90,12 +90,12 @@ public class FactionConfig {
         @Config.Name("Kill power gain")
         @Config.Comment("The amount of power gained for killing someone")
         @Config.RangeInt(min=0)
-        public int killPowerGain = 10;
+        public int killPowerGain = 20;
 
         @Config.Name("Kill max power gain")
         @Config.Comment("The amount of max power increases by when killing someone")
         @Config.RangeInt(min=0)
-        public int killMaxPowerGain = 20;
+        public int killMaxPowerGain = 10;
 
         @Config.Name("Enemy kill multiplier")
         @Config.Comment("How much more power & max power is gained by killing")
@@ -140,7 +140,7 @@ public class FactionConfig {
 
         @Config.Name("Require land to connect when stealing")
         @Config.Comment("Require newly claimed land to be right next to previously claimed land when stealing the land of other factions")
-        public boolean landRequireConnectWhenStealing = true;
+        public boolean landRequireConnectWhenStealing = false;
     }
 
     public static class Flags {

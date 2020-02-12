@@ -5,12 +5,11 @@ import com.demmodders.datmoddingapi.delayedexecution.delayedevents.DelayedTelepo
 import com.demmodders.datmoddingapi.structures.Location;
 import com.demmodders.factions.faction.Faction;
 import com.demmodders.factions.faction.FactionManager;
-import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.DemUtils;
+import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.enums.FactionChatMode;
 import com.demmodders.factions.util.enums.FactionRank;
 import net.minecraft.command.CommandBase;
-import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
@@ -118,6 +117,8 @@ public class FactionCommand extends CommandBase {
         }
         return TextFormatting.RED + "Could not generate help";
     }
+
+    // TODO: Give more verbose error messages, check colours
 
     @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
@@ -682,8 +683,12 @@ public class FactionCommand extends CommandBase {
                                     for (int i = 1; i < args.length; i++){
                                         mOTD.append(args[i]).append(" ");
                                     }
-                                    fMan.getFaction(factionID).motd = mOTD.toString();
-                                    replyMessage = TextFormatting.GOLD + "Successfully set MOTD to " + mOTD.toString();
+                                    if (mOTD.toString().length() <= FactionConfig.factionSubCat.maxFactionMOTDLength) {
+                                        fMan.getFaction(factionID).motd = mOTD.toString();
+                                        replyMessage = TextFormatting.GOLD + "Successfully set MOTD to " + mOTD.toString();
+                                    } else {
+                                        replyMessage = TextFormatting.RED + "That MOTD is too long";
+                                    }
                                 } else {
                                     commandResult = CommandResult.BADARGUMENT;
                                 }
@@ -873,6 +878,8 @@ public class FactionCommand extends CommandBase {
                     }
                     break;
 
+                // TODO: Flags
+
                 case "desc":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (factionID != null){
@@ -882,8 +889,12 @@ public class FactionCommand extends CommandBase {
                                     for (int i = 1; i < args.length; i++){
                                         desc.append(args[i]).append(" ");
                                     }
-                                    fMan.getFaction(factionID).desc = desc.toString();
-                                    replyMessage = TextFormatting.GOLD + "Successfully set description to " + desc.toString();
+                                    if (desc.toString().length() <= FactionConfig.factionSubCat.maxFactionDescLength) {
+                                        fMan.getFaction(factionID).desc = desc.toString();
+                                        replyMessage = TextFormatting.GOLD + "Successfully set description to " + desc.toString();
+                                    } else {
+                                        replyMessage = TextFormatting.RED + "That description is too long";
+                                    }
                                 } else {
                                     commandResult = CommandResult.BADARGUMENT;
                                 }
