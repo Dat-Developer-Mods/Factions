@@ -3,6 +3,7 @@
     "help" : "View a list and description of all the commands",
     "list" : "View a list all of the factions on the server",
     "info" : "View info on a given faction",
+    "map" : "View a map of the surrounding factions",
     "invites" : "View a list of all the invites to join factions",
     "join" : "Become a member of the given faction",
     "reject" : "Reject an invite from the given faction",

@@ -48,7 +48,7 @@ public class PlayerEvents {
             double powerGainMultiplier = 0;
             double powerMaxGainMultiplier = 0;
 
-            if (killedFaction != null) {
+            if (killedFaction != FactionManager.WILDID) {
                 powerGainMultiplier = 1;
                 powerMaxGainMultiplier = 1;
                 if (killerFaction != null && fMan.getFaction(killedFaction).relationships.containsKey(killerFaction)) {
@@ -96,11 +96,10 @@ public class PlayerEvents {
         if(e.getEntity() instanceof EntityPlayer && (e.getOldChunkX() != e.getNewChunkX() || e.getOldChunkZ() != e.getNewChunkZ())) {
             FactionManager fMan = FactionManager.getInstance();
             UUID factionID = fMan.getChunkOwningFaction(e.getEntity().dimension, e.getNewChunkX(), e.getNewChunkZ());
-            if (fMan.isPlayerRegistered(e.getEntity().getUniqueID()) && fMan.getPlayer(e.getEntity().getUniqueID()).lastFactionLand != factionID) {
-
+            if (fMan.isPlayerRegistered(e.getEntity().getUniqueID()) && (fMan.getPlayer(e.getEntity().getUniqueID()).lastFactionLand == null || !fMan.getPlayer(e.getEntity().getUniqueID()).lastFactionLand.equals(factionID))) {
                 UUID playerFaction = fMan.getPlayersFactionID(e.getEntity().getUniqueID());
                 String message = "";
-                if (factionID == null) {
+                if (factionID == FactionManager.WILDID) {
                     message = TextFormatting.GOLD + FactionManager.getInstance().getFaction(FactionManager.WILDID).getLandTag();
                 } else if (playerFaction != null) {
                     if (playerFaction.equals(factionID)) {
@@ -130,7 +129,7 @@ public class PlayerEvents {
         ChunkLocation chunk = ChunkLocation.coordsToChunkCoords(e.getPlayer().dimension, e.getPos().getX(), e.getPos().getZ());
         UUID chunkOwner = fMan.getChunkOwningFaction(chunk);
         // Check the chunk is owned
-        if (chunkOwner != null) {
+        if (chunkOwner != FactionManager.WILDID) {
             UUID playerFaction = fMan.getPlayersFactionID(e.getPlayer().getUniqueID());
             // Check the chunk isn't owned by the player breaking
             if (!chunkOwner.equals(playerFaction)) {
@@ -152,7 +151,7 @@ public class PlayerEvents {
             ChunkLocation chunk = ChunkLocation.coordsToChunkCoords(e.getEntity().dimension, e.getPos().getX(), e.getPos().getZ());
             UUID chunkOwner = fMan.getChunkOwningFaction(chunk);
             // Check the chunk is owned
-            if (chunkOwner != null) {
+            if (chunkOwner != FactionManager.WILDID) {
                 UUID playerFaction = fMan.getPlayersFactionID(e.getEntity().getUniqueID());
                 // Check the chunk isn't owned by the player placing
                 if (!chunkOwner.equals(playerFaction)) {

@@ -23,6 +23,8 @@ import javax.annotation.Nullable;
 import java.util.*;
 
 public class FactionCommand extends CommandBase {
+    final static String[] symbols = new String[]{"/", "\\", "|", "#", "?", "!", "%", "$", "&", "*", "£"};
+
     @Override
     public String getName() {
         return "faction";
@@ -194,6 +196,48 @@ public class FactionCommand extends CommandBase {
                         } else {
                             replyMessage = fMan.getFaction(fMan.getFactionIDFromName(args[1].toLowerCase())).printFactionInfo();
                         }
+                    } else {
+                        commandResult = CommandResult.NOPERMISSION;
+                    }
+                    break;
+
+                case "map":
+                    if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.map")) {
+                        StringBuilder message = new StringBuilder();
+
+                        HashMap<UUID, String> symbolMap = new HashMap<>();
+
+                        int startX = ((EntityPlayerMP) sender).chunkCoordX - (FactionConfig.playerSubCat.mapWidth / 2);
+                        int endX = ((EntityPlayerMP) sender).chunkCoordX + (FactionConfig.playerSubCat.mapWidth / 2);
+
+                        int startZ = ((EntityPlayerMP) sender).chunkCoordZ - (FactionConfig.playerSubCat.mapHeight / 2);
+                        int endZ = ((EntityPlayerMP) sender).chunkCoordZ + (FactionConfig.playerSubCat.mapHeight / 2);
+
+                        for (int i = startZ; i <= endZ; i++) {
+                            for (int j = startX; j <= endX; j++) {
+                                UUID theFaction = fMan.getChunkOwningFaction(((EntityPlayerMP) sender).dimension, j, i);
+                                message.append(TextFormatting.RESET);
+                                if (i == ((EntityPlayerMP) sender).chunkCoordZ && j == ((EntityPlayerMP) sender).chunkCoordX) message.append(TextFormatting.BLUE).append("+");
+
+                                else if (!theFaction.equals(FactionManager.WILDID)) {
+                                    if (!symbolMap.containsKey(theFaction))
+                                        symbolMap.put(theFaction, symbols[symbolMap.size() % symbols.length]);
+
+                                    message.append(fMan.getRelationColour(factionID, theFaction)).append(symbolMap.get(theFaction));
+                                }
+
+                                else message.append("-");
+                            }
+                            message.append("\n");
+                        }
+
+                        message.append("-: Wild");
+
+                        for (UUID theFaction : symbolMap.keySet()){
+                            message.append(TextFormatting.RESET).append(", ").append(fMan.getRelationColour(factionID, theFaction)).append(symbolMap.get(theFaction)).append(": ").append(fMan.getFaction(theFaction).name);
+                        }
+
+                        replyMessage = message.toString();
                     } else {
                         commandResult = CommandResult.NOPERMISSION;
                     }

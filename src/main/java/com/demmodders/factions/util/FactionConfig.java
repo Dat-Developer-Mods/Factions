@@ -76,14 +76,22 @@ public class FactionConfig {
         public int playerMaxPowerCap = 1000;
 
         @Config.Name("Faction home Delay")
-        @Config.RangeInt()
         @Config.Comment("The delay in seconds before a player teleports when using /faction home")
         public int teleportDelay = 3;
 
         @Config.Name("Faction home again Delay")
-        @Config.RangeInt()
         @Config.Comment("The delay in seconds before a player can teleport when using /faction home another time")
         public int reTeleportDelay = 0;
+
+        @Config.Name("Faction map width")
+        @Config.RangeInt(min = 0)
+        @Config.Comment("How many chunks in the x direction to display to the player with /faction map (must be odd, else will be +1)")
+        public int mapWidth = 41;
+
+        @Config.Name("Faction map height")
+        @Config.RangeInt(min = 0)
+        @Config.Comment("How many chunks in the y direction to display to the player with /faction map (must be odd, else will be +1)")
+        public int mapHeight = 11;
     }
 
     public static class PowerConfig {

@@ -306,6 +306,18 @@ public class FactionManager {
         return names;
     }
 
+    public String getRelationColour(UUID OriginalFaction, UUID OtherFaction){
+        if (OriginalFaction != null && OtherFaction != null) {
+            RelationState relationship = FactionMap.get(OriginalFaction).getRelation(OtherFaction);
+            if (OriginalFaction.equals(OtherFaction)) return TextFormatting.DARK_GREEN.toString();
+            else if (relationship == null) return "";
+            else if (relationship == RelationState.ALLY) return TextFormatting.GREEN.toString();
+            else if (relationship == RelationState.ENEMY) return TextFormatting.RED.toString();
+        }
+
+        return "";
+    }
+
     // Players
     /**
      * Checks if a player is registered to the factions system
@@ -370,7 +382,6 @@ public class FactionManager {
      * @param ChunkZ The Z coordinate of the chunk
      * @return The UUID of the faction that owns the chunk
      */
-    @Nullable
     public UUID getChunkOwningFaction(int Dim, int ChunkX, int ChunkZ){
         if (ClaimedLand.containsKey(Dim)){
             String chunkKey = makeChunkKey(ChunkX, ChunkZ);
@@ -378,7 +389,7 @@ public class FactionManager {
                 return ClaimedLand.get(Dim).get(chunkKey);
             }
         }
-        return null;
+        return WILDID;
     }
 
     /**
@@ -386,7 +397,6 @@ public class FactionManager {
      * @param Chunk the ChunkLocation
      * @return The UUID of the faction that owns the chunk
      */
-    @Nullable
     public UUID getChunkOwningFaction(ChunkLocation Chunk) {
         return getChunkOwningFaction(Chunk.dim, Chunk.x, Chunk.z);
     }
