@@ -1,20 +1,21 @@
 {
   "playerFlags":{
-    "Open" : "The faction doesn't require any invites",
-    "FriendlyFire" : "The faction doesn't prevent the members from killing each other"
+    "open" : "The faction doesn't require any invites",
+    "friendlyfire" : "The faction doesn't prevent the members from killing each other"
   },
   "adminFlags":{
-    "NoPowerLoss" : "You don't lose power when you die in this zone",
-    "Permanent" : "The faction cannot be deleted",
-    "Silent" : "The faction isn't mentioned when you cross its border",
-    "StrongBorders" : "The faction's land cannot be claimed",
-    "InfinitePower" : "The faction has unlimited power",
-    "UnlimitedLand" : "The faction has no limit to the amount of land it can have",
-    "Unrelateable" : "The faction cannot have relations",
-    "Default" : "The faction is one of the default factions",
-    "NoDamage" : "You cannot take damage on this faction's land",
-    "NoExplode" : "Blocks in this land can't explode",
-    "NoBuild" : "Players can't break of place blocks in this region",
-    "BonusPower" : "You lose/gain more power when you die/kill on this faction's land"
+    "nopowerloss" : "You don't lose power when you die in this zone",
+    "permanent" : "The faction cannot be deleted",
+    "silent" : "The faction isn't mentioned when you cross its border",
+    "strongborders" : "The faction's land cannot be claimed",
+    "infinitepower" : "The faction has unlimited power",
+    "unlimitedland" : "The faction has no limit to the amount of land it can have",
+    "unrelateable" : "The faction cannot have relations",
+    "uncharted" : "The faction does not show up on a map",
+    "default" : "The faction is one of the default factions",
+    "nodamage" : "You cannot take damage on this faction's land",
+    "noexplode" : "Blocks in this land can't explode",
+    "nobuild" : "Players can't break of place blocks in this region",
+    "bonuspower" : "You lose/gain more power when you die/kill on this faction's land"
   }
 }

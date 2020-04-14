@@ -10,17 +10,18 @@ import java.io.Reader;
 import java.util.LinkedHashMap;
 
 public class FactionCommandList {
-    private LinkedHashMap<String, String> commands = new LinkedHashMap<>();
+    public LinkedHashMap<String, String> commands = new LinkedHashMap<>();
+    public LinkedHashMap<String, String> adminCommands = new LinkedHashMap<>();
 
     FactionCommandList(){}
 
     @Nullable
-    public static LinkedHashMap<String, String> getCommands(){
+    public static FactionCommandList getCommands(){
         try {
             Gson gson = new Gson();
             File json = new File(FactionCommandList.class.getClassLoader().getResource("JSON/Commands.json").getFile());
             Reader reader = new FileReader(json);
-            return gson.fromJson(reader, FactionCommandList.class).commands;
+            return gson.fromJson(reader, FactionCommandList.class);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }

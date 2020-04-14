@@ -96,17 +96,17 @@ public class FactionConfig {
 
     public static class PowerConfig {
         @Config.Name("Kill power gain")
-        @Config.Comment("The amount of power gained for killing someone")
+        @Config.Comment("The amount a players power recharges by when they kill")
         @Config.RangeInt(min=0)
         public int killPowerGain = 20;
 
         @Config.Name("Kill max power gain")
-        @Config.Comment("The amount of max power increases by when killing someone")
+        @Config.Comment("The amount a player's maximum power increases by when killing someone")
         @Config.RangeInt(min=0)
         public int killMaxPowerGain = 10;
 
         @Config.Name("Enemy kill multiplier")
-        @Config.Comment("How much more power & max power is gained by killing")
+        @Config.Comment("How much more power & max power is gained by killing an enemy")
         @Config.RangeDouble(min=0f)
         public double enemyKillMultiplier = 2f;
 
@@ -117,7 +117,7 @@ public class FactionConfig {
 
         @Config.Name("Death by enemy loss multiplier")
         @Config.RangeDouble(min=0f)
-        @Config.Comment("How much more power lost for dying")
+        @Config.Comment("How much more power lost for dying at the hands of an enemy")
         public double deathByEnemyMultiplier = 2f;
 
         @Config.Name("Lieutenant Multiplier")
@@ -134,6 +134,21 @@ public class FactionConfig {
         @Config.RangeDouble(min=0f)
         @Config.Comment("How much extra power is gained/lost for killing/dying as the owner of a faction")
         public double ownerMultiplier = 3f;
+
+        @Config.Name("Power gain rate")
+        @Config.RangeInt(min=0)
+        @Config.Comment("How many seconds in the interval between the player earning power for being on the server")
+        public int powerGainInterval = 1800;
+
+        @Config.Name("Power gain amount")
+        @Config.RangeInt(min=0)
+        @Config.Comment("How much power the player gains after each Power Gain Rate interval")
+        public int powerGainAmount = 10;
+
+        @Config.Name("Max Power gain amount")
+        @Config.RangeInt(min=0)
+        @Config.Comment("How much max power the player gains after each Power Gain Rate interval")
+        public int maxPowerGainAmount = 0;
     }
 
     public static class Land {

@@ -17,5 +17,9 @@ public class OutFactionEvent extends FactionEvent{
         public String getFactionName() {
             return factionName;
         }
+
+        public void setFactionName(String newName) {
+            factionName = newName;
+        }
     }
 }

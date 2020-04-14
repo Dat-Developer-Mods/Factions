@@ -96,7 +96,7 @@ public class FactionManager {
     @Nullable
     public UUID getFactionIDFromName(String Name){
         for (UUID factionID : FactionMap.keySet()){
-            if (FactionMap.get(factionID).name.toLowerCase().equals(Name)){
+            if (FactionMap.get(factionID).name.toLowerCase().equals(Name.toLowerCase())){
                 return factionID;
             }
         }
@@ -171,6 +171,11 @@ public class FactionManager {
         savePlayer(PlayerID);
     }
 
+    /**
+     * Sets the given player's rank
+     * @param PlayerID The player who's rank is being changed
+     * @param Rank The new rank
+     */
     public void setPlayerRank(UUID PlayerID, FactionRank Rank){
         PlayerMap.get(PlayerID).factionRank = Rank;
         savePlayer(PlayerID);
@@ -306,11 +311,16 @@ public class FactionManager {
         return names;
     }
 
+    /**
+     * Gets the colour code for chat that should be shown based off the faction
+     * @param OriginalFaction The faction that has the relation
+     * @param OtherFaction The faction the Original faction has a relation with
+     * @return The colour code for the relation
+     */
     public String getRelationColour(UUID OriginalFaction, UUID OtherFaction){
         if (OriginalFaction != null && OtherFaction != null) {
             RelationState relationship = FactionMap.get(OriginalFaction).getRelation(OtherFaction);
             if (OriginalFaction.equals(OtherFaction)) return TextFormatting.DARK_GREEN.toString();
-            else if (relationship == null) return "";
             else if (relationship == RelationState.ALLY) return TextFormatting.GREEN.toString();
             else if (relationship == RelationState.ENEMY) return TextFormatting.RED.toString();
         }
@@ -401,30 +411,33 @@ public class FactionManager {
         return getChunkOwningFaction(Chunk.dim, Chunk.x, Chunk.z);
     }
 
+    /**
+     * Checks the given player can build on the given chunk
+     * @param Dim The dimension the chunk is in
+     * @param ChunkX The Chunk's X coord
+     * @param ChunkZ The Chunk's Z coord
+     * @param PlayerID The ID of the player trying to build
+     * @return Whether the player can build in the given chunk
+     */
     public boolean checkPlayerCanBuild(int Dim, int ChunkX, int ChunkZ, UUID PlayerID){
-        String chunkKey = makeChunkKey(ChunkX, ChunkZ);
-        if (ClaimedLand.containsKey(Dim) && ClaimedLand.get(Dim).containsKey(chunkKey)){
-            UUID owningFaction = ClaimedLand.get(Dim).get(chunkKey);
-            UUID playerFaction = getPlayersFactionID(PlayerID);
-            if (owningFaction.equals(playerFaction)) {
-                return true;
-            } else {
-                RelationState relation = FactionMap.get(owningFaction).getRelation(playerFaction);
-                if (relation != null){
-                    if (relation == RelationState.ALLY && FactionConfig.factionSubCat.allyBuild) return true;
-                    else if (relation == RelationState.ENEMY && FactionConfig.factionSubCat.enemyBuild) return true;
-                    else return false;
-                } else {
-                    return false;
-                }
-            }
-        } else {
-            return true;
-        }
+        return checkPlayerCanBuild(getChunkOwningFaction(Dim, ChunkX, ChunkZ), PlayerID);
     }
 
-    public void playerKilled(UUID KilledID, UUID KillerID){
+    /**
+     * Checks the given player can build on the given faction land
+     * @param OwningFaction The faction that owns the land
+     * @param PlayerID The player trying to build
+     * @return Whether the player can build on the faction's land
+     */
+    public boolean checkPlayerCanBuild(UUID OwningFaction, UUID PlayerID){
+        if (OwningFaction.equals(WILDID)) return true;
 
+        UUID playerFaction = getPlayersFactionID(PlayerID);
+
+        if (OwningFaction.equals(playerFaction)) return true;
+
+        RelationState relation = FactionMap.get(OwningFaction).getRelation(playerFaction);
+        return (relation == RelationState.ALLY && FactionConfig.factionSubCat.allyBuild || relation == RelationState.ENEMY && FactionConfig.factionSubCat.enemyBuild);
     }
 
     // Faction Functions
@@ -450,7 +463,7 @@ public class FactionManager {
         if (event.isCanceled()) return 4;
 
         UUID factionID = UUID.randomUUID();
-        FactionMap.put(factionID, new Faction(Name, PlayerID));
+        FactionMap.put(factionID, new Faction(event.getFactionName(), PlayerID));
 
         saveFaction(factionID);
 
@@ -461,24 +474,36 @@ public class FactionManager {
         return 0;
     }
 
+    /**
+     * Safely disbands the given faction
+     * @param FactionID The faction being disbanded
+     * @param PlayerID The player disbanding the faction
+     * @return Whether the faction was successfully disbanded
+     */
     public boolean disbandFaction(UUID FactionID, @Nullable UUID PlayerID){
         Faction faction = FactionMap.get(FactionID);
+
+        // Ensure the faction can be disbanded
         if (faction.hasFlag("Permanent")) return false;
 
+        // Post event, fail if something cancelled it
         InFactionEvent.FactionDisbandEvent event = new InFactionEvent.FactionDisbandEvent(PlayerID, FactionID);
         MinecraftForge.EVENT_BUS.post(event);
         if (event.isCanceled()) return false;
 
         releaseAllFactionLand(FactionID);
 
+        // Remove members
         for (UUID playerID : faction.members) {
             setPlayerFaction(playerID, null);
         }
 
+        // Remove invites
         for (UUID invitedPlayerID : faction.invites){
             PlayerMap.get(invitedPlayerID).invites.remove(FactionID);
         }
 
+        // Release relations
         for (UUID otherFactionID : faction.relationships.keySet()){
             FactionMap.get(otherFactionID).relationships.remove(FactionID);
         }
@@ -538,7 +563,7 @@ public class FactionManager {
                 }
             }
         } else {
-            // Create dimension
+            // Create dimension entry
             ClaimedLand.put(Dim, new HashMap<>());
         }
         // Check they can afford it
@@ -551,6 +576,7 @@ public class FactionManager {
         MinecraftForge.EVENT_BUS.post(event);
         if (event.isCanceled()) return 6;
 
+        // Save claim
         ClaimedLand.get(Dim).put(chunkKey, FactionID);
         saveClaimedChunks(Dim);
         FactionMap.get(FactionID).addLandToFaction(Dim, chunkKey);
@@ -694,7 +720,7 @@ public class FactionManager {
         if(isPlayerRegistered(Player.getUniqueID())) {
             return;
         }
-        PlayerMap.put(Player.getUniqueID(), new Player(null, null, new Power(FactionConfig.playerSubCat.playerStartingPower, FactionConfig.playerSubCat.playerStartingMaxPower), Player.getName()));
+        PlayerMap.put(Player.getUniqueID(), new Player(WILDID, null, new Power(FactionConfig.playerSubCat.playerStartingPower, FactionConfig.playerSubCat.playerStartingMaxPower), Player.getName()));
         savePlayer(Player.getUniqueID());
     }
 
@@ -761,12 +787,12 @@ public class FactionManager {
     // Generate default factions
     public void generateWild(){
         ArrayList<String> flags = new ArrayList<>();
-        flags.add("Default");
-        flags.add("Permanent");
-        flags.add("StrongBorders");
-        flags.add("InfinitePower");
-        flags.add("UnlimitedLand");
-        flags.add("Unrelateable");
+        flags.add("default");
+        flags.add("permanent");
+        flags.add("strongborders");
+        flags.add("infinitepower");
+        flags.add("unlimitedland");
+        flags.add("unrelateable");
         Faction wild = new Faction("Wild", "Everywhere that isn't owned by a faction", flags);
         FactionMap.put(WILDID, wild);
         saveFaction(WILDID);
@@ -774,15 +800,14 @@ public class FactionManager {
 
     public void generateSafeZone(){
         ArrayList<String> flags = new ArrayList<>();
-        flags.add("Default");
-        flags.add("Permanent");
-        flags.add("StrongBorders");
-        flags.add("InfinitePower");
-        flags.add("UnlimitedLand");
-        flags.add("Unrelateable");
-        flags.add("NoDamage");
-        flags.add("NoExplode");
-        flags.add("NoBuild");
+        flags.add("default");
+        flags.add("permanent");
+        flags.add("strongborders");
+        flags.add("infinitepower");
+        flags.add("unlimitedland");
+        flags.add("unrelateable");
+        flags.add("nodamage");
+        flags.add("nobuild");
         Faction wild = new Faction("SafeZone", "You're safe here", flags);
         FactionMap.put(SAFEID, wild);
         saveFaction(SAFEID);
@@ -790,13 +815,13 @@ public class FactionManager {
 
     public void generateWarZone(){
         ArrayList<String> flags = new ArrayList<>();
-        flags.add("Default");
-        flags.add("Permanent");
-        flags.add("StrongBorders");
-        flags.add("InfinitePower");
-        flags.add("UnlimitedLand");
-        flags.add("Unrelateable");
-        flags.add("BonusPower");
+        flags.add("default");
+        flags.add("permanent");
+        flags.add("strongborders");
+        flags.add("infinitepower");
+        flags.add("unlimitedland");
+        flags.add("unrelateable");
+        flags.add("bonuspower");
         Faction wild = new Faction("WarZone", "You're not safe here, you will lose more power when you die, but will gain more power when you kill", flags);
         FactionMap.put(WARID, wild);
         saveFaction(WARID);

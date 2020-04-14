@@ -38,15 +38,15 @@ public class Faction {
         name = Name;
         desc = Desc;
 
-        power = new Power();
-        flags = flags;
+        power = new Power(FactionConfig.factionSubCat.factionStartingPower, FactionConfig.factionSubCat.factionStartingMaxPower);
+        flags = Flags;
     }
 
     public Faction(String name, UUID playerID){
         this.name = name;
         this.foundingTime = System.currentTimeMillis();
 
-        power = new Power();
+        power = new Power(FactionConfig.factionSubCat.factionStartingPower, FactionConfig.factionSubCat.factionStartingMaxPower);
         invites = new ArrayList<>();
 
         flags = new ArrayList<>();
@@ -126,6 +126,26 @@ public class Faction {
      */
     public boolean hasFlag(String Flag){
         return flags.contains(Flag);
+    }
+
+    /**
+     * Adds the specified flag to the faction
+     * @param Flag The flag to add
+     */
+    public void setFlag(String Flag){
+        if (!hasFlag(Flag)){
+            flags.add(Flag);
+        }
+    }
+
+    /**
+     * Removes the specified flag to the faction
+     * @param Flag The flag to remove
+     */
+    public void removeFlag(String Flag){
+        if (hasFlag(Flag)){
+            flags.remove(Flag);
+        }
     }
 
     /**
