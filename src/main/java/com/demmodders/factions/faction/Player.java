@@ -29,6 +29,10 @@ public class Player {
         this.lastKnownName = name;
     }
 
+    public boolean hasInvite(UUID factionID){
+        return invites.contains(factionID);
+    }
+
     /**
      * Removes any faction stuff from the player
      */
@@ -38,10 +42,18 @@ public class Player {
         factionChat = FactionChatMode.NORMAL;
     }
 
+    /**
+     * Adds the given amount of power to the player, clamped below their maximum power
+     * @param Power The amount of power to add to the player
+     */
     public void addPower(int Power){
         power.setPower(Power + power.power);
     }
 
+    /**
+     * Adds the given amount of power to the player's max power
+     * @param MaxPower The amount of max power to add to the player
+     */
     public void addMaxPower(int MaxPower){
         if (MaxPower + power.maxPower > FactionConfig.playerSubCat.playerMaxPowerCap) power.maxPower = FactionConfig.playerSubCat.playerMaxPowerCap;
         else power.maxPower = MaxPower + power.maxPower;

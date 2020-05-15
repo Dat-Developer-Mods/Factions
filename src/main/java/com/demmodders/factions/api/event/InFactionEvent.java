@@ -72,4 +72,10 @@ public class InFactionEvent extends FactionEvent {
             return otherFaction;
         }
     }
+
+    public static class FactionUnClaimEvent extends FactionClaimEvent {
+        public FactionUnClaimEvent(ChunkLocation chunkLocation, UUID playerID, UUID factionID) {
+            super(chunkLocation, playerID, factionID);
+        }
+    }
 }

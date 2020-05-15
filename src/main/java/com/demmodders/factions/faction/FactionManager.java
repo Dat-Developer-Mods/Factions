@@ -7,6 +7,7 @@ import com.demmodders.factions.Factions;
 import com.demmodders.factions.api.event.InFactionEvent;
 import com.demmodders.factions.api.event.OutFactionEvent;
 import com.demmodders.factions.util.FactionConfig;
+import com.demmodders.factions.util.FactionConstants;
 import com.demmodders.factions.util.FactionFileHelper;
 import com.demmodders.factions.util.enums.FactionRank;
 import com.demmodders.factions.util.enums.RelationState;
@@ -152,10 +153,16 @@ public class FactionManager {
     /**
      * Sets the faction of the given player
      * @param PlayerID the player who's faction is being change
-     * @param FactionID the faction the player is being added to
+     * @param FactionID the faction the player is being added to, if null then makes the player factionless
+     * @param removeFromFaction Whether to remove the player info from the faction, useful to disable when iterating through and removing the members
      */
-    public void setPlayerFaction(UUID PlayerID, UUID FactionID){
+    public void setPlayerFaction(UUID PlayerID, @Nullable  UUID FactionID, boolean removeFromFaction){
         Player player = PlayerMap.get(PlayerID);
+
+        if (player.faction != null && removeFromFaction){
+            FactionMap.get(player.faction).removePlayer(PlayerID);
+        }
+
         player.faction = FactionID;
 
         if (FactionID != null) {
@@ -320,9 +327,9 @@ public class FactionManager {
     public String getRelationColour(UUID OriginalFaction, UUID OtherFaction){
         if (OriginalFaction != null && OtherFaction != null) {
             RelationState relationship = FactionMap.get(OriginalFaction).getRelation(OtherFaction);
-            if (OriginalFaction.equals(OtherFaction)) return TextFormatting.DARK_GREEN.toString();
-            else if (relationship == RelationState.ALLY) return TextFormatting.GREEN.toString();
-            else if (relationship == RelationState.ENEMY) return TextFormatting.RED.toString();
+            if (OriginalFaction.equals(OtherFaction)) return FactionConstants.TextColour.OWN.toString();
+            else if (relationship == RelationState.ALLY) return FactionConstants.TextColour.ALLY.toString();
+            else if (relationship == RelationState.ENEMY) return FactionConstants.TextColour.ENEMY.toString();
         }
 
         return "";
@@ -369,6 +376,7 @@ public class FactionManager {
      * @param playerID The ID of the player
      * @return The UUID of the faction that owns the player
      */
+    @Nullable
     public UUID getPlayersFactionID(UUID playerID){
         return PlayerMap.get(playerID).faction;
     }
@@ -495,7 +503,7 @@ public class FactionManager {
 
         // Remove members
         for (UUID playerID : faction.members) {
-            setPlayerFaction(playerID, null);
+            setPlayerFaction(playerID, WILDID, false);
         }
 
         // Remove invites
@@ -542,6 +550,7 @@ public class FactionManager {
     /**
      * Attempts to claim a chunk for the given faction
      * @param FactionID The faction claiming the chunk
+     * @param PlayerID The player claiming the chunk
      * @param Dim The dimention the chunk is in
      * @param ChunkX The X Coord of the chunk
      * @param ChunkZ The Z Coord of the chunk
@@ -576,11 +585,64 @@ public class FactionManager {
         MinecraftForge.EVENT_BUS.post(event);
         if (event.isCanceled()) return 6;
 
+        if (owned){
+            FactionMap.get(ClaimedLand.get(Dim).get(chunkKey)).removeLandFromFaction(Dim, chunkKey);
+        }
+
         // Save claim
         ClaimedLand.get(Dim).put(chunkKey, FactionID);
         saveClaimedChunks(Dim);
         FactionMap.get(FactionID).addLandToFaction(Dim, chunkKey);
         return (owned ? 1 : 0);
+    }
+    /**
+     * Forcefully claim a chunk for the given faction
+     * @param FactionID The faction claiming the chunk
+     * @param Dim The dimention the chunk is in
+     * @param ChunkX The X Coord of the chunk
+     * @param ChunkZ The Z Coord of the chunk
+     */
+    public void forceClaimLand(UUID FactionID, int Dim, int ChunkX, int ChunkZ){
+        String chunkKey = makeChunkKey(ChunkX, ChunkZ);
+
+        if (ClaimedLand.containsKey(Dim)) {
+            if (ClaimedLand.get(Dim).containsKey(chunkKey)) {
+                FactionMap.get(ClaimedLand.get(Dim).get(chunkKey)).removeLandFromFaction(Dim, chunkKey);
+            }
+        } else {
+            // Create dimension entry
+            ClaimedLand.put(Dim, new HashMap<>());
+        }
+
+        ClaimedLand.get(Dim).put(chunkKey, FactionID);
+        saveClaimedChunks(Dim);
+        FactionMap.get(FactionID).addLandToFaction(Dim, chunkKey);
+    }
+
+    /**
+     * Attempts to remove a factions claim on a chunk
+     * @param FactionID The faction unclaiming the chunk
+     * @param PlayerID The player unclaiming the chunk
+     * @param Dim The dimention the chunk is in
+     * @param ChunkX The X Coord of the chunk
+     * @param ChunkZ The Z Coord of the chunk
+     * @return The result of the claim (0: Success, 1: Faction doesn't own that chunk, 2: Cancelled)
+     */
+    public int unClaimLand(UUID FactionID, @Nullable UUID PlayerID, int Dim, int ChunkX, int ChunkZ){
+        String chunkKey = makeChunkKey(ChunkX, ChunkZ);
+        UUID owningFaction = null;
+        if (ClaimedLand.containsKey(Dim) && ClaimedLand.get(Dim).containsKey(chunkKey) && ClaimedLand.get(Dim).get(chunkKey).equals(FactionID)) {
+            InFactionEvent.FactionClaimEvent event = new InFactionEvent.FactionUnClaimEvent(new ChunkLocation(Dim, ChunkX, ChunkZ), PlayerID, FactionID);
+            MinecraftForge.EVENT_BUS.post(event);
+            if (event.isCanceled()) return 2;
+            else {
+                ClaimedLand.get(Dim).remove(chunkKey);
+                saveClaimedChunks(Dim);
+                FactionMap.get(FactionID).removeLandFromFaction(Dim, chunkKey);
+                return 0;
+            }
+        }
+        return 1;
     }
 
     /**
@@ -599,11 +661,11 @@ public class FactionManager {
         MinecraftForge.EVENT_BUS.post(event);
         if (event.isCanceled()) return 6;
 
-        FactionMap.get(FactionID).relationships.put(OtherFaction, new Relationship(RelationState.ALLY));
+        setFactionRelation(FactionID, OtherFaction, RelationState.ALLY);
         saveFaction(FactionID);
 
         if (!FactionMap.get(OtherFaction).relationships.containsKey(FactionID)) {
-            FactionMap.get(OtherFaction).relationships.put(FactionID, new Relationship(RelationState.PENDINGALLY));
+            setFactionRelation(OtherFaction, FactionID, RelationState.PENDINGALLY);
             saveFaction(OtherFaction);
             sendFactionwideMessage(OtherFaction, new TextComponentString(TextFormatting.DARK_GREEN + FactionMap.get(FactionID).name + " has made you their allies" + (FactionConfig.factionSubCat.allyBuild ? ", this means you can build on their land, but they can't build on yours" : "") + ", add them back with /faction ally " + FactionMap.get(FactionID).name));
             return 0;
@@ -632,11 +694,11 @@ public class FactionManager {
         MinecraftForge.EVENT_BUS.post(event);
         if (event.isCanceled()) return 6;
 
-        FactionMap.get(FactionID).relationships.put(OtherFaction, new Relationship(RelationState.ENEMY));
+        setFactionRelation(FactionID, OtherFaction, RelationState.ENEMY);
         saveFaction(FactionID);
 
         if (!FactionMap.get(OtherFaction).relationships.containsKey(FactionID) || FactionMap.get(OtherFaction).relationships.get(FactionID).relation == RelationState.PENDINGALLY) {
-            FactionMap.get(OtherFaction).relationships.put(FactionID, new Relationship(RelationState.PENDINGENEMY));
+            setFactionRelation(OtherFaction, FactionID, RelationState.PENDINGENEMY);
             saveFaction(OtherFaction);
             sendFactionwideMessage(OtherFaction, new TextComponentString(TextFormatting.DARK_RED + FactionMap.get(FactionID).name + " has declared you an enemy" + (FactionConfig.factionSubCat.enemyBuild ? ", this means they can build on your land, and you can build on theirs" : "") + ", let them know you got the message with with /faction enemy " + FactionMap.get(FactionID).name));
             return 0;
@@ -665,7 +727,7 @@ public class FactionManager {
         MinecraftForge.EVENT_BUS.post(event);
         if (event.isCanceled()) return 6;
 
-        FactionMap.get(FactionID).relationships.remove(OtherFaction);
+        setFactionRelation(FactionID, OtherFaction, null);
         saveFaction(FactionID);
         if (FactionMap.get(OtherFaction).relationships.containsKey(FactionID)) {
             switch (FactionMap.get(OtherFaction).relationships.get(FactionID).relation){
@@ -678,7 +740,7 @@ public class FactionManager {
                 case PENDINGALLY:
                 case PENDINGENEMY:
                     sendFactionwideMessage(OtherFaction, new TextComponentString(TextFormatting.GOLD + FactionMap.get(FactionID).name + " No longer wants to be your " + (FactionMap.get(OtherFaction).relationships.get(FactionID).relation == RelationState.PENDINGALLY ? "ally, " + (FactionConfig.factionSubCat.allyBuild ? "you can no longer build on their land" : "") : "enemy" + (FactionConfig.factionSubCat.enemyBuild ? "you can no longer build on each other's land" : ""))));
-                    FactionMap.get(OtherFaction).relationships.remove(FactionID);
+                    setFactionRelation(OtherFaction, FactionID, null);
                     saveFaction(OtherFaction);
                     break;
             }
@@ -691,6 +753,17 @@ public class FactionManager {
             default:
                 return 0;
         }
+    }
+
+    /**
+     * Sets the given faction's relation with the other given faction to the given relation
+     * @param FactionID The faction the relation is being set for
+     * @param OtherFactionID The faction the relation is being set about
+     * @param NewRelation The new relation to set the faction to, if null then removes the relationship
+     */
+    public void setFactionRelation(UUID FactionID, UUID OtherFactionID, @Nullable RelationState NewRelation){
+        if (NewRelation != null) FactionMap.get(FactionID).relationships.put(OtherFactionID, new Relationship(NewRelation));
+        else if (FactionMap.get(FactionID).relationships.containsKey(OtherFactionID)) FactionMap.get(FactionID).relationships.remove(OtherFactionID);
     }
 
     /**

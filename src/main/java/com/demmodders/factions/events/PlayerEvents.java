@@ -18,6 +18,8 @@ import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
+import net.minecraftforge.fml.common.network.FMLNetworkEvent;
+import net.minecraftforge.fml.relauncher.libraries.ModList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -39,6 +41,11 @@ public class PlayerEvents {
 
         // Add event for the player to
         DelayHandler.addEvent(new PowerIncrease(FactionConfig.powerSubCat.powerGainInterval, (EntityPlayerMP) e.player));
+    }
+
+    @SubscribeEvent
+    public static void playerConnect(FMLNetworkEvent.ServerConnectionFromClientEvent e){
+
     }
 
     @SubscribeEvent

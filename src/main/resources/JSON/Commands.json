@@ -13,6 +13,7 @@
     "motd" : "View your faction's message of the day",
     "chat" : "Switch your chat so only members of your faction or allies can see your chat messages",
     "claim" : "Claim a chunk for your faction",
+    "unclaim" : "Remove your faction's claim on a chunk",
     "ally" : "Make a given faction an ally of your faction",
     "enemy" : "Make a given faction an enemy of your faction",
     "neutral" : "Make your relationship with a given faction neutral",
@@ -29,17 +30,16 @@
     "setowner" : "Hand over ownership of your faction to another member",
     "disband" : "Permanently disband your faction"
   },
-  "AdminCommands": {
+  "adminCommands": {
     "help" : "View a list and description of all the admin commands",
-    "setfaction" : "Forcefully become a member of the given faction",
-    "leave" : "Leave your faction",
+    "setfaction" : "Forcefully set a player to be a member of the given faction, ignoring size limits",
     "home" : "Instantly teleport to your faction home, ignoring cooldowns",
-    "claim" : "Forcefully claim a chunk for the given faction",
-    "ally" : "Forcefully make a given faction an ally of your faction",
-    "enemy" : "Forcefully make a given faction an enemy of another given faction",
-    "neutral" : "Forcefully make a given faction's relationship with another given faction neutral",
-    "kick" : "Remove a given member from the given faction faction",
-    "invite" : "Invite a player to the given faction",
+    "claim" : "Forcefully claim a chunk for the given faction, or your faction if no faction is given",
+    "ally" : "Forcefully create an alliance between 2 factions",
+    "enemy" : "Forcefully make 2 factions enemies",
+    "neutral" : "Forcefully make 2 factions neutral",
+    "kick" : "Remove a given member from the given faction",
+    "invite" : "Invites a player to the given faction",
     "uninvite" : "Remove an invite to a given player from a given faction",
     "setmotd" : "Set the given faction's message of the day",
     "sethome" : "Set the home location for a given faction",
@@ -51,6 +51,6 @@
     "setowner" : "Set the owning member of a faction",
     "disband" : "Permanently disband the given faction",
     "setpower" : "Sets the power of a given faction",
-    "setmaxpower" : "Sets the max power of a given faction",
+    "setmaxpower" : "Sets the max power of a given faction"
   }
 }

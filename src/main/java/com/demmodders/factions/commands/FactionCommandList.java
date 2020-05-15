@@ -10,21 +10,43 @@ import java.io.Reader;
 import java.util.LinkedHashMap;
 
 public class FactionCommandList {
-    public LinkedHashMap<String, String> commands = new LinkedHashMap<>();
-    public LinkedHashMap<String, String> adminCommands = new LinkedHashMap<>();
+    private static LinkedHashMap<String, String> commands = null;
+    private static LinkedHashMap<String, String> adminCommands = new LinkedHashMap<>();
 
     FactionCommandList(){}
 
-    @Nullable
-    public static FactionCommandList getCommands(){
+    public static LinkedHashMap<String, String> getCommands(){
+        if (commands == null){
+            loadCommands();
+        }
+        return commands;
+    }
+
+    public static LinkedHashMap<String, String> getAdminCommands(){
+        if (adminCommands == null){
+            loadCommands();
+        }
+        return adminCommands;
+    }
+
+    private static void loadCommands(){
         try {
             Gson gson = new Gson();
             File json = new File(FactionCommandList.class.getClassLoader().getResource("JSON/Commands.json").getFile());
             Reader reader = new FileReader(json);
-            return gson.fromJson(reader, FactionCommandList.class);
+            Commands commandsList = gson.fromJson(reader, Commands.class);
+            commands = new LinkedHashMap<>(commandsList.commands);
+            adminCommands = new LinkedHashMap<>(commandsList.adminCommands);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        return null;
+    }
+}
+
+class Commands{
+    public LinkedHashMap<String, String> commands;
+    public LinkedHashMap<String, String> adminCommands;
+    Commands(){
+
     }
 }

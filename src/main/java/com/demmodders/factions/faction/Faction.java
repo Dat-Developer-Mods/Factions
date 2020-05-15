@@ -1,12 +1,16 @@
 package com.demmodders.factions.faction;
 
 import com.demmodders.datmoddingapi.structures.Location;
+import com.demmodders.datmoddingapi.util.DemConstants;
 import com.demmodders.factions.Factions;
 import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.DemUtils;
+import com.demmodders.factions.util.FactionConstants;
+import com.demmodders.factions.util.enums.FactionRank;
 import com.demmodders.factions.util.enums.RelationState;
 import com.demmodders.factions.util.structures.Power;
 import com.demmodders.factions.util.structures.Relationship;
+import com.sun.istack.internal.NotNull;
 import net.minecraft.server.management.PlayerList;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -98,6 +102,19 @@ public class Faction {
     }
 
     /**
+     * removes chunk from the faction
+     * @param Dimension The dimension of the chunk
+     * @param Land The position of the chunk
+     */
+    public void removeLandFromFaction(int Dimension, String Land){
+        if (land.containsKey(Dimension) && land.get(Dimension).contains(Land)){
+            land.get(Dimension).remove(Land);
+        } else {
+            Factions.LOGGER.info("Tried to remove claimed land " + Land + " in Dim " + Dimension + " from faction " + name + " when it didn't have that land, ignoring");
+        }
+    }
+
+    /**
      * Get the relation with the given faction ID
      * @param FactionID The faction to check the relation with
      * @return The relation with the other faction, null if neutral
@@ -107,6 +124,20 @@ public class Faction {
         Relationship relation = relationships.getOrDefault(FactionID, null);
         if (relation != null){
             return relation.relation;
+        }
+        return null;
+    }
+
+    /**
+     * Gets the owner of the faction
+     * @return The owner of the faction
+     */
+    @NotNull
+    public UUID getOwnerID(){
+        for (UUID member : members){
+            if (FactionManager.getInstance().getPlayer(member).factionRank == FactionRank.OWNER){
+                return member;
+            }
         }
         return null;
     }
@@ -244,7 +275,7 @@ public class Faction {
 
         long minutes = DemUtils.calculateAge(foundingTime) / 60000;
         if (minutes < 60){
-            age = Math.round(minutes) + " Minutes";
+            age = minutes + " Minutes";
         } else if (minutes < 1440){
             age = (minutes / 60) + " Hours";
         } else {
@@ -270,7 +301,6 @@ public class Faction {
                 first = false;
             }
 
-            //noinspection ConstantConditions
             if(playerList.getPlayerByUUID(player) != null) memberText.append(TextFormatting.GREEN);
             else memberText.append(TextFormatting.RED);
             memberText.append(fMan.getPlayer(player).lastKnownName);
@@ -285,24 +315,24 @@ public class Faction {
             if (relationships.get(factionID).relation == RelationState.ALLY){
                 if (!first) allies.append(TextFormatting.RESET).append(", ");
                 else first = false;
-                allies.append(TextFormatting.GREEN).append(fMan.getFaction(factionID).name);
+                allies.append(FactionConstants.TextColour.ALLY).append(fMan.getFaction(factionID).name);
             } else if (relationships.get(factionID).relation == RelationState.ENEMY){
                 if (!enemyFirst) allies.append(TextFormatting.RESET).append(", ");
                 else enemyFirst = false;
-                enemies.append(TextFormatting.RED).append(fMan.getFaction(factionID).name);
+                enemies.append(FactionConstants.TextColour.ENEMY).append(fMan.getFaction(factionID).name);
             }
         }
 
-        message.append(TextFormatting.GOLD).append("======").append(TextFormatting.DARK_GREEN).append(TextFormatting.GOLD).append(name).append("======\n");
-        message.append(TextFormatting.GOLD).append("Description: ").append(TextFormatting.RESET).append(desc).append("\n");
-        message.append(TextFormatting.GOLD).append("Age: ").append(TextFormatting.RESET).append(age).append("\n");
-        message.append(TextFormatting.GOLD).append("Invitation Policy: ").append(TextFormatting.RESET).append(invitePolicy).append("\n");
-        message.append(TextFormatting.GOLD).append("Land worth: ").append(TextFormatting.RESET).append(checkCanAffordLand()).append("\n");
-        message.append(TextFormatting.GOLD).append("Power: ").append(TextFormatting.RESET).append(calculatePower()).append("\n");
-        message.append(TextFormatting.GOLD).append("Max Power: ").append(TextFormatting.RESET).append(calculateMaxPower()).append("\n");
-        message.append(TextFormatting.GOLD).append("Members: ").append(memberText.toString()).append("\n");
-        message.append(TextFormatting.GOLD).append("Allies: ").append(allies.toString()).append("\n");
-        message.append(TextFormatting.GOLD).append("Enemies: ").append(enemies.toString()).append("\n");
+        message.append(DemConstants.TextColour.INFO).append("======").append(FactionConstants.TextColour.OWN).append(name).append(DemConstants.TextColour.INFO).append("======\n");
+        message.append(DemConstants.TextColour.INFO).append("Description: ").append(TextFormatting.RESET).append(desc).append("\n");
+        message.append(DemConstants.TextColour.INFO).append("Age: ").append(TextFormatting.RESET).append(age).append("\n");
+        message.append(DemConstants.TextColour.INFO).append("Invitation Policy: ").append(TextFormatting.RESET).append(invitePolicy).append("\n");
+        message.append(DemConstants.TextColour.INFO).append("Land worth: ").append(TextFormatting.RESET).append(checkCanAffordLand()).append("\n");
+        message.append(DemConstants.TextColour.INFO).append("Power: ").append(TextFormatting.RESET).append(calculatePower()).append("\n");
+        message.append(DemConstants.TextColour.INFO).append("Max Power: ").append(TextFormatting.RESET).append(calculateMaxPower()).append("\n");
+        message.append(DemConstants.TextColour.INFO).append("Members: ").append(memberText.toString()).append("\n");
+        message.append(DemConstants.TextColour.INFO).append("Allies: ").append(allies.toString()).append("\n");
+        message.append(DemConstants.TextColour.INFO).append("Enemies: ").append(enemies.toString()).append("\n");
 
         return message.toString();
     }

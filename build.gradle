@@ -51,7 +51,8 @@ dependencies {
     // the 'provided' configuration is for optional dependencies that exist at compile-time but might not at runtime.
     //provided 'com.mod-buildcraft:buildcraft:6.0.8:dev'
 
-    implementation 'com.github.jtljac:DatModdingAPI:1.+'
+    // implementation 'com.github.jtljac:DatModdingAPI:1.+'
+    implementation files('libs/datmoddingapi-1.1.0.jar')
 
     // the deobf configurations:  'deobfCompile' and 'deobfProvided' are the same as the normal compile and provided,
     // except that these dependencies get remapped to your current MCP mappings
