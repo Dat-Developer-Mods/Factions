@@ -2,6 +2,7 @@ package com.demmodders.factions.faction;
 
 import com.demmodders.datmoddingapi.structures.ChunkLocation;
 import com.demmodders.datmoddingapi.structures.Location;
+import com.demmodders.datmoddingapi.util.DemConstants;
 import com.demmodders.datmoddingapi.util.FileHelper;
 import com.demmodders.factions.Factions;
 import com.demmodders.factions.api.event.InFactionEvent;
@@ -17,6 +18,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.server.management.PlayerList;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
@@ -153,28 +155,25 @@ public class FactionManager {
     /**
      * Sets the faction of the given player
      * @param PlayerID the player who's faction is being change
-     * @param FactionID the faction the player is being added to, if null then makes the player factionless
+     * @param FactionID the faction the player is being added to
      * @param removeFromFaction Whether to remove the player info from the faction, useful to disable when iterating through and removing the members
      */
-    public void setPlayerFaction(UUID PlayerID, @Nullable  UUID FactionID, boolean removeFromFaction){
+    public void setPlayerFaction(UUID PlayerID, UUID FactionID, boolean removeFromFaction){
         Player player = PlayerMap.get(PlayerID);
 
-        if (player.faction != null && removeFromFaction){
+        if (removeFromFaction){
             FactionMap.get(player.faction).removePlayer(PlayerID);
         }
 
         player.faction = FactionID;
 
-        if (FactionID != null) {
-            FactionMap.get(FactionID).addPlayer(PlayerID);
-            player.factionRank = FactionRank.GRUNT;
-            if (player.invites.contains(FactionID)){
-                player.invites.remove(FactionID);
-                FactionMap.get(FactionID).invites.remove(PlayerID);
-            }
-        } else {
-            player.factionRank = null;
+        FactionMap.get(FactionID).addPlayer(PlayerID);
+        player.factionRank = FactionRank.GRUNT;
+        if (player.invites.contains(FactionID)){
+            player.invites.remove(FactionID);
+            FactionMap.get(FactionID).invites.remove(PlayerID);
         }
+
         savePlayer(PlayerID);
     }
 
@@ -202,7 +201,7 @@ public class FactionManager {
                 break;
         }
         if (!rank.isEmpty()) {
-            getPlayerMPFromUUID(PlayerID).sendMessage(new TextComponentString(TextFormatting.GOLD + "You are now " + rank));
+            sendMessageToPlayer(PlayerID, DemConstants.TextColour.INFO + "You are now " + rank);
         }
     }
 
@@ -212,22 +211,22 @@ public class FactionManager {
      * Attempts to invite the given player to the given faction
      * @param PlayerID The player being invited
      * @param FactionID The faction the player is invited to
-     * @return Whether the player was successfully invited to the faction
+     * @return The result of the invite (0: Success, 1: Already invited, 2: already a member)
      */
-    public boolean invitePlayerToFaction(UUID PlayerID, UUID FactionID){
-        if (!FactionMap.get(FactionID).invites.contains(PlayerID)) {
-            FactionMap.get(FactionID).invites.add(PlayerID);
-            PlayerMap.get(PlayerID).invites.add(FactionID);
-            saveFaction(FactionID);
-            getPlayerMPFromUUID(PlayerID).sendMessage(new TextComponentString(TextFormatting.GOLD + FactionMap.get(FactionID).name + " Has invited you to join, accept their invite with /faction join " + TextFormatting.DARK_GREEN + FactionMap.get(FactionID).name));
-            return true;
-        } else {
-            return false;
-        }
+    public int invitePlayerToFaction(UUID PlayerID, UUID FactionID){
+        if (FactionMap.get(FactionID).invites.contains(PlayerID)) return 1;
+
+        if (PlayerMap.get(PlayerID).faction.equals(FactionID)) return 2;
+
+        FactionMap.get(FactionID).invites.add(PlayerID);
+        PlayerMap.get(PlayerID).invites.add(FactionID);
+        saveFaction(FactionID);
+        sendMessageToPlayer(PlayerID, DemConstants.TextColour.INFO + FactionMap.get(FactionID).name + " Has invited you to join, accept their invite with " + DemConstants.TextColour.COMMAND + "/faction join " + FactionConstants.TextColour.OWN + FactionMap.get(FactionID).name);
+        return 0;
     }
 
     /**
-     * Remove the any invites to the player if they have any
+     * Remove any invites to the player if they have any
      * @param PlayerID The player who's getting the invite
      * @param FactionID The faction the player's invited to
      * @return Whether there were any invites to remove
@@ -239,7 +238,8 @@ public class FactionManager {
             removed = true;
         }
         if (PlayerMap.get(PlayerID).invites.contains(FactionID)) {
-           PlayerMap.get(PlayerID).invites.remove(FactionID);
+            PlayerMap.get(PlayerID).invites.remove(FactionID);
+
             removed = true;
         }
         return removed;
@@ -310,9 +310,25 @@ public class FactionManager {
         return new ArrayList<UUID>(FactionMap.keySet());
     }
 
+    /**
+     * Gets a list of the names of all the factions in the game
+     * @return A list of all the faction names
+     */
     public List<String> getListOfFactionsNames(){
         ArrayList<String> names = new ArrayList<>();
         for (UUID faction : FactionMap.keySet()){
+            names.add(FactionMap.get(faction).name);
+        }
+        return names;
+    }
+
+    /**
+     * Gets a list of the names of all the factions passed to the function by their UUIDs
+     * @return A list of the faction names
+     */
+    public List<String> getListOfFactionsNamesFromFactionList(ArrayList<UUID> IDs){
+        ArrayList<String> names = new ArrayList<>();
+        for (UUID faction : IDs){
             names.add(FactionMap.get(faction).name);
         }
         return names;
@@ -346,6 +362,18 @@ public class FactionManager {
     }
 
     /**
+     * Registers a player to the factions system
+     * @param Player The player object to register
+     */
+    public void registerPlayer(EntityPlayer Player){
+        if(isPlayerRegistered(Player.getUniqueID())) {
+            return;
+        }
+        PlayerMap.put(Player.getUniqueID(), new Player(WILDID, null, new Power(FactionConfig.playerSubCat.playerStartingPower, FactionConfig.playerSubCat.playerStartingMaxPower), Player.getName()));
+        savePlayer(Player.getUniqueID());
+    }
+
+    /**
      * Checks whether the given player can join the given faction
      * @param PlayerID The player trying to join the faction
      * @param FactionID The faction the player is trying to join
@@ -353,7 +381,7 @@ public class FactionManager {
      */
     public boolean canAddPlayerToFaction(UUID PlayerID, UUID FactionID){
         Faction faction = FactionMap.get(FactionID);
-        if ((FactionConfig.factionSubCat.maxMembers == 0 || faction.members.size() < FactionConfig.factionSubCat.maxMembers) && (faction.invites.contains(PlayerID) || faction.hasFlag("Open"))) return true;
+        if ((FactionConfig.factionSubCat.maxMembers == 0 || faction.members.size() < FactionConfig.factionSubCat.maxMembers) && (faction.invites.contains(PlayerID) || faction.hasFlag("open"))) return true;
         else return false;
     }
 
@@ -362,13 +390,9 @@ public class FactionManager {
      * @param PlayerID The ID of the player
      * @return The faction object the player belongs to
      */
-    @Nullable
     public Faction getPlayersFaction(UUID PlayerID){
         UUID factionID = getPlayersFactionID(PlayerID);
-        if (factionID != null){
-            return FactionMap.get(factionID);
-        }
-        return null;
+        return FactionMap.get(factionID);
     }
 
     /**
@@ -376,9 +400,40 @@ public class FactionManager {
      * @param playerID The ID of the player
      * @return The UUID of the faction that owns the player
      */
-    @Nullable
     public UUID getPlayersFactionID(UUID playerID){
         return PlayerMap.get(playerID).faction;
+    }
+
+    /**
+     * Sends the given message to the given player
+     * @param Player The ID of the player to send the message to
+     * @param Message The Message to send to the player
+     */
+    public void sendMessageToPlayer(UUID Player, String Message){
+        sendMessageToPlayer(Player, new TextComponentString(Message));
+    }
+
+    /**
+     * Sends the given message to the given player
+     * @param Player The ID of the player to send the message to
+     * @param Message The Message to send to the player
+     */
+    public void sendMessageToPlayer(UUID Player, ITextComponent Message){
+        EntityPlayerMP playerMP = getPlayerMPFromUUID(Player);
+        if (playerMP != null){
+            playerMP.sendMessage(Message);
+        }
+    }
+
+
+
+    public String getPlayerStatusColour(UUID PlayerID, boolean ShowAway){
+        PlayerList playerList = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList();
+        if(playerList.getPlayerByUUID(PlayerID) != null) {
+            // TODO: AFK
+            return DemConstants.playerColour.ONLINE.toString();
+        }
+        else return DemConstants.playerColour.OFFLINE.toString();
     }
 
     // Chunks
@@ -427,8 +482,8 @@ public class FactionManager {
      * @param PlayerID The ID of the player trying to build
      * @return Whether the player can build in the given chunk
      */
-    public boolean checkPlayerCanBuild(int Dim, int ChunkX, int ChunkZ, UUID PlayerID){
-        return checkPlayerCanBuild(getChunkOwningFaction(Dim, ChunkX, ChunkZ), PlayerID);
+    public boolean getPlayerCanBuild(int Dim, int ChunkX, int ChunkZ, UUID PlayerID){
+        return getPlayerCanBuild(getChunkOwningFaction(Dim, ChunkX, ChunkZ), PlayerID);
     }
 
     /**
@@ -437,7 +492,7 @@ public class FactionManager {
      * @param PlayerID The player trying to build
      * @return Whether the player can build on the faction's land
      */
-    public boolean checkPlayerCanBuild(UUID OwningFaction, UUID PlayerID){
+    public boolean getPlayerCanBuild(UUID OwningFaction, UUID PlayerID){
         if (OwningFaction.equals(WILDID)) return true;
 
         UUID playerFaction = getPlayersFactionID(PlayerID);
@@ -445,7 +500,7 @@ public class FactionManager {
         if (OwningFaction.equals(playerFaction)) return true;
 
         RelationState relation = FactionMap.get(OwningFaction).getRelation(playerFaction);
-        return (relation == RelationState.ALLY && FactionConfig.factionSubCat.allyBuild || relation == RelationState.ENEMY && FactionConfig.factionSubCat.enemyBuild);
+        return (relation == RelationState.ALLY && FactionConfig.factionSubCat.allyBuild) || ((relation == RelationState.ENEMY || relation == RelationState.PENDINGENEMY) && FactionConfig.factionSubCat.enemyBuild);
     }
 
     // Faction Functions
@@ -492,7 +547,7 @@ public class FactionManager {
         Faction faction = FactionMap.get(FactionID);
 
         // Ensure the faction can be disbanded
-        if (faction.hasFlag("Permanent")) return false;
+        if (faction.hasFlag("permanent")) return false;
 
         // Post event, fail if something cancelled it
         InFactionEvent.FactionDisbandEvent event = new InFactionEvent.FactionDisbandEvent(PlayerID, FactionID);
@@ -528,10 +583,7 @@ public class FactionManager {
      */
     public void sendFactionwideMessage(UUID FactionID, ITextComponent Message){
         for(UUID playerID : FactionMap.get(FactionID).members){
-            EntityPlayerMP player = getPlayerMPFromUUID(playerID);
-            if (player != null){
-                player.sendMessage(Message);
-            }
+            sendMessageToPlayer(playerID, Message);
         }
     }
 
@@ -567,7 +619,7 @@ public class FactionManager {
                 UUID owner = ClaimedLand.get(Dim).get(chunkKey);
 
                 if (owner.equals(FactionID)) return 5;
-                if (FactionMap.get(owner).hasFlag("StrongBorders") || FactionMap.get(owner).calculatePower() >= FactionMap.get(owner).checkCanAffordLand()) {
+                if (FactionMap.get(owner).hasFlag("strongborders") || FactionMap.get(owner).calculatePower() >= FactionMap.get(owner).checkCanAffordLand()) {
                     return 4;
                 }
             }
@@ -576,7 +628,7 @@ public class FactionManager {
             ClaimedLand.put(Dim, new HashMap<>());
         }
         // Check they can afford it
-        if (!(FactionMap.get(FactionID).checkCanAffordLand(1)) && !(FactionMap.get(FactionID).hasFlag("UnlimitedLand"))) return 2;
+        if (!(FactionMap.get(FactionID).checkCanAffordLand(1)) && !(FactionMap.get(FactionID).hasFlag("unlimitedland"))) return 2;
 
         // Check the land is connected
         if (FactionConfig.landSubCat.landRequireConnect && !(FactionConfig.landSubCat.landRequireConnectWhenStealing && owned) && !getFaction(FactionID).checkLandTouches(Dim, ChunkX, ChunkZ)) return 3;
@@ -654,7 +706,7 @@ public class FactionManager {
     public int addAlly(UUID FactionID, UUID OtherFaction, @Nullable UUID PlayerID){
         Relationship currentRelation = FactionMap.get(FactionID).relationships.getOrDefault(OtherFaction, null);
         if (FactionID.equals(OtherFaction)) return 4;
-        if (FactionMap.get(FactionID).hasFlag("Unrelateable")) return 5;
+        if (FactionMap.get(OtherFaction).hasFlag("unrelateable")) return 5;
         if (currentRelation != null && currentRelation.relation == RelationState.ALLY) return 3;
 
         InFactionEvent.FactionRelationEvent event = new InFactionEvent.FactionRelationEvent(PlayerID, FactionID, OtherFaction, RelationState.ALLY);
@@ -684,13 +736,13 @@ public class FactionManager {
      * @param OtherFaction The faction becoming an enemy
      * @return The result of the declaration (0: Success, 1: Success enemies all round, 2: Success but you're an ally to them, 3: already enemies, 4: That's you, 5: No)
      */
-    public int addEnemy(UUID FactionID, UUID OtherFaction, UUID PlayerID){
+    public int addEnemy(UUID FactionID, UUID OtherFaction, @Nullable UUID PlayerID){
         Relationship currentRelation = FactionMap.get(FactionID).relationships.getOrDefault(OtherFaction, null);
         if (FactionID.equals(OtherFaction)) return 4;
-        if (FactionMap.get(OtherFaction).hasFlag("Unrelateable")) return 5;
+        if (FactionMap.get(OtherFaction).hasFlag("unrelateable")) return 5;
         if (currentRelation != null && currentRelation.relation == RelationState.ENEMY) return 3;
 
-        InFactionEvent.FactionRelationEvent event = new InFactionEvent.FactionRelationEvent(PlayerID, FactionID, OtherFaction, RelationState.ALLY);
+        InFactionEvent.FactionRelationEvent event = new InFactionEvent.FactionRelationEvent(PlayerID, FactionID, OtherFaction, RelationState.ENEMY);
         MinecraftForge.EVENT_BUS.post(event);
         if (event.isCanceled()) return 6;
 
@@ -732,14 +784,14 @@ public class FactionManager {
         if (FactionMap.get(OtherFaction).relationships.containsKey(FactionID)) {
             switch (FactionMap.get(OtherFaction).relationships.get(FactionID).relation){
                 case ALLY:
-                    sendFactionwideMessage(OtherFaction, new TextComponentString(TextFormatting.GOLD + FactionMap.get(FactionID).name + " is no longer your Ally, however you still regard them as one" + (FactionConfig.factionSubCat.allyBuild ? ", this means they can build on your land, but you can't build on theirs" : "") + ", you can remove them as allies with /faction neutral " + FactionMap.get(FactionID).name));
+                    sendFactionwideMessage(OtherFaction, new TextComponentString(DemConstants.TextColour.INFO + FactionMap.get(FactionID).name + " is no longer your Ally, however you still regard them as one" + (FactionConfig.factionSubCat.allyBuild ? ", this means they can build on your land, but you can't build on theirs" : "") + ", you can remove them as allies with /faction neutral " + FactionMap.get(FactionID).name));
                     break;
                 case ENEMY:
-                    sendFactionwideMessage(OtherFaction, new TextComponentString(TextFormatting.GOLD + FactionMap.get(FactionID).name + " is no longer your enemy, however you still regard them as one" + (FactionConfig.factionSubCat.enemyBuild ? ", this means they you can still build on each other's land" : "") + ", you can remove them as an enemy with /faction neutral " + FactionMap.get(FactionID).name));
+                    sendFactionwideMessage(OtherFaction, new TextComponentString(DemConstants.TextColour.INFO + FactionMap.get(FactionID).name + " is no longer your enemy, however you still regard them as one" + (FactionConfig.factionSubCat.enemyBuild ? ", this means they you can still build on each other's land" : "") + ", you can remove them as an enemy with /faction neutral " + FactionMap.get(FactionID).name));
                     break;
                 case PENDINGALLY:
                 case PENDINGENEMY:
-                    sendFactionwideMessage(OtherFaction, new TextComponentString(TextFormatting.GOLD + FactionMap.get(FactionID).name + " No longer wants to be your " + (FactionMap.get(OtherFaction).relationships.get(FactionID).relation == RelationState.PENDINGALLY ? "ally, " + (FactionConfig.factionSubCat.allyBuild ? "you can no longer build on their land" : "") : "enemy" + (FactionConfig.factionSubCat.enemyBuild ? "you can no longer build on each other's land" : ""))));
+                    sendFactionwideMessage(OtherFaction, new TextComponentString(DemConstants.TextColour.INFO + FactionMap.get(FactionID).name + " No longer wants to be your " + (FactionMap.get(OtherFaction).relationships.get(FactionID).relation == RelationState.PENDINGALLY ? "ally, " + (FactionConfig.factionSubCat.allyBuild ? "you can no longer build on their land" : "") : "enemy" + (FactionConfig.factionSubCat.enemyBuild ? "you can no longer build on each other's land" : ""))));
                     setFactionRelation(OtherFaction, FactionID, null);
                     saveFaction(OtherFaction);
                     break;
@@ -784,19 +836,6 @@ public class FactionManager {
         return false;
     }
 
-    // Player Functions
-    /**
-     * Registers a player to the factions system
-     * @param Player The player object to register
-     */
-    public void registerPlayer(EntityPlayer Player){
-        if(isPlayerRegistered(Player.getUniqueID())) {
-            return;
-        }
-        PlayerMap.put(Player.getUniqueID(), new Player(WILDID, null, new Power(FactionConfig.playerSubCat.playerStartingPower, FactionConfig.playerSubCat.playerStartingMaxPower), Player.getName()));
-        savePlayer(Player.getUniqueID());
-    }
-
     // IO Functions
     // Save
     public void saveFaction(UUID FactionID){
@@ -824,7 +863,7 @@ public class FactionManager {
     public void savePlayer(UUID PlayerID){
         if (PlayerMap.containsKey(PlayerID)){
             Gson gson = new Gson();
-            File playerFile = FileHelper.openFile(new File(FactionFileHelper.getPlayerDir(), PlayerID.toString()  + ".json"));
+            File playerFile = FileHelper.openFile(new File(FactionFileHelper.getPlayerDir(), PlayerID.toString() + ".json"));
             if (playerFile == null){
                 return;
             }

@@ -3,6 +3,7 @@
     "help" : "View a list and description of all the commands",
     "list" : "View a list all of the factions on the server",
     "info" : "View info on a given faction",
+    "rank" : "Shows the faction rank of the given player",
     "map" : "View a map of the surrounding factions",
     "invites" : "View a list of all the invites to join factions",
     "join" : "Become a member of the given faction",
@@ -10,6 +11,7 @@
     "create" : "Create a faction",
     "leave" : "Leave your faction",
     "home" : "Teleport to your faction home",
+    "members" : "Shows all the faction members sorted into their ranks",
     "motd" : "View your faction's message of the day",
     "chat" : "Switch your chat so only members of your faction or allies can see your chat messages",
     "claim" : "Claim a chunk for your faction",
@@ -51,6 +53,8 @@
     "setowner" : "Set the owning member of a faction",
     "disband" : "Permanently disband the given faction",
     "setpower" : "Sets the power of a given faction",
-    "setmaxpower" : "Sets the max power of a given faction"
+    "resetpower" : "Sets the power of a given faction to its default power",
+    "setmaxpower" : "Sets the max power of a given faction",
+    "resetmaxpower" : "resets the max power of a given faction back to its default max power"
   }
 }

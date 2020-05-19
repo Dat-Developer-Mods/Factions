@@ -2,10 +2,13 @@ package com.demmodders.factions.events;
 
 import com.demmodders.datmoddingapi.delayedexecution.DelayHandler;
 import com.demmodders.datmoddingapi.structures.ChunkLocation;
+import com.demmodders.datmoddingapi.util.DemConstants;
 import com.demmodders.factions.Factions;
 import com.demmodders.factions.delayedevents.PowerIncrease;
+import com.demmodders.factions.faction.Faction;
 import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.FactionConfig;
+import com.demmodders.factions.util.FactionConstants;
 import com.demmodders.factions.util.enums.RelationState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -19,7 +22,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
-import net.minecraftforge.fml.relauncher.libraries.ModList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -115,15 +117,15 @@ public class PlayerEvents {
 
                 // Special land tag for wild
                 if (factionID.equals(FactionManager.WILDID)) {
-                    message = TextFormatting.GOLD + FactionManager.getInstance().getFaction(FactionManager.WILDID).getLandTag();
+                    message = DemConstants.TextColour.INFO + FactionManager.getInstance().getFaction(FactionManager.WILDID).getLandTag();
                 } else if (playerFaction != null) {
                     if (playerFaction.equals(factionID)) {
-                        message = TextFormatting.DARK_GREEN + "your land";
+                        message = FactionConstants.TextColour.OWN + "your land";
                     } else {
                         message = fMan.getRelationColour(playerFaction, factionID) + FactionManager.getInstance().getFaction(factionID).getLandTag();
                     }
                 } else {
-                    message = TextFormatting.GOLD + FactionManager.getInstance().getFaction(factionID).getLandTag();
+                    message = DemConstants.TextColour.INFO + FactionManager.getInstance().getFaction(factionID).getLandTag();
                 }
                 e.getEntity().sendMessage(new TextComponentString("Now entering " + message));
                 fMan.getPlayer(e.getEntity().getUniqueID()).lastFactionLand = factionID;
@@ -136,7 +138,7 @@ public class PlayerEvents {
         FactionManager fMan = FactionManager.getInstance();
         ChunkLocation chunk = ChunkLocation.coordsToChunkCoords(e.getPlayer().dimension, e.getPos().getX(), e.getPos().getZ());
         UUID chunkOwner = fMan.getChunkOwningFaction(chunk);
-        if (fMan.checkPlayerCanBuild(chunkOwner, e.getPlayer().getUniqueID())) {
+        if (!fMan.getPlayerCanBuild(chunkOwner, e.getPlayer().getUniqueID())) {
             e.getPlayer().sendMessage(new TextComponentString(TextFormatting.RED + "You're not allowed to build on " + fMan.getFaction(chunkOwner).name + "'s Land"));
             e.setCanceled(true);
         }
@@ -148,7 +150,7 @@ public class PlayerEvents {
             FactionManager fMan = FactionManager.getInstance();
             ChunkLocation chunk = ChunkLocation.coordsToChunkCoords(e.getEntity().dimension, e.getPos().getX(), e.getPos().getZ());
             UUID chunkOwner = fMan.getChunkOwningFaction(chunk);
-            if (fMan.checkPlayerCanBuild(chunkOwner, e.getEntity().getUniqueID())) {
+            if (!fMan.getPlayerCanBuild(chunkOwner, e.getEntity().getUniqueID())) {
                 e.getEntity().sendMessage(new TextComponentString(TextFormatting.RED + "You're not allowed to build on " + fMan.getFaction(chunkOwner).name + "'s Land"));
                 e.setCanceled(true);
             }
@@ -161,8 +163,8 @@ public class PlayerEvents {
             FactionManager fMan = FactionManager.getInstance();
             UUID attackedPlayerFaction = fMan.getPlayersFactionID(e.getEntity().getUniqueID());
             UUID attackingPlayerFaction = fMan.getPlayersFactionID(e.getSource().getImmediateSource().getUniqueID());
-            if (attackedPlayerFaction != null && attackingPlayerFaction != null){
-                if (attackingPlayerFaction.equals(attackedPlayerFaction) && !fMan.getFaction(attackedPlayerFaction).hasFlag("FriendlyFire")){
+            if (!attackedPlayerFaction.equals(FactionManager.WILDID) && !attackingPlayerFaction.equals(FactionManager.WILDID)){
+                if (attackingPlayerFaction.equals(attackedPlayerFaction) && !fMan.getFaction(attackedPlayerFaction).hasFlag("friendlyfire")){
                     e.getSource().getImmediateSource().sendMessage(new TextComponentString(TextFormatting.RED + "You cannot damage other members of your faction"));
                     e.setCanceled(true);
                 }

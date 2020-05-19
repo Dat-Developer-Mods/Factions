@@ -7,6 +7,7 @@ import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.FactionConstants;
 import com.demmodders.factions.util.FlagDescriptions;
+import com.demmodders.factions.util.enums.CommandResult;
 import com.demmodders.factions.util.enums.FactionRank;
 import com.demmodders.factions.util.enums.RelationState;
 import net.minecraft.command.CommandBase;
@@ -103,7 +104,7 @@ public class FAdminCommand extends CommandBase {
                     break;
                 case "home":
                     if (!console) {
-                        if (factionID != null) {
+                        if (!factionID.equals(fMan.WILDID)) {
                             // Make sure they have a faction home
                             Location destination = fMan.getFaction(factionID).homePos;
                             if (destination != null) {
@@ -217,10 +218,16 @@ public class FAdminCommand extends CommandBase {
                         } else if (fMan.getPlayer(targetPlayer).faction != null) {
                             replyMessage = DemConstants.TextColour.ERROR + args[1] + " cannot receive an invite as they are already a member of a faction";
                         } else {
-                            if (fMan.invitePlayerToFaction(targetPlayer, targetFaction)) {
-                                replyMessage = DemConstants.TextColour.INFO + "Successfully invited " + args[1] + " to " + args[2];
-                            } else {
-                                replyMessage = DemConstants.TextColour.ERROR + args[1] + " already has an invite from " + args[2];
+                            switch(fMan.invitePlayerToFaction(targetPlayer, targetFaction)) {
+                                case 0:
+                                    replyMessage = DemConstants.TextColour.INFO + "Successfully invited " + args[1] + " to " + args[2];
+                                    break;
+                                case 1:
+                                    replyMessage = DemConstants.TextColour.ERROR + args[1] + " already has an invite from " + args[2];
+                                    break;
+                                case 2:
+                                    replyMessage = DemConstants.TextColour.ERROR + args[1] + " is already a member of " + args[2];
+                                    break;
                             }
                         }
                     } else {
@@ -460,7 +467,7 @@ public class FAdminCommand extends CommandBase {
 
                 //TODO Finish
                 default:
-                    replyMessage = DemConstants.TextColour.INFO + "Unknown command, use " + DemConstants.TextColour.COMMAND + "/faction help " + DemConstants.TextColour.INFO + "for a list of available commands";
+                    replyMessage = DemConstants.TextColour.INFO + "Unknown command, use " + DemConstants.TextColour.COMMAND + "/factionadmin help " + DemConstants.TextColour.INFO + "for a list of available commands";
             }
             switch (commandResult){
                 case NOFACTION:

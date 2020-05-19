@@ -2,7 +2,6 @@ package com.demmodders.factions.commands;
 
 import com.google.gson.Gson;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;

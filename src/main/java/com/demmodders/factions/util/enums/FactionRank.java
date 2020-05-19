@@ -9,6 +9,23 @@ public enum FactionRank {
     LIEUTENANT,
     @SerializedName("2")
     OFFICER,
-    @SerializedName("0")
-    OWNER
+    @SerializedName("3")
+    OWNER;
+
+    public static String getFactionRankString(FactionRank Rank){
+        switch (Rank) {
+            case OWNER:
+                return "Owner";
+            case OFFICER:
+                return "Officer";
+            case LIEUTENANT:
+                return "Lieutenant";
+            case GRUNT:
+                return "Grunt";
+        }
+        return null;
+    }
 }
+
+
+

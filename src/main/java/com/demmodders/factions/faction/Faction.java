@@ -3,17 +3,15 @@ package com.demmodders.factions.faction;
 import com.demmodders.datmoddingapi.structures.Location;
 import com.demmodders.datmoddingapi.util.DemConstants;
 import com.demmodders.factions.Factions;
-import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.DemUtils;
+import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.FactionConstants;
 import com.demmodders.factions.util.enums.FactionRank;
 import com.demmodders.factions.util.enums.RelationState;
 import com.demmodders.factions.util.structures.Power;
 import com.demmodders.factions.util.structures.Relationship;
 import com.sun.istack.internal.NotNull;
-import net.minecraft.server.management.PlayerList;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -184,7 +182,7 @@ public class Faction {
      * @return The amount of power the faction has
      */
     public int calculatePower(){
-        if (hasFlag("InfinitePower")) return Integer.MAX_VALUE;
+        if (hasFlag("infinitepower")) return Integer.MAX_VALUE;
         int factionPower = power.power;
         FactionManager fMan = FactionManager.getInstance();
         for (UUID memberID : members) {
@@ -198,7 +196,7 @@ public class Faction {
      * @return the maximum amount of power the faction can have
      */
     public int calculateMaxPower(){
-        if (hasFlag("InfinitePower")) return Integer.MAX_VALUE;
+        if (hasFlag("infinitepower")) return Integer.MAX_VALUE;
         int factionMaxPower = power.maxPower;
         FactionManager fMan = FactionManager.getInstance();
         for (UUID memberID : members) {
@@ -284,7 +282,7 @@ public class Faction {
 
         // Work out invitation policy to display
         String invitePolicy;
-        if (hasFlag("Open")){
+        if (hasFlag("open")){
             invitePolicy = "Open";
         } else {
             invitePolicy = "Invite only";
@@ -293,7 +291,6 @@ public class Faction {
         // Format Members
         StringBuilder memberText = new StringBuilder();
         boolean first = true;
-        PlayerList playerList = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList();
         for (UUID player : members){
             if(!first) {
                 memberText.append(TextFormatting.RESET).append(", ");
@@ -301,9 +298,7 @@ public class Faction {
                 first = false;
             }
 
-            if(playerList.getPlayerByUUID(player) != null) memberText.append(TextFormatting.GREEN);
-            else memberText.append(TextFormatting.RED);
-            memberText.append(fMan.getPlayer(player).lastKnownName);
+            memberText.append(fMan.getPlayerStatusColour(player, false)).append(fMan.getPlayer(player).lastKnownName);
         }
 
         StringBuilder allies = new StringBuilder();
@@ -332,7 +327,7 @@ public class Faction {
         message.append(DemConstants.TextColour.INFO).append("Max Power: ").append(TextFormatting.RESET).append(calculateMaxPower()).append("\n");
         message.append(DemConstants.TextColour.INFO).append("Members: ").append(memberText.toString()).append("\n");
         message.append(DemConstants.TextColour.INFO).append("Allies: ").append(allies.toString()).append("\n");
-        message.append(DemConstants.TextColour.INFO).append("Enemies: ").append(enemies.toString()).append("\n");
+        message.append(DemConstants.TextColour.INFO).append("Enemies: ").append(enemies.toString());
 
         return message.toString();
     }
