@@ -3,6 +3,7 @@ package com.demmodders.factions.events;
 import com.demmodders.datmoddingapi.delayedexecution.DelayHandler;
 import com.demmodders.datmoddingapi.structures.ChunkLocation;
 import com.demmodders.datmoddingapi.util.DemConstants;
+import com.demmodders.datmoddingapi.util.DemStringUtils;
 import com.demmodders.factions.Factions;
 import com.demmodders.factions.delayedevents.PowerIncrease;
 import com.demmodders.factions.faction.Faction;
@@ -110,24 +111,24 @@ public class PlayerEvents {
         if(e.getEntity() instanceof EntityPlayer && (e.getOldChunkX() != e.getNewChunkX() || e.getOldChunkZ() != e.getNewChunkZ())) {
             FactionManager fMan = FactionManager.getInstance();
             UUID factionID = fMan.getChunkOwningFaction(e.getEntity().dimension, e.getNewChunkX(), e.getNewChunkZ());
+            Faction theFaction = fMan.getFaction(factionID);
 
             if (fMan.isPlayerRegistered(e.getEntity().getUniqueID()) && (fMan.getPlayer(e.getEntity().getUniqueID()).lastFactionLand == null || !fMan.getPlayer(e.getEntity().getUniqueID()).lastFactionLand.equals(factionID))) {
                 UUID playerFaction = fMan.getPlayersFactionID(e.getEntity().getUniqueID());
                 String message = "";
-
-                // Special land tag for wild
-                if (factionID.equals(FactionManager.WILDID)) {
-                    message = DemConstants.TextColour.INFO + FactionManager.getInstance().getFaction(FactionManager.WILDID).getLandTag();
-                } else if (playerFaction != null) {
-                    if (playerFaction.equals(factionID)) {
-                        message = FactionConstants.TextColour.OWN + "your land";
-                    } else {
-                        message = fMan.getRelationColour(playerFaction, factionID) + FactionManager.getInstance().getFaction(factionID).getLandTag();
-                    }
+                if (factionID.equals(FactionManager.WILDID)){
+                    message = FactionConfig.factionSubCat.wildLandTag;
+                } else if (factionID.equals(FactionManager.SAFEID)){
+                    message = FactionConfig.factionSubCat.safeLandTag;
+                } else if (factionID.equals(FactionManager.WARID)){
+                    message = FactionConstants.TextColour.ENEMY + FactionConfig.factionSubCat.warLandTag;
+                } else if (playerFaction.equals(factionID) ) {
+                    message = "Now entering " + FactionConstants.TextColour.OWN + "your land";
                 } else {
-                    message = DemConstants.TextColour.INFO + FactionManager.getInstance().getFaction(factionID).getLandTag();
+                    if (theFaction.desc.isEmpty()) message = FactionConfig.factionSubCat.factionLandTagNoDesc;
+                    else message = FactionConfig.factionSubCat.factionLandTag;
                 }
-                e.getEntity().sendMessage(new TextComponentString("Now entering " + message));
+                e.getEntity().sendMessage(new TextComponentString(String.format(DemConstants.TextColour.INFO + message, fMan.getRelationColour(playerFaction, factionID) + theFaction.name + DemConstants.TextColour.INFO, fMan.getRelationColour(playerFaction, factionID) + DemStringUtils.makePossessive((theFaction.name)) + DemConstants.TextColour.INFO, theFaction.desc)));
                 fMan.getPlayer(e.getEntity().getUniqueID()).lastFactionLand = factionID;
             }
         }
@@ -139,7 +140,7 @@ public class PlayerEvents {
         ChunkLocation chunk = ChunkLocation.coordsToChunkCoords(e.getPlayer().dimension, e.getPos().getX(), e.getPos().getZ());
         UUID chunkOwner = fMan.getChunkOwningFaction(chunk);
         if (!fMan.getPlayerCanBuild(chunkOwner, e.getPlayer().getUniqueID())) {
-            e.getPlayer().sendMessage(new TextComponentString(TextFormatting.RED + "You're not allowed to build on " + fMan.getFaction(chunkOwner).name + "'s Land"));
+            e.getPlayer().sendMessage(new TextComponentString(DemConstants.TextColour.ERROR + "You're not allowed to build on " + DemStringUtils.makePossessive(fMan.getFaction(chunkOwner).name) + " Land"));
             e.setCanceled(true);
         }
     }
@@ -151,7 +152,7 @@ public class PlayerEvents {
             ChunkLocation chunk = ChunkLocation.coordsToChunkCoords(e.getEntity().dimension, e.getPos().getX(), e.getPos().getZ());
             UUID chunkOwner = fMan.getChunkOwningFaction(chunk);
             if (!fMan.getPlayerCanBuild(chunkOwner, e.getEntity().getUniqueID())) {
-                e.getEntity().sendMessage(new TextComponentString(TextFormatting.RED + "You're not allowed to build on " + fMan.getFaction(chunkOwner).name + "'s Land"));
+                e.getEntity().sendMessage(new TextComponentString(DemConstants.TextColour.ERROR + "You're not allowed to build on " + DemStringUtils.makePossessive(fMan.getFaction(chunkOwner).name) + " Land"));
                 e.setCanceled(true);
             }
         }
@@ -165,7 +166,7 @@ public class PlayerEvents {
             UUID attackingPlayerFaction = fMan.getPlayersFactionID(e.getSource().getImmediateSource().getUniqueID());
             if (!attackedPlayerFaction.equals(FactionManager.WILDID) && !attackingPlayerFaction.equals(FactionManager.WILDID)){
                 if (attackingPlayerFaction.equals(attackedPlayerFaction) && !fMan.getFaction(attackedPlayerFaction).hasFlag("friendlyfire")){
-                    e.getSource().getImmediateSource().sendMessage(new TextComponentString(TextFormatting.RED + "You cannot damage other members of your faction"));
+                    e.getSource().getImmediateSource().sendMessage(new TextComponentString(DemConstants.TextColour.ERROR + "You cannot damage other members of your faction"));
                     e.setCanceled(true);
                 }
             }

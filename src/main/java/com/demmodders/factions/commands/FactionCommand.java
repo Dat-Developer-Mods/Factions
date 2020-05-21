@@ -89,17 +89,6 @@ public class FactionCommand extends CommandBase {
                     possibilities = fMan.getListOfFactionsNames();
                     break;
 
-                case "flag":
-                    possibilities.add("set");
-                    possibilities.add("remove");
-                    break;
-
-                case "chat":
-                    possibilities.add("normal");
-                    possibilities.add("faction");
-                    possibilities.add("ally");
-                    break;
-
                 // Argument is a member of the faction
                 case "kick":
                 case "setrank":
@@ -114,6 +103,18 @@ public class FactionCommand extends CommandBase {
                 case "uninvite":
                 case "rank":
                     possibilities = Arrays.asList(server.getOnlinePlayerNames());
+                    break;
+
+                // Specifics
+                case "flag":
+                    possibilities.add("set");
+                    possibilities.add("remove");
+                    break;
+
+                case "chat":
+                    possibilities.add("normal");
+                    possibilities.add("faction");
+                    possibilities.add("ally");
                     break;
             }
         } else if (args.length == 3) {
@@ -978,7 +979,7 @@ public class FactionCommand extends CommandBase {
                                     String factionName = fMan.getFaction(factionID).name;
                                     if (args[1].equals(factionName)){
                                         if (fMan.disbandFaction(factionID, playerID)){
-                                            FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendMessage(new TextComponentString(DemConstants.TextColour.INFO + factionName + " Has been disbanded"));
+                                            FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendMessage(new TextComponentString(DemConstants.TextColour.INFO + factionName + " has been disbanded"));
                                         } else {
                                             replyMessage = DemConstants.TextColour.ERROR + "Failed to disband faction";
                                         }

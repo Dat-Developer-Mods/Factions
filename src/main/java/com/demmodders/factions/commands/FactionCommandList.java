@@ -10,7 +10,7 @@ import java.util.LinkedHashMap;
 
 public class FactionCommandList {
     private static LinkedHashMap<String, String> commands = null;
-    private static LinkedHashMap<String, String> adminCommands = new LinkedHashMap<>();
+    private static LinkedHashMap<String, String> adminCommands = null;
 
     FactionCommandList(){}
 

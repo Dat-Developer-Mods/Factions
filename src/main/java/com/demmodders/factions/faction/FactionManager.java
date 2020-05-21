@@ -341,7 +341,7 @@ public class FactionManager {
      * @return The colour code for the relation
      */
     public String getRelationColour(UUID OriginalFaction, UUID OtherFaction){
-        if (OriginalFaction != null && OtherFaction != null) {
+        if (OriginalFaction != WILDID && OtherFaction != WILDID) {
             RelationState relationship = FactionMap.get(OriginalFaction).getRelation(OtherFaction);
             if (OriginalFaction.equals(OtherFaction)) return FactionConstants.TextColour.OWN.toString();
             else if (relationship == RelationState.ALLY) return FactionConstants.TextColour.ALLY.toString();
@@ -905,7 +905,7 @@ public class FactionManager {
         flags.add("infinitepower");
         flags.add("unlimitedland");
         flags.add("unrelateable");
-        Faction wild = new Faction("Wild", "Everywhere that isn't owned by a faction", flags);
+        Faction wild = new Faction("The Wild", "Everywhere that isn't owned by a faction", flags);
         FactionMap.put(WILDID, wild);
         saveFaction(WILDID);
     }
@@ -920,7 +920,7 @@ public class FactionManager {
         flags.add("unrelateable");
         flags.add("nodamage");
         flags.add("nobuild");
-        Faction wild = new Faction("SafeZone", "You're safe here", flags);
+        Faction wild = new Faction("The SafeZone", "You're pretty safe here", flags);
         FactionMap.put(SAFEID, wild);
         saveFaction(SAFEID);
     }
@@ -934,7 +934,7 @@ public class FactionManager {
         flags.add("unlimitedland");
         flags.add("unrelateable");
         flags.add("bonuspower");
-        Faction wild = new Faction("WarZone", "You're not safe here, you will lose more power when you die, but will gain more power when you kill", flags);
+        Faction wild = new Faction("The WarZone", "You're not safe here, you will lose more power when you die, but will gain more power when you kill", flags);
         FactionMap.put(WARID, wild);
         saveFaction(WARID);
     }

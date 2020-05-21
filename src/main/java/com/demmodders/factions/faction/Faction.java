@@ -256,10 +256,6 @@ public class Faction {
         return false;
     }
 
-    public String getLandTag(){
-        return name + " - " + desc;
-    }
-
     /**
      * Builds a message giving information about the faction
      * @return a long message detailing public information about the faction

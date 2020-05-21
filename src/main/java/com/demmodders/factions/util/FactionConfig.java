@@ -35,6 +35,26 @@ public class FactionConfig {
         @Config.Comment("The text that appears at the top of every MOTD, use %s for the faction name")
         public String factionMOTDHeader = "_[%s MOTD]_";
 
+        @Config.Name("Faction Land Tag")
+        @Config.Comment("The text that is displayed when entering a faction's land, use %1$s for the faction name, %2$s for the faction's name as a possessive (with a 's or ' at the end), and %3$s for the faction description")
+        public String factionLandTag = "Now entering %2$s land - %3$s";
+
+        @Config.Name("Faction Land Tag no description")
+        @Config.Comment("The text that is displayed when entering a faction's land, use %1$s for the faction name, %2$s for the faction's name as a possessive (with a 's or ' at the end)")
+        public String factionLandTagNoDesc = "Now entering %2$s land";
+
+        @Config.Name("Wild Land Tag")
+        @Config.Comment("The text that is displayed when entering the wild, use %1$s for the wild's name, %2$s for the wild's name as a possessive (with a 's or ' at the end), and %3$s for the Wild's description")
+        public String wildLandTag = "Now entering %1$s - %3$s";
+
+        @Config.Name("Save Zone Land Tag")
+        @Config.Comment("The text that is displayed when entering the SafeZone, use %1$s for the SafeZone's name, %2$s for the SafeZone's name as a possessive (with a 's or ' at the end), and %3$s for the SafeZone's description")
+        public String safeLandTag = "Now entering %1$s - %3$s";
+
+        @Config.Name("War Zone Land Tag")
+        @Config.Comment("The text that is displayed when entering the WarZone, use %1$s for the WarZone's name, %2$s for the WarZone's name as a possessive (with a 's or ' at the end), and %3$s for the WarZone's description")
+        public String warLandTag = "Now entering %1$s - %3$s";
+
         @Config.Name("Faction Starting Power")
         @Config.RangeInt(min = 1)
         @Config.Comment("The amount of power the faction starts with when it's created")
@@ -70,16 +90,16 @@ public class FactionConfig {
         @Config.Comment("The maximum amount of power the player can have when they first join the server")
         public int playerStartingMaxPower = 100;
 
-        @Config.Name("Player Starting Max Power cap")
+        @Config.Name("Player Max Power cap")
         @Config.RangeInt(min = 1)
         @Config.Comment("The maximum amount of power the player can ever have")
         public int playerMaxPowerCap = 1000;
 
-        @Config.Name("Faction home Delay")
+        @Config.Name("Faction home teleport delay")
         @Config.Comment("The delay in seconds before a player teleports when using /faction home")
         public int teleportDelay = 3;
 
-        @Config.Name("Faction home again Delay")
+        @Config.Name("Faction home cooldowm")
         @Config.Comment("The delay in seconds before a player can teleport when using /faction home another time")
         public int reTeleportDelay = 0;
 
