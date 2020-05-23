@@ -10,7 +10,6 @@ import com.demmodders.factions.util.enums.FactionRank;
 import com.demmodders.factions.util.enums.RelationState;
 import com.demmodders.factions.util.structures.Power;
 import com.demmodders.factions.util.structures.Relationship;
-import com.sun.istack.internal.NotNull;
 import net.minecraft.util.text.TextFormatting;
 
 import javax.annotation.Nullable;
@@ -130,7 +129,6 @@ public class Faction {
      * Gets the owner of the faction
      * @return The owner of the faction
      */
-    @NotNull
     public UUID getOwnerID(){
         for (UUID member : members){
             if (FactionManager.getInstance().getPlayer(member).factionRank == FactionRank.OWNER){

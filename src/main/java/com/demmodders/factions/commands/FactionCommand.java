@@ -38,7 +38,7 @@ public class FactionCommand extends CommandBase {
     @Override
     public String getUsage(ICommandSender sender) {
         if (sender instanceof EntityPlayerMP) {
-            return printHelp(1);
+            return printHelp(1, true);
         }
         return "Only a player can use these commands";
     }
@@ -133,7 +133,7 @@ public class FactionCommand extends CommandBase {
         return getListOfStringsMatchingLastWord(args, possibilities);
     }
 
-    private String printHelp(int Page) throws IndexOutOfBoundsException {
+    private String printHelp(int Page, boolean dump) throws IndexOutOfBoundsException {
         LinkedHashMap<String, String> commands = FactionCommandList.getCommands();
 
         // Check the help file was successfully loaded
@@ -141,12 +141,23 @@ public class FactionCommand extends CommandBase {
             List<String> keyList = new ArrayList<>(commands.keySet());
             StringBuilder helpText = new StringBuilder();
             // Header
-            helpText.append(DemConstants.TextColour.HEADER).append("Showing help page ").append(Page).append(" of ").append((int) Math.ceil(commands.size() / 10f)).append("\n");
-            // First faction, without comma
-            int firstIndex = (Page - 1) * 10;
+            int firstIndex;
+            int lastIndex;
+            if (dump) {
+                firstIndex = 0;
+                lastIndex = commands.size();
+            } else {
+                helpText.append(DemConstants.TextColour.HEADER).append("Showing help page ").append(Page).append(" of ").append((int) Math.ceil(commands.size() / 10f)).append("\n");
+                firstIndex = (Page - 1) * 10;
+                lastIndex = (10 * Page);
+            }
+
+
             helpText.append(DemConstants.TextColour.COMMAND).append(keyList.get(firstIndex)).append(DemConstants.TextColour.INFO).append(" - ").append(commands.get(keyList.get(firstIndex)));
-            for (int i = firstIndex + 1; i < commands.size() && i < ((10 * Page)); i++) {
-                helpText.append("\n").append(DemConstants.TextColour.COMMAND).append(keyList.get(i)).append(DemConstants.TextColour.INFO).append(" - ").append(commands.get(keyList.get(i)));
+            for (int i = firstIndex + 1; i < commands.size() && i < lastIndex; i++) {
+                helpText.append("\n").append(DemConstants.TextColour.COMMAND);
+                if (dump) helpText.append("/faction ");
+                helpText.append(keyList.get(i)).append(DemConstants.TextColour.INFO).append(" - ").append(commands.get(keyList.get(i)));
             }
             return helpText.toString();
         }
@@ -173,13 +184,17 @@ public class FactionCommand extends CommandBase {
             switch (args[0].toLowerCase()) {
                 // Global
                 case "help":
-                    try {
-                        int page = ((args.length == 1) ? 1 : Integer.parseInt(args[1]));
-                        replyMessage = printHelp(page);
-                    } catch  (NumberFormatException e) {
-                        replyMessage = DemConstants.TextColour.ERROR + "Bad argument, command should look like: " + DemConstants.TextColour.COMMAND + "/faction help <page>";
-                    } catch (IndexOutOfBoundsException e){
-                        replyMessage = DemConstants.TextColour.INFO + "There aren't that many pages";
+                    if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.info")) {
+                        try {
+                            int page = ((args.length == 1) ? 1 : Integer.parseInt(args[1]));
+                            replyMessage = printHelp(page, false);
+                        } catch (NumberFormatException e) {
+                            replyMessage = DemConstants.TextColour.ERROR + "Bad argument, command should look like: " + DemConstants.TextColour.COMMAND + "/faction help <page>";
+                        } catch (IndexOutOfBoundsException e) {
+                            replyMessage = DemConstants.TextColour.INFO + "There aren't that many pages";
+                        }
+                    } else {
+                        commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
                 case "list":
@@ -224,7 +239,7 @@ public class FactionCommand extends CommandBase {
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.info")) {
                         // If they haven't given an argument, show info on their faction
                         if (args.length == 1) {
-                            if(!factionID.equals(fMan.WILDID)){
+                            if(!factionID.equals(FactionManager.WILDID)){
                                 replyMessage = fMan.getFaction(factionID).printFactionInfo();
                             } else {
                                 replyMessage = DemConstants.TextColour.ERROR + "You don't belong to a faction, you may only look up other factions";
@@ -330,7 +345,7 @@ public class FactionCommand extends CommandBase {
                             replyMessage = DemConstants.TextColour.ERROR + "Bad argument, command should look like: " + DemConstants.TextColour.COMMAND + "/faction join <faction name>";
                         } else {
                             // Make sure they're not in a faction
-                            if (factionID.equals(fMan.WILDID)) {
+                            if (factionID.equals(FactionManager.WILDID)) {
 
                                 // Make sure they gave a valid faction
                                 factionID = fMan.getFactionIDFromName(args[1].toLowerCase());
@@ -444,7 +459,7 @@ public class FactionCommand extends CommandBase {
                 case "home":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
                         // Make sure they're in a faction
-                        if (!factionID.equals(fMan.WILDID)) {
+                        if (!factionID.equals(FactionManager.WILDID)) {
                             // Make sure they have a faction home
                             if (fMan.getFaction(factionID).homePos != null) {
                                 // Make sure they're teleport cooldown has passed
@@ -472,7 +487,7 @@ public class FactionCommand extends CommandBase {
                 case "members":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
                         // Make sure they're in a faction
-                        if (!factionID.equals(fMan.WILDID)) {
+                        if (!factionID.equals(FactionManager.WILDID)) {
                             StringBuilder message = new StringBuilder();
 
                             List<UUID> grunts = new ArrayList<>();
@@ -540,7 +555,7 @@ public class FactionCommand extends CommandBase {
                 case "leave":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
                         // Check they're in a faction
-                        if (!factionID.equals(fMan.WILDID)) {
+                        if (!factionID.equals(FactionManager.WILDID)) {
                             // Ensure they're not the owner
                             if (fMan.getPlayer(playerID).factionRank == FactionRank.OWNER){
                                 replyMessage = DemConstants.TextColour.ERROR + "You are the leader of this faction, you must disband your faction or pass on your status as the owner";
@@ -560,7 +575,7 @@ public class FactionCommand extends CommandBase {
                 case "motd":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
                         // Check they're in a faction
-                        if (!factionID.equals(fMan.WILDID)) {
+                        if (!factionID.equals(FactionManager.WILDID)) {
                             Faction faction = fMan.getFaction(factionID);
                             replyMessage = DemConstants.TextColour.HEADER + String.format(FactionConfig.factionSubCat.factionMOTDHeader, faction.name) + "\n" + faction.motd;
                         } else {
@@ -574,9 +589,9 @@ public class FactionCommand extends CommandBase {
                 case "chat":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.default")) {
                         // Check they're in a faction
-                        if (!factionID.equals(fMan.WILDID)) {
+                        if (!factionID.equals(FactionManager.WILDID)) {
                             if (args.length == 1) {
-                                replyMessage = DemConstants.TextColour.ERROR + "Bad argument, command should look like: " + DemConstants.TextColour.COMMAND + "/faction chat <Chatmode>" + DemConstants.TextColour.ERROR + " Available chat modes are normal, faction, and ally";
+                                replyMessage = DemConstants.TextColour.ERROR + "Bad argument, command should look like: " + DemConstants.TextColour.COMMAND + "/faction chat normal|faction|ally";
                             } else {
                                 try{
                                     fMan.getPlayer(playerID).factionChat = FactionChatMode.valueOf(args[1].toUpperCase());
@@ -593,13 +608,11 @@ public class FactionCommand extends CommandBase {
                     }
                     break;
 
-                //TODO: Members command, check members and ranks
-
                 // Faction Lieutenant
                 case "claim":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         // Check they're in a faction
-                        if (!factionID.equals(fMan.WILDID)){
+                        if (!factionID.equals(FactionManager.WILDID)){
                             // Make sure they're the correct rank
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.LIEUTENANT.ordinal()) {
                                 // Check if the land is valid for claiming
@@ -644,7 +657,7 @@ public class FactionCommand extends CommandBase {
                 case "unclaim":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         // Check they're in a faction
-                        if (!factionID.equals(fMan.WILDID)){
+                        if (!factionID.equals(FactionManager.WILDID)){
                             // Make sure they're the correct rank
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.LIEUTENANT.ordinal()) {
                                 // Check if the land is valid for claiming
@@ -676,7 +689,7 @@ public class FactionCommand extends CommandBase {
                 case "ally":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         // Check they're in a faction
-                        if (!factionID.equals(fMan.WILDID)){
+                        if (!factionID.equals(FactionManager.WILDID)){
                             // Check they have a high enough rank
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
                                 if (args.length > 1) {
@@ -728,7 +741,7 @@ public class FactionCommand extends CommandBase {
                 case "enemy":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         // Check the player is in a faction
-                        if (!factionID.equals(fMan.WILDID)){
+                        if (!factionID.equals(FactionManager.WILDID)){
                             // Check the player has permission in their faction
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
                                 // Check the player gives an an argument
@@ -782,7 +795,7 @@ public class FactionCommand extends CommandBase {
                 case "neutral":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         // Check the player is in a faction
-                        if (!factionID.equals(fMan.WILDID)){
+                        if (!factionID.equals(FactionManager.WILDID)){
                             // Check the player has permission in their faction
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
                                 // Check the player gives an argument
@@ -826,7 +839,7 @@ public class FactionCommand extends CommandBase {
 
                 case "sethome":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (!factionID.equals(fMan.WILDID)){
+                        if (!factionID.equals(FactionManager.WILDID)){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
                                 boolean result = fMan.setFactionHome(factionID, new Location(((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).posX, ((EntityPlayerMP) sender).posY, ((EntityPlayerMP) sender).posZ, ((EntityPlayerMP) sender).rotationPitch, ((EntityPlayerMP) sender).rotationYaw));
                                 if (result) replyMessage = DemConstants.TextColour.INFO + "Successfully set faction home, you and your members can travel to it with " + DemConstants.TextColour.COMMAND + "/faction home";
@@ -844,7 +857,7 @@ public class FactionCommand extends CommandBase {
 
                 case "kick":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (!factionID.equals(fMan.WILDID)){
+                        if (!factionID.equals(FactionManager.WILDID)){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
                                 if (args.length > 1) {
                                     UUID otherPlayer = fMan.getPlayerIDFromName(args[1]);
@@ -872,7 +885,7 @@ public class FactionCommand extends CommandBase {
 
                 case "invite":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (!factionID.equals(fMan.WILDID)){
+                        if (!factionID.equals(FactionManager.WILDID)){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
                                 if (args.length > 1) {
                                     UUID otherPlayer = fMan.getPlayerIDFromName(args[1]);
@@ -910,7 +923,7 @@ public class FactionCommand extends CommandBase {
 
                 case "uninvite":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (!factionID.equals(fMan.WILDID)){
+                        if (!factionID.equals(FactionManager.WILDID)){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
                                 if (args.length > 1) {
                                     UUID otherPlayer = fMan.getPlayerIDFromName(args[1]);
@@ -940,7 +953,7 @@ public class FactionCommand extends CommandBase {
 
                 case "setmotd":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (!factionID.equals(fMan.WILDID)){
+                        if (!factionID.equals(FactionManager.WILDID)){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
                                 if (args.length > 1) {
                                     StringBuilder mOTD = new StringBuilder();
@@ -971,7 +984,7 @@ public class FactionCommand extends CommandBase {
                 // Faction Owner
                 case "disband":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (!factionID.equals(fMan.WILDID)){
+                        if (!factionID.equals(FactionManager.WILDID)){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
                                 if (args.length == 1){
                                     replyMessage = DemConstants.TextColour.ERROR + "Are you sure? type " + DemConstants.TextColour.COMMAND + "/faction disband " + fMan.getFaction(factionID).name;
@@ -1000,7 +1013,7 @@ public class FactionCommand extends CommandBase {
 
                 case "promote":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (!factionID.equals(fMan.WILDID)){
+                        if (!factionID.equals(FactionManager.WILDID)){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
                                 if (args.length > 1) {
                                     UUID otherPlayer = fMan.getPlayerIDFromName(args[1]);
@@ -1041,7 +1054,7 @@ public class FactionCommand extends CommandBase {
 
                 case "demote":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (!factionID.equals(fMan.WILDID)){
+                        if (!factionID.equals(FactionManager.WILDID)){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
                                 if (args.length > 1) {
                                     UUID otherPlayer = fMan.getPlayerIDFromName(args[1]);
@@ -1082,7 +1095,7 @@ public class FactionCommand extends CommandBase {
 
                 case "setrank":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (!factionID.equals(fMan.WILDID)){
+                        if (!factionID.equals(FactionManager.WILDID)){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
                                 if (args.length > 2) {
                                     try {
@@ -1122,7 +1135,7 @@ public class FactionCommand extends CommandBase {
 
                 case "setowner":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (!factionID.equals(fMan.WILDID)){
+                        if (!factionID.equals(FactionManager.WILDID)){
                             if (fMan.getPlayer(playerID).factionRank == FactionRank.OWNER) {
                                 if (args.length > 1) {
                                     UUID otherPlayer = fMan.getPlayerIDFromName(args[1]);
@@ -1149,7 +1162,7 @@ public class FactionCommand extends CommandBase {
 
                 case "flag":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (!factionID.equals(fMan.WILDID)){
+                        if (!factionID.equals(FactionManager.WILDID)){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
                                 if (args.length > 2) {
                                     HashMap<String, String> flags = FlagDescriptions.getPlayerFlags();
@@ -1196,7 +1209,7 @@ public class FactionCommand extends CommandBase {
 
                 case "desc":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (!factionID.equals(fMan.WILDID)){
+                        if (!factionID.equals(FactionManager.WILDID)){
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
                                 if (args.length > 1) {
                                     StringBuilder desc = new StringBuilder();
