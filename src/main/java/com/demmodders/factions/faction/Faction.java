@@ -1,5 +1,6 @@
 package com.demmodders.factions.faction;
 
+import com.demmodders.datmoddingapi.structures.ChunkLocation;
 import com.demmodders.datmoddingapi.structures.Location;
 import com.demmodders.datmoddingapi.util.DemConstants;
 import com.demmodders.factions.Factions;
@@ -96,6 +97,15 @@ public class Faction {
         } else {
             Factions.LOGGER.info("Tried to add claimed land " + Land + " in Dim " + Dimension + " to faction " + name + " when it already has that land, ignoring");
         }
+    }
+
+    /**
+     * removes chunk from the faction
+     * @param Location The Location of the chunk
+     */
+    public void removeLandFromFaction(ChunkLocation Location){
+        String chunkKey = FactionManager.makeChunkKey(Location.x, Location.z);
+        removeLandFromFaction(Location.dim, chunkKey);
     }
 
     /**

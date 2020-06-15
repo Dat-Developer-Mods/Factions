@@ -30,6 +30,7 @@ import org.apache.logging.log4j.Logger;
 import javax.annotation.Nullable;
 import java.io.*;
 import java.lang.reflect.Type;
+import java.security.acl.Owner;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -324,6 +325,7 @@ public class FactionManager {
 
     /**
      * Gets a list of the names of all the factions passed to the function by their UUIDs
+     * @param IDs a list of the IDs
      * @return A list of the faction names
      */
     public List<String> getListOfFactionsNamesFromFactionList(ArrayList<UUID> IDs){
@@ -526,7 +528,7 @@ public class FactionManager {
         if (event.isCanceled()) return 4;
 
         UUID factionID = UUID.randomUUID();
-        FactionMap.put(factionID, new Faction(event.getFactionName(), PlayerID));
+        FactionMap.put(factionID, new Faction(event.factionName, PlayerID));
 
         saveFaction(factionID);
 
@@ -611,12 +613,14 @@ public class FactionManager {
     public int claimLand(UUID FactionID, @Nullable UUID PlayerID, int Dim, int ChunkX, int ChunkZ){
         String chunkKey = makeChunkKey(ChunkX, ChunkZ);
 
+        UUID owner = null;
+
         // Check it isn't owned, or owned by someone who can't afford it
         boolean owned = false;
         if (ClaimedLand.containsKey(Dim)) {
             if (ClaimedLand.get(Dim).containsKey(chunkKey)){
                 owned = true;
-                UUID owner = ClaimedLand.get(Dim).get(chunkKey);
+                owner = ClaimedLand.get(Dim).get(chunkKey);
 
                 if (owner.equals(FactionID)) return 5;
                 if (FactionMap.get(owner).hasFlag("strongborders") || FactionMap.get(owner).calculatePower() >= FactionMap.get(owner).checkCanAffordLand()) {
@@ -630,21 +634,26 @@ public class FactionManager {
         // Check they can afford it
         if (!(FactionMap.get(FactionID).checkCanAffordLand(1)) && !(FactionMap.get(FactionID).hasFlag("unlimitedland"))) return 2;
 
+        // Check they can steal if off the owning faction
+        if (owned && (FactionMap.get(FactionID).calculatePower() <= FactionMap.get(owner).calculatePower())) return 4;
+
         // Check the land is connected
         if (FactionConfig.landSubCat.landRequireConnect && !(FactionConfig.landSubCat.landRequireConnectWhenStealing && owned) && !getFaction(FactionID).checkLandTouches(Dim, ChunkX, ChunkZ)) return 3;
 
-        InFactionEvent.FactionClaimEvent event = new InFactionEvent.FactionClaimEvent(new ChunkLocation(Dim, ChunkX, ChunkZ), PlayerID, FactionID);
+        InFactionEvent.ChunkEvent.FactionClaimEvent event = new InFactionEvent.ChunkEvent.FactionClaimEvent(new ChunkLocation(Dim, ChunkX, ChunkZ), PlayerID, FactionID, owner);
         MinecraftForge.EVENT_BUS.post(event);
         if (event.isCanceled()) return 6;
 
+        chunkKey = makeChunkKey(event.position.x, event.position.z);
+
         if (owned){
-            FactionMap.get(ClaimedLand.get(Dim).get(chunkKey)).removeLandFromFaction(Dim, chunkKey);
+            FactionMap.get(ClaimedLand.get(Dim).get(chunkKey)).removeLandFromFaction(event.position);
         }
 
         // Save claim
-        ClaimedLand.get(Dim).put(chunkKey, FactionID);
+        ClaimedLand.get(event.position.dim).put(chunkKey, FactionID);
         saveClaimedChunks(Dim);
-        FactionMap.get(FactionID).addLandToFaction(Dim, chunkKey);
+        FactionMap.get(FactionID).addLandToFaction(event.position.dim, chunkKey);
         return (owned ? 1 : 0);
     }
     /**
@@ -684,7 +693,7 @@ public class FactionManager {
         String chunkKey = makeChunkKey(ChunkX, ChunkZ);
         UUID owningFaction = null;
         if (ClaimedLand.containsKey(Dim) && ClaimedLand.get(Dim).containsKey(chunkKey) && ClaimedLand.get(Dim).get(chunkKey).equals(FactionID)) {
-            InFactionEvent.FactionClaimEvent event = new InFactionEvent.FactionUnClaimEvent(new ChunkLocation(Dim, ChunkX, ChunkZ), PlayerID, FactionID);
+            InFactionEvent.ChunkEvent.FactionUnClaimEvent event = new InFactionEvent.ChunkEvent.FactionUnClaimEvent(new ChunkLocation(Dim, ChunkX, ChunkZ), PlayerID, FactionID);
             MinecraftForge.EVENT_BUS.post(event);
             if (event.isCanceled()) return 2;
             else {
@@ -701,6 +710,7 @@ public class FactionManager {
      * Attempts to add the other faction as an ally to the given faction
      * @param FactionID The faction creating the alliance
      * @param OtherFaction the faction the alliance is with
+     * @param PlayerID The ID of the player creating the alliance
      * @return The result of the alliance (0: Success them pending, 1: Success both allies, 2: Success but enemy, 3: Already allies, 4: That's you, 5: No)
      */
     public int addAlly(UUID FactionID, UUID OtherFaction, @Nullable UUID PlayerID){
@@ -734,6 +744,7 @@ public class FactionManager {
      * Attempts to add the other faction as an enemy to the given faction
      * @param FactionID The faction declaring the enemy
      * @param OtherFaction The faction becoming an enemy
+     * @param PlayerID The ID of the player declaring the enemy
      * @return The result of the declaration (0: Success, 1: Success enemies all round, 2: Success but you're an ally to them, 3: already enemies, 4: That's you, 5: No)
      */
     public int addEnemy(UUID FactionID, UUID OtherFaction, @Nullable UUID PlayerID){
@@ -767,6 +778,7 @@ public class FactionManager {
      * Adds the given the faction as a neutral faction
      * @param FactionID The faction becoming neutral
      * @param OtherFaction The faction to become neutral with
+     * @param PlayerID The ID of the player creating the alliance
      * @return The result of the declaration (0: Success, 1: Removed enemy, 2: Removed ally, 3: cannot deny request, 4: no relation, 5: that's you
      */
     public int addNeutral(UUID FactionID, UUID OtherFaction, UUID PlayerID){

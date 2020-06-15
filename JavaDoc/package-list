@@ -1,0 +1,9 @@
+com.demmodders.factions
+com.demmodders.factions.api.event
+com.demmodders.factions.commands
+com.demmodders.factions.delayedevents
+com.demmodders.factions.events
+com.demmodders.factions.faction
+com.demmodders.factions.util
+com.demmodders.factions.util.enums
+com.demmodders.factions.util.structures

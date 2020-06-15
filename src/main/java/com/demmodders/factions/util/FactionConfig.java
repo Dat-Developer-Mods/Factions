@@ -118,39 +118,44 @@ public class FactionConfig {
         @Config.Name("Kill power gain")
         @Config.Comment("The amount a players power recharges by when they kill")
         @Config.RangeInt(min=0)
-        public int killPowerGain = 20;
+        public int killPowerGain = 40;
 
         @Config.Name("Kill max power gain")
         @Config.Comment("The amount a player's maximum power increases by when killing someone")
         @Config.RangeInt(min=0)
-        public int killMaxPowerGain = 10;
-
-        @Config.Name("Enemy kill multiplier")
-        @Config.Comment("How much more power & max power is gained by killing an enemy")
-        @Config.RangeDouble(min=0f)
-        public double enemyKillMultiplier = 2f;
+        public int killMaxPowerGain = 30;
 
         @Config.Name("Death power Loss")
         @Config.Comment("The amount of power lost for dying")
         @Config.RangeInt(min=0)
         public int deathPowerLoss = 10;
 
-        @Config.Name("Death by enemy loss multiplier")
+        @Config.Name("Enemy Power multiplier")
         @Config.RangeDouble(min=0f)
-        @Config.Comment("How much more power lost for dying at the hands of an enemy")
-        public double deathByEnemyMultiplier = 2f;
+        @Config.Comment("How much more power lost/gained for dying at the hands of/killing an enemy")
+        public double enemyMultiplier = 2f;
 
-        @Config.Name("Lieutenant Multiplier")
+        @Config.Name("Ally kill multiplier")
+        @Config.RangeDouble(min=0f)
+        @Config.Comment("How much more power gained for killing an ally")
+        public double allyKillMultiplier = -.5f;
+
+        @Config.Name("Killed by ally multiplier")
+        @Config.RangeDouble(min=0f)
+        @Config.Comment("How much more power lost for being killed by an ally")
+        public double killedByAllyMultiplier = .5f;
+
+        @Config.Name("Lieutenant kill/killed Multiplier")
         @Config.RangeDouble(min=0f)
         @Config.Comment("How much extra power is gained/lost for killing/dying as a lieutenant")
         public double lieutenantMultiplier = 1.5f;
 
-        @Config.Name("Officer Multiplier")
+        @Config.Name("Officer kill/killed Multiplier")
         @Config.RangeDouble(min=0f)
         @Config.Comment("How much extra power is gained/lost for killing/dying as a officer")
         public double officerMultiplier = 2f;
 
-        @Config.Name("Owner Multiplier")
+        @Config.Name("Owner kill/killed Multiplier")
         @Config.RangeDouble(min=0f)
         @Config.Comment("How much extra power is gained/lost for killing/dying as the owner of a faction")
         public double ownerMultiplier = 3f;
@@ -168,7 +173,27 @@ public class FactionConfig {
         @Config.Name("Max Power gain amount")
         @Config.RangeInt(min=0)
         @Config.Comment("How much max power the player gains after each Power Gain Rate interval")
-        public int maxPowerGainAmount = 0;
+        public int maxPowerGainAmount = 5;
+
+        @Config.Name("Grunt Power Gain Multiplier")
+        @Config.RangeDouble(min=0f)
+        @Config.Comment("How much extra power is gained overtime for faction grunts")
+        public double powerGainGruntMultiplier = 0.D;
+
+        @Config.Name("Lieutenant Power Gain Multiplier")
+        @Config.RangeDouble(min=0f)
+        @Config.Comment("How much extra power is gained overtime for faction lieutenants")
+        public double powerGainLieutenantMultiplier = 1.5D;
+
+        @Config.Name("Sergeant Power Gain Multiplier")
+        @Config.RangeDouble(min=0f)
+        @Config.Comment("How much extra power is gained overtime for faction sergeants")
+        public double powerGainSergeantMultiplier = 1.75D;
+
+        @Config.Name("Owner Power Gain Multiplier")
+        @Config.RangeDouble(min=0f)
+        @Config.Comment("How much extra power is gained overtime for faction owners")
+        public double powerGainOwnerMultiplier = 2.25D;
     }
 
     public static class Land {

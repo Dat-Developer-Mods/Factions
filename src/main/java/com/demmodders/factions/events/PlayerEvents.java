@@ -10,6 +10,7 @@ import com.demmodders.factions.faction.Faction;
 import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.FactionConstants;
+import com.demmodders.factions.util.enums.FactionRank;
 import com.demmodders.factions.util.enums.RelationState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -51,62 +52,73 @@ public class PlayerEvents {
 
     }
 
+    private static double rankModifier(FactionRank rank){
+        switch(rank){
+            case LIEUTENANT:
+                return FactionConfig.powerSubCat.lieutenantMultiplier;
+            case OFFICER:
+                return FactionConfig.powerSubCat.officerMultiplier;
+            case OWNER:
+                return FactionConfig.powerSubCat.ownerMultiplier;
+            default:
+                return 1.D;
+        }
+    }
+
     @SubscribeEvent
     public static void playerKilled(LivingDeathEvent e){
         // TODO: CHECK
-        // TODO: Change based on land
         if (e.getEntity() instanceof EntityPlayer && e.getSource().getTrueSource() instanceof EntityPlayer) {
             FactionManager fMan = FactionManager.getInstance();
             UUID killedFaction = fMan.getPlayersFactionID(e.getEntity().getUniqueID());
             UUID killerFaction = fMan.getPlayersFactionID(e.getSource().getTrueSource().getUniqueID());
-            double powerLossMultiplier = -1;
-            double powerGainMultiplier = 0;
-            double powerMaxGainMultiplier = 0;
+            UUID chunkOwner = fMan.getChunkOwningFaction(e.getEntity().dimension, e.getEntity().chunkCoordX, e.getEntity().chunkCoordZ);
+            RelationState relation = fMan.getFaction(killedFaction).getRelation(killerFaction);
 
-            // Only gain power if the killed player is in a faction
+            double relationModifier = 1.D;
+
+            double landMultiplier = (fMan.getFaction(chunkOwner).hasFlag("bonuspower") ? FactionConfig.flagSubCat.bonusPowerMultiplier : 1.D);
+            double rankMultiplier = rankModifier(fMan.getPlayer(e.getEntity().getUniqueID()).factionRank);
+
+            // Power Gain
+            // Only gain power if they're not wild
             if (!killedFaction.equals(FactionManager.WILDID)){
-                powerGainMultiplier = 1;
-                powerMaxGainMultiplier = 1;
-                if (killerFaction != null && fMan.getFaction(killedFaction).relationships.containsKey(killerFaction)) {
-                    if (fMan.getFaction(killedFaction).relationships.get(killerFaction).relation == RelationState.ENEMY || fMan.getFaction(killerFaction).relationships.get(killedFaction).relation == RelationState.ENEMY) {
-                        powerGainMultiplier *= FactionConfig.powerSubCat.enemyKillMultiplier;
-                        powerMaxGainMultiplier *= FactionConfig.powerSubCat.enemyKillMultiplier;
-                        powerLossMultiplier *= FactionConfig.powerSubCat.deathByEnemyMultiplier;
+                if (relation != null) {
+                    switch (relation) {
+                        case ENEMY:
+                            relationModifier = FactionConfig.powerSubCat.enemyMultiplier;
+                            break;
+                        case ALLY:
+                            relationModifier = FactionConfig.powerSubCat.allyKillMultiplier;
+                            break;
                     }
                 }
 
-                switch(fMan.getPlayer(e.getEntity().getUniqueID()).factionRank){
-                    case LIEUTENANT:
-                        powerGainMultiplier *= FactionConfig.powerSubCat.lieutenantMultiplier;
-                        powerLossMultiplier *= FactionConfig.powerSubCat.lieutenantMultiplier;
-                        powerMaxGainMultiplier *= FactionConfig.powerSubCat.lieutenantMultiplier;
+                fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).addMaxPower((int) Math.ceil(FactionConfig.powerSubCat.killMaxPowerGain * landMultiplier * relationModifier * rankMultiplier));
+                fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).addPower((int) Math.ceil(FactionConfig.powerSubCat.killPowerGain * landMultiplier * relationModifier * rankMultiplier));
+                e.getSource().getTrueSource().sendMessage(new TextComponentString(TextFormatting.GREEN + "You've gained power, your power is now: " + fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).power.power + "/" + fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).power.maxPower));
+            }
+
+            // Power Loss
+            if (relation != null) {
+                switch (relation) {
+                    case ENEMY:
+                        relationModifier = FactionConfig.powerSubCat.enemyMultiplier;
                         break;
-                    case OFFICER:
-                        powerGainMultiplier *= FactionConfig.powerSubCat.officerMultiplier;
-                        powerLossMultiplier *= FactionConfig.powerSubCat.officerMultiplier;
-                        powerMaxGainMultiplier *= FactionConfig.powerSubCat.officerMultiplier;
-                        break;
-                    case OWNER:
-                        powerGainMultiplier *= FactionConfig.powerSubCat.ownerMultiplier;
-                        powerLossMultiplier *= FactionConfig.powerSubCat.ownerMultiplier;
-                        powerMaxGainMultiplier *= FactionConfig.powerSubCat.ownerMultiplier;
+                    case ALLY:
+                        relationModifier = FactionConfig.powerSubCat.killedByAllyMultiplier;
                         break;
                 }
             }
 
-            fMan.getPlayer(e.getEntity().getUniqueID()).addPower((int) Math.ceil(FactionConfig.powerSubCat.deathPowerLoss * powerLossMultiplier));
+            fMan.getPlayer(e.getEntity().getUniqueID()).addPower((int) Math.ceil(-1.D * FactionConfig.powerSubCat.deathPowerLoss * landMultiplier * relationModifier));
             e.getEntity().sendMessage(new TextComponentString(TextFormatting.RED + "You've lost power, your power is now: " + fMan.getPlayer(e.getEntity().getUniqueID()).power.power + "/" + fMan.getPlayer(e.getEntity().getUniqueID()).power.maxPower));
-            if (powerGainMultiplier != 0){
-                fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).addMaxPower((int) Math.ceil(FactionConfig.powerSubCat.killMaxPowerGain * powerMaxGainMultiplier));
-                fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).addPower((int) Math.ceil(FactionConfig.powerSubCat.killPowerGain * powerGainMultiplier));
-                e.getSource().getTrueSource().sendMessage(new TextComponentString(TextFormatting.GREEN + "You've gained power, your power is now: " + fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).power.power + "/" + fMan.getPlayer(e.getSource().getTrueSource().getUniqueID()).power.maxPower));
-            }
-
         }
     }
 
     @SubscribeEvent
     public static void enterChunk(EntityEvent.EnteringChunk e){
+        // This fires really weirdly, sometimes 3 times giving: faction land, wild land, faction land, its really weird
         // Make sure its a player entering a new chunk
         if(e.getEntity() instanceof EntityPlayer && (e.getOldChunkX() != e.getNewChunkX() || e.getOldChunkZ() != e.getNewChunkZ())) {
             FactionManager fMan = FactionManager.getInstance();
