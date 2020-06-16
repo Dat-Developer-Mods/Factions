@@ -17,16 +17,12 @@ public class FlagDescriptions {
      * Loads the flags from the flags file
      */
     private static void loadFlags(){
-        try {
-            Gson gson = new Gson();
-            File json = new File(FactionCommandList.class.getClassLoader().getResource("JSON/Flags.json").getFile());
-            Reader reader = new FileReader(json);
-            Flags items = gson.fromJson(reader, Flags.class);
-            playerFlags = new HashMap<>(items.playerFlags);
-            adminFlags = new HashMap<>(items.adminFlags);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+        Gson gson = new Gson();
+        InputStream json = FactionCommandList.class.getClassLoader().getResourceAsStream("JSON/Flags.json");
+        InputStreamReader reader = new InputStreamReader(json);
+        Flags items = gson.fromJson(reader, Flags.class);
+        playerFlags = new HashMap<>(items.playerFlags);
+        adminFlags = new HashMap<>(items.adminFlags);
     }
 
     /**

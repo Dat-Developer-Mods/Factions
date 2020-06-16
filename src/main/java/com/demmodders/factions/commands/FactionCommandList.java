@@ -2,10 +2,8 @@ package com.demmodders.factions.commands;
 
 import com.google.gson.Gson;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.Reader;
+import java.io.*;
+import java.net.URISyntaxException;
 import java.util.LinkedHashMap;
 
 public class FactionCommandList {
@@ -29,16 +27,12 @@ public class FactionCommandList {
     }
 
     private static void loadCommands(){
-        try {
-            Gson gson = new Gson();
-            File json = new File(FactionCommandList.class.getClassLoader().getResource("JSON/Commands.json").getFile());
-            Reader reader = new FileReader(json);
-            Commands commandsList = gson.fromJson(reader, Commands.class);
-            commands = new LinkedHashMap<>(commandsList.commands);
-            adminCommands = new LinkedHashMap<>(commandsList.adminCommands);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+        Gson gson = new Gson();
+        InputStream json = FactionCommandList.class.getClassLoader().getResourceAsStream("JSON/Commands.json");
+        InputStreamReader reader = new InputStreamReader(json);
+        Commands commandsList = gson.fromJson(reader, Commands.class);
+        commands = new LinkedHashMap<>(commandsList.commands);
+        adminCommands = new LinkedHashMap<>(commandsList.adminCommands);
     }
 }
 
