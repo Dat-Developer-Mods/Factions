@@ -58,7 +58,10 @@ public class FactionCommand extends CommandBase {
         if (args.length == 1) {
             // All commands are possible
             HashMap<String, String> commands = FactionCommandList.getCommands();
-            if (commands != null) possibilities = new ArrayList<>(commands.keySet());
+            if (commands != null) {
+                possibilities = new ArrayList<>(commands.keySet());
+                possibilities.add("show");
+            }
         } else if (args.length == 2){
             // Only the the first argument of commands with 1 or more arguments are possible
             switch(args[0].toLowerCase()) {
@@ -83,6 +86,7 @@ public class FactionCommand extends CommandBase {
 
                 // Argument is a faction name
                 case "info":
+                case "show":
                 case "neutral":
                 case "ally":
                 case "enemy":
@@ -236,6 +240,7 @@ public class FactionCommand extends CommandBase {
                     break;
 
                 case "info":
+                case "show":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.info")) {
                         // If they haven't given an argument, show info on their faction
                         if (args.length == 1) {
