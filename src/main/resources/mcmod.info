@@ -1,7 +1,7 @@
 [
 {
   "modid": "demfactions",
-  "name": "Factions",
+  "name": "Dat Factions",
   "description": "A mod to add player run factions into the game",
   "version": "${version}",
   "mcversion": "${mcversion}",

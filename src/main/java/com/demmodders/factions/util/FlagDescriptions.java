@@ -1,6 +1,8 @@
 package com.demmodders.factions.util;
 
+import com.demmodders.factions.Factions;
 import com.demmodders.factions.commands.FactionCommandList;
+import com.demmodders.factions.faction.Faction;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -10,6 +12,7 @@ import java.util.HashMap;
 public class FlagDescriptions {
     private static HashMap<String, String> playerFlags = null;
     private static HashMap<String, String> adminFlags = null;
+    public static File flagFile = null;
 
     public FlagDescriptions(){}
 
@@ -18,7 +21,17 @@ public class FlagDescriptions {
      */
     private static void loadFlags(){
         Gson gson = new Gson();
-        InputStream json = FactionCommandList.class.getClassLoader().getResourceAsStream("JSON/Flags.json");
+        InputStream json;
+        if (flagFile != null) {
+            try {
+                json = new FileInputStream(flagFile);
+            } catch (FileNotFoundException e) {
+                json = FactionCommandList.class.getClassLoader().getResourceAsStream("JSON/Flags.json");
+                Factions.LOGGER.warn("Failed to find flag file, defaulting to default translation");
+            }
+        } else {
+            json = FactionCommandList.class.getClassLoader().getResourceAsStream("JSON/Flags.json");
+        }
         InputStreamReader reader = new InputStreamReader(json);
         Flags items = gson.fromJson(reader, Flags.class);
         playerFlags = new HashMap<>(items.playerFlags);

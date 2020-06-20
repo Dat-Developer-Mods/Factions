@@ -7,7 +7,7 @@ import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-@Config(modid = Factions.MODID)
+@Config(modid = Factions.MODID, name="Dat Factions/Dat Factions")
 public class FactionConfig {
     public static Faction factionSubCat = new Faction();
     public static Player playerSubCat = new Player();
