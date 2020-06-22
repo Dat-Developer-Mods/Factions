@@ -8,7 +8,6 @@ import java.io.File;
 import java.io.IOException;
 
 public class FactionFileHelper {
-    public static final Logger LOGGER = LogManager.getLogger(Factions.MODID);
     /**
      * Gets the base directory the faction data is stored in
      * @return A File object at the base directory

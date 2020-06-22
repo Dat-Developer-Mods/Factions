@@ -1,4 +1,5 @@
 {
+  "version" : 0,
   "playerFlags":{
     "open" : "The faction doesn't require any invites",
     "friendlyfire" : "The faction doesn't prevent the members from killing each other"
