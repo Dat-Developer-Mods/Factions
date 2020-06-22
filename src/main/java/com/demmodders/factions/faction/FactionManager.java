@@ -124,7 +124,7 @@ public class FactionManager {
     @Nullable
     public UUID getPlayerIDFromName(String Name){
         for (UUID playerID : PlayerMap.keySet()){
-            if (PlayerMap.get(playerID).lastKnownName.equals(Name)){
+            if (PlayerMap.get(playerID).lastKnownName.equalsIgnoreCase(Name)){
                 return playerID;
             }
         }
@@ -528,7 +528,7 @@ public class FactionManager {
         if (event.isCanceled()) return 4;
 
         UUID factionID = UUID.randomUUID();
-        FactionMap.put(factionID, new Faction(event.factionName, PlayerID));
+        FactionMap.put(factionID, new Faction(factionID, event.factionName, PlayerID));
 
         saveFaction(factionID);
 
@@ -917,7 +917,7 @@ public class FactionManager {
         flags.add("infinitepower");
         flags.add("unlimitedland");
         flags.add("unrelateable");
-        Faction wild = new Faction("The Wild", "Everywhere that isn't owned by a faction", flags);
+        Faction wild = new Faction(WILDID, "The Wild", "Everywhere that isn't owned by a faction", flags);
         FactionMap.put(WILDID, wild);
         saveFaction(WILDID);
     }
@@ -932,7 +932,7 @@ public class FactionManager {
         flags.add("unrelateable");
         flags.add("nodamage");
         flags.add("nobuild");
-        Faction wild = new Faction("The SafeZone", "You're pretty safe here", flags);
+        Faction wild = new Faction(SAFEID, "The SafeZone", "You're pretty safe here", flags);
         FactionMap.put(SAFEID, wild);
         saveFaction(SAFEID);
     }
@@ -946,7 +946,7 @@ public class FactionManager {
         flags.add("unlimitedland");
         flags.add("unrelateable");
         flags.add("bonuspower");
-        Faction wild = new Faction("The WarZone", "You're not safe here, you will lose more power when you die, but will gain more power when you kill", flags);
+        Faction wild = new Faction(WARID, "The WarZone", "You're not safe here, you will lose more power when you die, but will gain more power when you kill", flags);
         FactionMap.put(WARID, wild);
         saveFaction(WARID);
     }
@@ -998,6 +998,7 @@ public class FactionManager {
             Reader reader = new FileReader(factionFile);
             Faction factionObject = gson.fromJson(reader, Faction.class);
             if (factionObject != null){
+                factionObject.ID = ID;
                 FactionMap.put(ID, factionObject);
             }
         } catch (FileNotFoundException e) {

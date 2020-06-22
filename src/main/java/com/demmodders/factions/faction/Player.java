@@ -1,9 +1,12 @@
 package com.demmodders.factions.faction;
 
+import com.demmodders.datmoddingapi.util.DemConstants;
 import com.demmodders.factions.util.FactionConfig;
+import com.demmodders.factions.util.FactionConstants;
 import com.demmodders.factions.util.enums.FactionChatMode;
 import com.demmodders.factions.util.enums.FactionRank;
 import com.demmodders.factions.util.structures.Power;
+import net.minecraft.util.text.TextFormatting;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -57,6 +60,22 @@ public class Player {
     public void addMaxPower(int MaxPower){
         if (MaxPower + power.maxPower > FactionConfig.playerSubCat.playerMaxPowerCap) power.maxPower = FactionConfig.playerSubCat.playerMaxPowerCap;
         else power.maxPower = MaxPower + power.maxPower;
+    }
+
+    public String printPlayerInfo(UUID askingFaction){
+        FactionManager fMan = FactionManager.getInstance();
+
+        String relationColour = fMan.getRelationColour(askingFaction, faction);
+
+        StringBuilder message = new StringBuilder();
+
+        message.append(DemConstants.TextColour.INFO).append("======").append(FactionConstants.TextColour.OWN).append(lastKnownName).append(DemConstants.TextColour.INFO).append("======\n");
+        message.append(DemConstants.TextColour.INFO).append("Faction: ").append(TextFormatting.RESET).append(relationColour).append(faction != FactionManager.WILDID ? fMan.getFaction(faction).name : "N/A").append("\n");
+        message.append(DemConstants.TextColour.INFO).append("Rank: ").append(factionRank != null ? FactionRank.getFactionRankString(factionRank) : "N/A").append("\n");
+        message.append(DemConstants.TextColour.INFO).append("Personal Power: ").append(power.power).append("\n");
+        message.append(DemConstants.TextColour.INFO).append("Personal Max Power: ").append(power.maxPower);
+
+        return message.toString();
     }
 }
 

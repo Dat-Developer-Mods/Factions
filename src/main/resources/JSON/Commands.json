@@ -4,6 +4,7 @@
     "list" : "View a list all of the factions on the server",
     "info" : "View info on a given faction",
     "rank" : "Shows the faction rank of the given player",
+	"playerinfo" : "Shows the power and max power of the given player",
     "map" : "View a map of the factions claim to land around you",
     "invites" : "View a list of all the invites you've received from factions",
     "join" : "Become a member of the given faction",

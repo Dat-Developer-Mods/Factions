@@ -73,7 +73,7 @@ public class FactionCommand extends CommandBase {
                     possibilities.add("4");
                     break;
                 case "list":
-                    for (int i = 1; i < fMan.getListOfFactionsUUIDs().size(); i++) {
+                    for (int i = 1; i <= (int) Math.ceil((float) fMan.getListOfFactionsUUIDs().size() / 10); i++) {
                         possibilities.add(String.valueOf(i));
                     }
                     break;
@@ -106,6 +106,8 @@ public class FactionCommand extends CommandBase {
                 case "invite":
                 case "uninvite":
                 case "rank":
+                case "playerinfo":
+                case "pinfo":
                     possibilities = Arrays.asList(server.getOnlinePlayerNames());
                     break;
 
@@ -245,14 +247,14 @@ public class FactionCommand extends CommandBase {
                         // If they haven't given an argument, show info on their faction
                         if (args.length == 1) {
                             if(!factionID.equals(FactionManager.WILDID)){
-                                replyMessage = fMan.getFaction(factionID).printFactionInfo();
+                                replyMessage = fMan.getFaction(factionID).printFactionInfo(factionID);
                             } else {
                                 replyMessage = DemConstants.TextColour.ERROR + "You don't belong to a faction, you may only look up other factions";
                             }
                         } else {
                             UUID otherFaction = fMan.getFactionIDFromName(args[1]);
                             if (otherFaction != null) {
-                                replyMessage = fMan.getFaction(otherFaction).printFactionInfo();
+                                replyMessage = fMan.getFaction(otherFaction).printFactionInfo(factionID);
                             } else {
                                 replyMessage = DemConstants.TextColour.ERROR + "That faction doesn't exist";
                             }
@@ -261,7 +263,24 @@ public class FactionCommand extends CommandBase {
                         commandResult = CommandResult.NOPERMISSION;
                     }
                     break;
-
+                case "playerinfo":
+                case "pinfo":
+                    if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.info")) {
+                        // If they haven't given an argument, show info on themselves
+                        if (args.length == 1) {
+                            replyMessage = fMan.getPlayer(playerID).printPlayerInfo(factionID);
+                        } else {
+                            UUID otherPlayer = fMan.getPlayerIDFromName(args[1]);
+                            if (otherPlayer != null) {
+                                replyMessage = fMan.getPlayer(otherPlayer).printPlayerInfo(factionID);
+                            } else {
+                                replyMessage = DemConstants.TextColour.ERROR + "That player doesn't exist";
+                            }
+                        }
+                    } else {
+                        commandResult = CommandResult.NOPERMISSION;
+                    }
+                    break;
                 case "rank":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.info")) {
                         // If they haven't given an argument, show info on their faction

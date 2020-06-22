@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class Faction {
+    public transient UUID ID;
     public String name = "";
     public String desc = "";
     public String motd = "";
@@ -36,7 +37,8 @@ public class Faction {
 
     }
 
-    Faction(String Name, String Desc, ArrayList<String> Flags){
+    Faction(UUID factionID, String Name, String Desc, ArrayList<String> Flags){
+        ID = factionID;
         name = Name;
         desc = Desc;
 
@@ -44,7 +46,8 @@ public class Faction {
         flags = Flags;
     }
 
-    public Faction(String name, UUID playerID){
+    public Faction(UUID factionID, String name, UUID playerID){
+        this.ID = factionID;
         this.name = name;
         this.foundingTime = System.currentTimeMillis();
 
@@ -268,8 +271,10 @@ public class Faction {
      * Builds a message giving information about the faction
      * @return a long message detailing public information about the faction
      */
-    public String printFactionInfo(){
+    public String printFactionInfo(UUID askingFaction){
         FactionManager fMan = FactionManager.getInstance();
+
+        String relationColour = fMan.getRelationColour(askingFaction, ID);
 
         // Work out age to display
         StringBuilder message = new StringBuilder();
@@ -322,7 +327,7 @@ public class Faction {
             }
         }
 
-        message.append(DemConstants.TextColour.INFO).append("======").append(FactionConstants.TextColour.OWN).append(name).append(DemConstants.TextColour.INFO).append("======\n");
+        message.append(DemConstants.TextColour.INFO).append("======").append(TextFormatting.RESET).append(relationColour).append(name).append(DemConstants.TextColour.INFO).append("======\n");
         message.append(DemConstants.TextColour.INFO).append("Description: ").append(TextFormatting.RESET).append(desc).append("\n");
         message.append(DemConstants.TextColour.INFO).append("Age: ").append(TextFormatting.RESET).append(age).append("\n");
         message.append(DemConstants.TextColour.INFO).append("Invitation Policy: ").append(TextFormatting.RESET).append(invitePolicy).append("\n");
