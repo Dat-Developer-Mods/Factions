@@ -17,6 +17,7 @@ public class Player {
     public Power power = null;
     public String lastKnownName = "";
     public transient UUID lastFactionLand  = null;
+    public transient boolean autoClaim = false;
     public transient ArrayList<UUID> invites = new ArrayList<>();
     public transient FactionChatMode factionChat = FactionChatMode.NORMAL;
 

@@ -3,9 +3,11 @@ package com.demmodders.factions.api.event;
 import com.demmodders.datmoddingapi.structures.ChunkLocation;
 import com.demmodders.factions.faction.Faction;
 import com.demmodders.factions.faction.FactionManager;
+import com.demmodders.factions.util.enums.ClaimType;
 import com.demmodders.factions.util.enums.RelationState;
 import net.minecraftforge.fml.common.eventhandler.Cancelable;
 
+import java.util.List;
 import java.util.UUID;
 
 public class InFactionEvent extends FactionEvent {
@@ -21,11 +23,13 @@ public class InFactionEvent extends FactionEvent {
     }
 
     public static class ChunkEvent extends InFactionEvent {
-        public ChunkLocation position;
+        public List<ChunkLocation> positions;
+        public final ClaimType type;
 
-        public ChunkEvent(ChunkLocation Position, UUID Player, UUID FactionID){
+        public ChunkEvent(List<ChunkLocation> Positions, UUID Player, UUID FactionID, ClaimType Type){
             super(Player, FactionID);
-            position = Position;
+            positions = Positions;
+            type = Type;
         }
 
         /**
@@ -34,18 +38,15 @@ public class InFactionEvent extends FactionEvent {
         @Cancelable
         public static class FactionClaimEvent extends ChunkEvent {
 
-            public final UUID currentOwner;
-
-            public FactionClaimEvent(ChunkLocation Position, UUID Player, UUID FactionID, UUID CurrentOwner) {
-                super(Position, Player, FactionID);
-                currentOwner = CurrentOwner;
+            public FactionClaimEvent(List<ChunkLocation> Positions, UUID Player, UUID FactionID, ClaimType Type) {
+                super(Positions, Player, FactionID, Type);
             }
         }
 
         @Cancelable
         public static class FactionUnClaimEvent extends ChunkEvent {
-            public FactionUnClaimEvent(ChunkLocation chunkLocation, UUID playerID, UUID factionID) {
-                super(chunkLocation, playerID, factionID);
+            public FactionUnClaimEvent(List<ChunkLocation> chunkLocations, UUID playerID, UUID factionID, ClaimType Type) {
+                super(chunkLocations, playerID, factionID, Type);
             }
         }
     }

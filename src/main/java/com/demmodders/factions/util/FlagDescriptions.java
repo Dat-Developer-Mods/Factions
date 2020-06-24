@@ -20,22 +20,27 @@ public class FlagDescriptions {
      * Loads the flags from the flags file
      */
     private static void loadFlags(){
-        Gson gson = new Gson();
-        InputStream json;
-        if (flagFile != null) {
-            try {
-                json = new FileInputStream(flagFile);
-            } catch (FileNotFoundException e) {
+        try {
+            Gson gson = new Gson();
+            InputStream json;
+            if (flagFile != null) {
+                try {
+                    json = new FileInputStream(flagFile);
+                } catch (FileNotFoundException e) {
+                    json = FactionCommandList.class.getClassLoader().getResourceAsStream("JSON/Flags.json");
+                    Factions.LOGGER.warn("Failed to find flag file, defaulting to default translation");
+                }
+            } else {
                 json = FactionCommandList.class.getClassLoader().getResourceAsStream("JSON/Flags.json");
-                Factions.LOGGER.warn("Failed to find flag file, defaulting to default translation");
             }
-        } else {
-            json = FactionCommandList.class.getClassLoader().getResourceAsStream("JSON/Flags.json");
+            InputStreamReader reader = new InputStreamReader(json);
+            Flags items = gson.fromJson(reader, Flags.class);
+            playerFlags = new HashMap<>(items.playerFlags);
+            adminFlags = new HashMap<>(items.adminFlags);
+            json.close();
+        } catch (IOException ignored) {
+
         }
-        InputStreamReader reader = new InputStreamReader(json);
-        Flags items = gson.fromJson(reader, Flags.class);
-        playerFlags = new HashMap<>(items.playerFlags);
-        adminFlags = new HashMap<>(items.adminFlags);
     }
 
     /**

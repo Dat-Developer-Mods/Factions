@@ -31,22 +31,25 @@ public class FactionCommandList {
     private static void loadCommands(){
         Gson gson = new Gson();
         InputStream json;
-
-        if (commandFile != null) {
-            try {
-                json = new FileInputStream(commandFile);
-            } catch (FileNotFoundException e) {
+        try {
+            if (commandFile != null) {
+                try {
+                    json = new FileInputStream(commandFile);
+                } catch (FileNotFoundException e) {
+                    json = FactionCommandList.class.getClassLoader().getResourceAsStream("JSON/Commands.json");
+                    Factions.LOGGER.warn("Failed to find flag file, defaulting to default translation");
+                }
+            } else {
                 json = FactionCommandList.class.getClassLoader().getResourceAsStream("JSON/Commands.json");
-                Factions.LOGGER.warn("Failed to find flag file, defaulting to default translation");
             }
-        } else {
-            json = FactionCommandList.class.getClassLoader().getResourceAsStream("JSON/Commands.json");
-        }
 
-        InputStreamReader reader = new InputStreamReader(json);
-        Commands commandsList = gson.fromJson(reader, Commands.class);
-        commands = new LinkedHashMap<>(commandsList.commands);
-        adminCommands = new LinkedHashMap<>(commandsList.adminCommands);
+            InputStreamReader reader = new InputStreamReader(json);
+            Commands commandsList = gson.fromJson(reader, Commands.class);
+            commands = new LinkedHashMap<>(commandsList.commands);
+            adminCommands = new LinkedHashMap<>(commandsList.adminCommands);
+            json.close();
+        } catch (IOException ignored) {
+        }
     }
 }
 

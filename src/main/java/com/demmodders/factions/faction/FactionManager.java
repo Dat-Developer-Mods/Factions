@@ -10,8 +10,10 @@ import com.demmodders.factions.api.event.OutFactionEvent;
 import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.FactionConstants;
 import com.demmodders.factions.util.FactionFileHelper;
+import com.demmodders.factions.util.enums.ClaimType;
 import com.demmodders.factions.util.enums.FactionRank;
 import com.demmodders.factions.util.enums.RelationState;
+import com.demmodders.factions.util.structures.ClaimResult;
 import com.demmodders.factions.util.structures.Power;
 import com.demmodders.factions.util.structures.Relationship;
 import com.google.gson.Gson;
@@ -30,7 +32,6 @@ import org.apache.logging.log4j.Logger;
 import javax.annotation.Nullable;
 import java.io.*;
 import java.lang.reflect.Type;
-import java.security.acl.Owner;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -89,7 +90,7 @@ public class FactionManager {
      * @return The faction object of the ID
      */
     public Faction getFaction(UUID ID){
-        return FactionMap.getOrDefault(ID, null);
+        return FactionMap.get(ID);
     }
 
     /**
@@ -113,7 +114,7 @@ public class FactionManager {
      * @return the player object of the ID
      */
     public Player getPlayer(UUID ID){
-        return PlayerMap.getOrDefault(ID, null);
+        return PlayerMap.get(ID);
     }
 
     /**
@@ -602,59 +603,129 @@ public class FactionManager {
     }
 
     /**
-     * Attempts to claim a chunk for the given faction
+     * Attempts to claim some chunks for the given faction
      * @param FactionID The faction claiming the chunk
      * @param PlayerID The player claiming the chunk
      * @param Dim The dimention the chunk is in
      * @param ChunkX The X Coord of the chunk
      * @param ChunkZ The Z Coord of the chunk
+     * @param Type The type of claim (One, Square, auto)
+     * @param Radius The radius of the claim (only applies to square)
      * @return The result of the claim (0: Success, 1:Success, but stolen, 2: Not enough power, 3: Must touch other land, 4: Faction owns it, 5: You own it, 6: Nope)
      */
-    public int claimLand(UUID FactionID, @Nullable UUID PlayerID, int Dim, int ChunkX, int ChunkZ){
-        String chunkKey = makeChunkKey(ChunkX, ChunkZ);
+    public ClaimResult claimLand(UUID FactionID, @Nullable UUID PlayerID, int Dim, int ChunkX, int ChunkZ, ClaimType Type, int Radius){
+        ClaimResult result = new ClaimResult();
+        List<ChunkLocation> chunks = new ArrayList<>();
+        Faction faction = FactionMap.get(FactionID);
 
-        UUID owner = null;
-
-        // Check it isn't owned, or owned by someone who can't afford it
-        boolean owned = false;
-        if (ClaimedLand.containsKey(Dim)) {
-            if (ClaimedLand.get(Dim).containsKey(chunkKey)){
-                owned = true;
-                owner = ClaimedLand.get(Dim).get(chunkKey);
-
-                if (owner.equals(FactionID)) return 5;
-                if (FactionMap.get(owner).hasFlag("strongborders") || FactionMap.get(owner).calculatePower() >= FactionMap.get(owner).checkCanAffordLand()) {
-                    return 4;
-                }
-            }
-        } else {
+        // Ensure dimension is in the system
+        if (!ClaimedLand.containsKey(Dim)) {
             // Create dimension entry
             ClaimedLand.put(Dim, new HashMap<>());
         }
-        // Check they can afford it
-        if (!(FactionMap.get(FactionID).checkCanAffordLand(1)) && !(FactionMap.get(FactionID).hasFlag("unlimitedland"))) return 2;
 
-        // Check they can steal if off the owning faction
-        if (owned && (FactionMap.get(FactionID).calculatePower() <= FactionMap.get(owner).calculatePower())) return 4;
+        // Get all chunks and check they connect
+        boolean connected = false;
 
-        // Check the land is connected
-        if (FactionConfig.landSubCat.landRequireConnect && !(FactionConfig.landSubCat.landRequireConnectWhenStealing && owned) && !getFaction(FactionID).checkLandTouches(Dim, ChunkX, ChunkZ)) return 3;
-
-        InFactionEvent.ChunkEvent.FactionClaimEvent event = new InFactionEvent.ChunkEvent.FactionClaimEvent(new ChunkLocation(Dim, ChunkX, ChunkZ), PlayerID, FactionID, owner);
-        MinecraftForge.EVENT_BUS.post(event);
-        if (event.isCanceled()) return 6;
-
-        chunkKey = makeChunkKey(event.position.x, event.position.z);
-
-        if (owned){
-            FactionMap.get(ClaimedLand.get(Dim).get(chunkKey)).removeLandFromFaction(event.position);
+        // Work out which land we're claiming
+        switch (Type) {
+            case AUTO:
+            case ONE:
+                result.attemptedClaimedLandCount = 1;
+                chunks.add(new ChunkLocation(Dim, ChunkX, ChunkZ));
+                connected = faction.checkLandTouches(Dim, ChunkX, ChunkZ) || !getChunkOwningFaction(Dim, ChunkX, ChunkZ).equals(WILDID);
+                break;
+            case SQUARE:
+                result.attemptedClaimedLandCount = (Radius * 2) + 1;
+                for (int i = ChunkX - Radius; i <= ChunkX + Radius; i++) {
+                    for (int j = ChunkZ - Radius; j <= ChunkZ + Radius; j++) {
+                        UUID owner = getChunkOwningFaction(Dim, i, j);
+                        if (!owner.equals(WILDID)) {
+                            result.owners.add(owner);
+                            continue;
+                        };
+                        chunks.add(new ChunkLocation(Dim, i, j));
+                        connected = connected || faction.checkLandTouches(Dim, i, j);
+                    }
+                }
+                break;
+            default:
+                result.result = 5;
+                return result;
+        }
+        result.claimedLandCount = chunks.size();
+        if (chunks.size() == 0) {
+            result.result = 3;
+            return result;
+        } else if (!faction.checkCanAffordLand(chunks.size())) {
+            result.result = 1;
+            return result;
+        } else if (!connected && FactionConfig.landSubCat.landRequireConnect) {
+            result.result = 2;
+            return result;
         }
 
-        // Save claim
-        ClaimedLand.get(event.position.dim).put(chunkKey, FactionID);
+        result.owners.clear();
+
+        InFactionEvent.ChunkEvent.FactionClaimEvent event = new InFactionEvent.ChunkEvent.FactionClaimEvent(chunks, PlayerID, FactionID, Type);
+        MinecraftForge.EVENT_BUS.post(event);
+
+        if (event.isCanceled()) {
+            result.result = 5;
+            return result;
+        }
+
+        // Check auto
+        if (Type == ClaimType.AUTO) {
+            if (PlayerID == null) {
+                result.result = 5;
+                return result;
+            }
+            Player thePlayer = PlayerMap.get(PlayerID);
+            if (thePlayer == null) {
+                result.result = 5;
+                return result;
+            }
+
+            if (thePlayer.autoClaim) {
+                thePlayer.autoClaim = false;
+                sendMessageToPlayer(PlayerID, DemConstants.TextColour.INFO + "Disabled autoclaim");
+            } else {
+                thePlayer.autoClaim = true;
+                sendMessageToPlayer(PlayerID, DemConstants.TextColour.INFO + "Enabled autoclaim");
+            }
+            chunks.add(new ChunkLocation(Dim, ChunkX, ChunkZ));
+            result.attemptedClaimedLandCount = 1;
+        }
+     // 0: Success, 1: Not enough power, 2: Must touch other land, 3: Faction owns it, 4: You own it, 5: Nope
+
+        for (int i = 0; i < chunks.size(); i++) {
+            ChunkLocation chunk = chunks.get(i);
+            String chunkKey = makeChunkKey(chunk.x, chunk.z);
+            UUID owner = getChunkOwningFaction(chunk.dim, chunk.x, chunk.z);
+            if (!owner.equals(WILDID)) {
+                if (FactionMap.get(owner).hasFlag("strongborders") || FactionMap.get(owner).calculatePower() >= FactionMap.get(owner).calculateLandValue() || FactionMap.get(owner).calculatePower() >= FactionMap.get(FactionID).calculatePower()) {
+                    result.result = 3;
+                    chunks.remove(i);
+                    i--;
+                    continue;
+                } else if (!FactionConfig.landSubCat.landRequireConnectWhenStealing && !faction.checkLandTouches(chunk.dim, chunk.x, chunk.z)) {
+                    result.result = 2;
+                    chunks.remove(i);
+                    i--;
+                    continue;
+                } else {
+                    result.owners.add(owner);
+                    FactionMap.get(owner).removeLandFromFaction(chunk);
+                }
+            }
+
+            ClaimedLand.get(chunk.dim).put(chunkKey, FactionID);
+
+            FactionMap.get(FactionID).addLandToFaction(chunk.dim, chunkKey);
+        }
         saveClaimedChunks(Dim);
-        FactionMap.get(FactionID).addLandToFaction(event.position.dim, chunkKey);
-        return (owned ? 1 : 0);
+        return result;
     }
     /**
      * Forcefully claim a chunk for the given faction
@@ -689,11 +760,11 @@ public class FactionManager {
      * @param ChunkZ The Z Coord of the chunk
      * @return The result of the claim (0: Success, 1: Faction doesn't own that chunk, 2: Cancelled)
      */
-    public int unClaimLand(UUID FactionID, @Nullable UUID PlayerID, int Dim, int ChunkX, int ChunkZ){
+    public int unClaimLand(UUID FactionID, @Nullable UUID PlayerID, int Dim, int ChunkX, int ChunkZ, ClaimType Type, int Radius){
         String chunkKey = makeChunkKey(ChunkX, ChunkZ);
         UUID owningFaction = null;
         if (ClaimedLand.containsKey(Dim) && ClaimedLand.get(Dim).containsKey(chunkKey) && ClaimedLand.get(Dim).get(chunkKey).equals(FactionID)) {
-            InFactionEvent.ChunkEvent.FactionUnClaimEvent event = new InFactionEvent.ChunkEvent.FactionUnClaimEvent(new ChunkLocation(Dim, ChunkX, ChunkZ), PlayerID, FactionID);
+            InFactionEvent.ChunkEvent.FactionUnClaimEvent event = new InFactionEvent.ChunkEvent.FactionUnClaimEvent(new ChunkLocation(Dim, ChunkX, ChunkZ), PlayerID, FactionID, Type);
             MinecraftForge.EVENT_BUS.post(event);
             if (event.isCanceled()) return 2;
             else {
@@ -714,7 +785,7 @@ public class FactionManager {
      * @return The result of the alliance (0: Success them pending, 1: Success both allies, 2: Success but enemy, 3: Already allies, 4: That's you, 5: No)
      */
     public int addAlly(UUID FactionID, UUID OtherFaction, @Nullable UUID PlayerID){
-        Relationship currentRelation = FactionMap.get(FactionID).relationships.getOrDefault(OtherFaction, null);
+        Relationship currentRelation = FactionMap.get(FactionID).relationships.get(OtherFaction);
         if (FactionID.equals(OtherFaction)) return 4;
         if (FactionMap.get(OtherFaction).hasFlag("unrelateable")) return 5;
         if (currentRelation != null && currentRelation.relation == RelationState.ALLY) return 3;
@@ -748,7 +819,7 @@ public class FactionManager {
      * @return The result of the declaration (0: Success, 1: Success enemies all round, 2: Success but you're an ally to them, 3: already enemies, 4: That's you, 5: No)
      */
     public int addEnemy(UUID FactionID, UUID OtherFaction, @Nullable UUID PlayerID){
-        Relationship currentRelation = FactionMap.get(FactionID).relationships.getOrDefault(OtherFaction, null);
+        Relationship currentRelation = FactionMap.get(FactionID).relationships.get(OtherFaction);
         if (FactionID.equals(OtherFaction)) return 4;
         if (FactionMap.get(OtherFaction).hasFlag("unrelateable")) return 5;
         if (currentRelation != null && currentRelation.relation == RelationState.ENEMY) return 3;
@@ -782,7 +853,7 @@ public class FactionManager {
      * @return The result of the declaration (0: Success, 1: Removed enemy, 2: Removed ally, 3: cannot deny request, 4: no relation, 5: that's you
      */
     public int addNeutral(UUID FactionID, UUID OtherFaction, UUID PlayerID){
-        Relationship currentRelation = FactionMap.get(FactionID).relationships.getOrDefault(OtherFaction, null);
+        Relationship currentRelation = FactionMap.get(FactionID).relationships.get(OtherFaction);
         if (FactionID.equals(OtherFaction)) return 5;
         if (currentRelation == null) return 4;
         if (currentRelation.relation == RelationState.PENDINGALLY || currentRelation.relation == RelationState.PENDINGENEMY) return 3;

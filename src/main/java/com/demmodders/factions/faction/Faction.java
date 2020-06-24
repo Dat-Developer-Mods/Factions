@@ -220,7 +220,7 @@ public class Faction {
      * Calculates the cost of all the land this faction owns
      * @return the cost of the land this faction owns
      */
-    public int checkCanAffordLand(){
+    public int calculateLandValue(){
         int landCount = 0;
         for (int dim: land.keySet()) {
             landCount += land.get(dim).size();
@@ -331,7 +331,7 @@ public class Faction {
         message.append(DemConstants.TextColour.INFO).append("Description: ").append(TextFormatting.RESET).append(desc).append("\n");
         message.append(DemConstants.TextColour.INFO).append("Age: ").append(TextFormatting.RESET).append(age).append("\n");
         message.append(DemConstants.TextColour.INFO).append("Invitation Policy: ").append(TextFormatting.RESET).append(invitePolicy).append("\n");
-        message.append(DemConstants.TextColour.INFO).append("Land worth: ").append(TextFormatting.RESET).append(checkCanAffordLand()).append("\n");
+        message.append(DemConstants.TextColour.INFO).append("Land worth: ").append(TextFormatting.RESET).append(calculateLandValue()).append("\n");
         message.append(DemConstants.TextColour.INFO).append("Power: ").append(TextFormatting.RESET).append(calculatePower()).append("\n");
         message.append(DemConstants.TextColour.INFO).append("Max Power: ").append(TextFormatting.RESET).append(calculateMaxPower()).append("\n");
         message.append(DemConstants.TextColour.INFO).append("Members: ").append(memberText.toString()).append("\n");

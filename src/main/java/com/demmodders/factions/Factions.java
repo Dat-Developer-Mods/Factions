@@ -6,6 +6,7 @@ import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.FlagDescriptions;
 import com.demmodders.factions.util.structures.Version;
 import com.google.gson.Gson;
+import jdk.internal.util.xml.impl.Input;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -45,17 +46,17 @@ public class Factions {
         Gson gson = new Gson();
         Version fileVersion;
 
-        try {
+        try (InputStream file = getClass().getClassLoader().getResourceAsStream("JSON/Commands.json")) {
             File commandList = new File(translationsDir, "Commands.json");
             if (!commandList.exists()) {
-                Files.copy(getClass().getClassLoader().getResourceAsStream("JSON/Commands.json"), commandList.toPath());
+                Files.copy(file, commandList.toPath());
                 FactionCommandList.commandFile = commandList;
             } else {
                 fileVersion = gson.fromJson(new FileReader(commandList), Version.class);
                 if(fileVersion.version != COMMANDSVERSION) {
                     LOGGER.warn("Command List file out of date, updated to latest version, this means it will be cleared");
                     commandList.delete();
-                    Files.copy(getClass().getClassLoader().getResourceAsStream("JSON/Commands.json"), commandList.toPath());
+                    Files.copy(file, commandList.toPath());
                 }
             }
         } catch (IOException e) {
@@ -63,22 +64,21 @@ public class Factions {
             return;
         }
 
-        try {
+        try (InputStream file = getClass().getClassLoader().getResourceAsStream("JSON/Flags.json")) {
             File flagList = new File(translationsDir, "Flags.json");
             if (!flagList.exists()) {
-                Files.copy(getClass().getClassLoader().getResourceAsStream("JSON/Flags.json"), flagList.toPath());
+                Files.copy(file, flagList.toPath());
                 FlagDescriptions.flagFile = flagList;
             } else {
                 fileVersion = gson.fromJson(new FileReader(flagList), Version.class);
                 if(fileVersion.version != FLAGSVERSION) {
                     LOGGER.warn("Flag List file out of date, updated to latest version, this means it will be cleared");
                     flagList.delete();
-                    Files.copy(getClass().getClassLoader().getResourceAsStream("JSON/Flags.json"), flagList.toPath());
+                    Files.copy(file, flagList.toPath());
                 }
             }
         } catch (IOException e) {
             LOGGER.error("Failed to create flags translations file, command description and flag translations won't load");
-            return;
         }
     }
 
