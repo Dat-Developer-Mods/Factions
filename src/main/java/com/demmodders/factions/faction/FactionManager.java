@@ -16,6 +16,7 @@ import com.demmodders.factions.util.enums.RelationState;
 import com.demmodders.factions.util.structures.ClaimResult;
 import com.demmodders.factions.util.structures.Power;
 import com.demmodders.factions.util.structures.Relationship;
+import com.demmodders.factions.util.structures.UnClaimResult;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import net.minecraft.entity.player.EntityPlayer;
@@ -32,10 +33,7 @@ import org.apache.logging.log4j.Logger;
 import javax.annotation.Nullable;
 import java.io.*;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class FactionManager {
     public static final Logger LOGGER = LogManager.getLogger(Factions.MODID);
@@ -697,19 +695,20 @@ public class FactionManager {
             chunks.add(new ChunkLocation(Dim, ChunkX, ChunkZ));
             result.attemptedClaimedLandCount = 1;
         }
-     // 0: Success, 1: Not enough power, 2: Must touch other land, 3: Faction owns it, 4: You own it, 5: Nope
+
+        Set<Integer> dims = new HashSet<>();
 
         for (int i = 0; i < chunks.size(); i++) {
             ChunkLocation chunk = chunks.get(i);
             String chunkKey = makeChunkKey(chunk.x, chunk.z);
             UUID owner = getChunkOwningFaction(chunk.dim, chunk.x, chunk.z);
             if (!owner.equals(WILDID)) {
-                if (FactionMap.get(owner).hasFlag("strongborders") || FactionMap.get(owner).calculatePower() >= FactionMap.get(owner).calculateLandValue() || FactionMap.get(owner).calculatePower() >= FactionMap.get(FactionID).calculatePower()) {
+                if (owner.equals(FactionID) || FactionMap.get(owner).hasFlag("strongborders") || FactionMap.get(owner).calculatePower() >= FactionMap.get(owner).calculateLandValue() || FactionMap.get(owner).calculatePower() >= FactionMap.get(FactionID).calculatePower()) {
                     result.result = 3;
                     chunks.remove(i);
                     i--;
                     continue;
-                } else if (!FactionConfig.landSubCat.landRequireConnectWhenStealing && !faction.checkLandTouches(chunk.dim, chunk.x, chunk.z)) {
+                } else if (!FactionConfig.landSubCat.landRequireConnectWhenStealing || faction.checkLandTouches(chunk.dim, chunk.x, chunk.z)) {
                     result.result = 2;
                     chunks.remove(i);
                     i--;
@@ -721,10 +720,10 @@ public class FactionManager {
             }
 
             ClaimedLand.get(chunk.dim).put(chunkKey, FactionID);
-
+            dims.add(chunk.dim);
             FactionMap.get(FactionID).addLandToFaction(chunk.dim, chunkKey);
         }
-        saveClaimedChunks(Dim);
+        for (int dim : dims) saveClaimedChunks(dim);
         return result;
     }
     /**
@@ -760,21 +759,87 @@ public class FactionManager {
      * @param ChunkZ The Z Coord of the chunk
      * @return The result of the claim (0: Success, 1: Faction doesn't own that chunk, 2: Cancelled)
      */
-    public int unClaimLand(UUID FactionID, @Nullable UUID PlayerID, int Dim, int ChunkX, int ChunkZ, ClaimType Type, int Radius){
-        String chunkKey = makeChunkKey(ChunkX, ChunkZ);
-        UUID owningFaction = null;
-        if (ClaimedLand.containsKey(Dim) && ClaimedLand.get(Dim).containsKey(chunkKey) && ClaimedLand.get(Dim).get(chunkKey).equals(FactionID)) {
-            InFactionEvent.ChunkEvent.FactionUnClaimEvent event = new InFactionEvent.ChunkEvent.FactionUnClaimEvent(new ChunkLocation(Dim, ChunkX, ChunkZ), PlayerID, FactionID, Type);
-            MinecraftForge.EVENT_BUS.post(event);
-            if (event.isCanceled()) return 2;
-            else {
-                ClaimedLand.get(Dim).remove(chunkKey);
-                saveClaimedChunks(Dim);
-                FactionMap.get(FactionID).removeLandFromFaction(Dim, chunkKey);
-                return 0;
-            }
+    public UnClaimResult unClaimLand(UUID FactionID, @Nullable UUID PlayerID, int Dim, int ChunkX, int ChunkZ, ClaimType Type, int Radius){
+        UnClaimResult result = new UnClaimResult();
+        List<ChunkLocation> chunks = new ArrayList<>();
+        Faction faction = FactionMap.get(FactionID);
+        // Work out which land we're claiming
+        switch (Type) {
+            case ALL:
+                break;
+            case ONE:
+                if (getChunkOwningFaction(Dim, ChunkX, ChunkZ).equals(FactionID))
+                    chunks.add(new ChunkLocation(Dim, ChunkX, ChunkZ));
+                break;
+            case SQUARE:
+                for (int i = ChunkX - Radius; i <= ChunkX + Radius; i++) {
+                    for (int j = ChunkZ - Radius; j <= ChunkZ + Radius; j++) {
+                        if (getChunkOwningFaction(Dim, i, j).equals(FactionID))
+                            chunks.add(new ChunkLocation(Dim, i, j));
+                    }
+                }
+                break;
+            default:
+                result.result = 2;
+                return result;
         }
-        return 1;
+
+
+        if (chunks.isEmpty() && Type != ClaimType.ALL) {
+            result.result = 1;
+            return result;
+        }
+
+        InFactionEvent.ChunkEvent.FactionUnClaimEvent event = new InFactionEvent.ChunkEvent.FactionUnClaimEvent(chunks, PlayerID, FactionID, Type);
+        MinecraftForge.EVENT_BUS.post(event);
+
+        if (event.isCanceled()) {
+            result.result = 2;
+            return result;
+        }
+
+        if (Type == ClaimType.ALL){
+            result.count = countFactionLand(FactionID);
+            releaseAllFactionLand(FactionID);
+            result.result = 0;
+        } else {
+            Set<Integer> dims = new HashSet<>();
+            for (ChunkLocation chunk : chunks) {
+                String chunkKey = makeChunkKey(chunk.x, ChunkZ);
+                ClaimedLand.get(chunk.dim).remove(chunkKey);
+                dims.add(chunk.dim);
+                FactionMap.get(FactionID).removeLandFromFaction(chunk.dim, chunkKey);
+            }
+            for (int dim : dims) saveClaimedChunks(dim);
+        }
+
+        return result;
+    }
+
+    /**
+     * Counts all the land a faction owns
+     * @param FactionID The ID of the faction whose land you're counting
+     * @return The amount of land the faction owns
+     */
+    public int countFactionLand(UUID FactionID){
+        int landCount = 0;
+        Faction faction = FactionMap.get(FactionID);
+        for (ArrayList<String> landList : faction.land.values()) {
+            landCount += landList.size();
+        }
+        return landCount;
+    }
+
+    /**
+     * Counts all the land a faction owns in a dimension
+     * @param FactionID The ID of the faction whose land you're counting
+     * @param Dim The dimension that countains the land you want to count
+     * @return The amount of land the given faction owns in the given dimension
+     */
+    public int countFactionLand(UUID FactionID, int Dim) {
+        if (FactionMap.get(FactionID).land.get(Dim) != null)
+            return FactionMap.get(FactionID).land.get(Dim).size();
+        return 0;
     }
 
     /**
