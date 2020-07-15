@@ -46,6 +46,7 @@ public class FactionManager {
     public static FactionManager getInstance(){
         if (instance == null){
             instance = new FactionManager();
+            instance.claimThread.start(instance);
         }
         return instance;
     }
@@ -80,6 +81,9 @@ public class FactionManager {
     private HashMap<UUID, Faction> FactionMap = new HashMap<>();
     private HashMap<UUID, Player> PlayerMap = new HashMap<>();
     private HashMap<Integer, HashMap<String, UUID>> ClaimedLand = new HashMap<>();
+
+    // Claim Thread
+    ClaimThread claimThread = new ClaimThread();
 
     // Getters
     /**
@@ -708,6 +712,7 @@ public class FactionManager {
                     chunks.remove(i);
                     i--;
                     continue;
+                    // TODO: Fix, will break when badly ordered
                 } else if (!FactionConfig.landSubCat.landRequireConnectWhenStealing || faction.checkLandTouches(chunk.dim, chunk.x, chunk.z)) {
                     result.result = 2;
                     chunks.remove(i);

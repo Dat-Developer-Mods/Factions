@@ -667,9 +667,14 @@ public class FactionCommand extends CommandBase {
                                                     replyMessage = DemConstants.TextColour.ERROR + "You cannot claim this chunk, it isn't connected to the rest of your land";
                                                     break;
                                                 case 3:
-                                                    replyMessage = DemConstants.TextColour.ERROR + "You cannot claim this chunk, " + fMan.getFaction(result.owners.get(0)).name + " owns it and has the power to keep it";
+                                                    if (result.owners.get(0).equals(factionID)) {
+                                                        replyMessage = DemConstants.TextColour.ERROR + "You already own this chunk";
+                                                    } else {
+                                                        replyMessage = DemConstants.TextColour.ERROR + "You cannot claim this chunk, " + fMan.getFaction(result.owners.get(0)).name + " owns it and has the power to keep it";
+                                                    }
                                                     break;
                                             }
+// 0: Success, 1: Not enough power, 2: Must touch other land, 3: Faction owns it, 4: You own it, 5: Nope
                                         } else {
                                             // TODO: Square
                                         }
