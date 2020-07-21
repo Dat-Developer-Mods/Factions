@@ -6,7 +6,6 @@ import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.FlagDescriptions;
 import com.demmodders.factions.util.structures.Version;
 import com.google.gson.Gson;
-import jdk.internal.util.xml.impl.Input;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -16,7 +15,10 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 
 @Mod(modid = Factions.MODID, name = Factions.NAME, serverSideOnly = true, version = Factions.VERSION, acceptableRemoteVersions  = "*", dependencies = "required-after:datmoddingapi@[1.1.1,)")
