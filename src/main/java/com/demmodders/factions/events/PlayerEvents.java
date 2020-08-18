@@ -55,16 +55,17 @@ public class PlayerEvents {
     }
 
     private static double rankModifier(FactionRank rank){
-        switch(rank){
-            case LIEUTENANT:
-                return FactionConfig.powerSubCat.lieutenantMultiplier;
-            case OFFICER:
-                return FactionConfig.powerSubCat.officerMultiplier;
-            case OWNER:
-                return FactionConfig.powerSubCat.ownerMultiplier;
-            default:
-                return 1.D;
+        if (rank != null) {
+            switch (rank) {
+                case LIEUTENANT:
+                    return FactionConfig.powerSubCat.lieutenantMultiplier;
+                case OFFICER:
+                    return FactionConfig.powerSubCat.officerMultiplier;
+                case OWNER:
+                    return FactionConfig.powerSubCat.ownerMultiplier;
+            }
         }
+        return 1.D;
     }
 
     @SubscribeEvent
