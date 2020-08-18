@@ -78,9 +78,9 @@ public class FactionManager {
     }
 
     // Faction Objects
-    private HashMap<UUID, Faction> FactionMap = new HashMap<>();
-    private HashMap<UUID, Player> PlayerMap = new HashMap<>();
-    private HashMap<Integer, HashMap<String, UUID>> ClaimedLand = new HashMap<>();
+    private Map<UUID, Faction> FactionMap = new HashMap<>();
+    private Map<UUID, Player> PlayerMap = new HashMap<>();
+    private final Map<Integer, HashMap<String, UUID>> ClaimedLand = Collections.synchronizedMap(new HashMap<>());
 
     // Claim Thread
     ClaimThread claimThread = new ClaimThread();
@@ -270,19 +270,23 @@ public class FactionManager {
      */
     private void addLandToFactions(){
         boolean pruned;
-        for (int dim : ClaimedLand.keySet()){
-            pruned = false;
-            for (String land : ClaimedLand.get(dim).keySet()){
-                if (FactionMap.containsKey(ClaimedLand.get(dim).get(land))) {
-                    FactionMap.get(ClaimedLand.get(dim).get(land)).addLandToFaction(dim, land);
-                } else {
-                    LOGGER.warn("Discovered land owned by a faction that doesn't exist, removing owner");
-                    ClaimedLand.get(dim).remove(land);
-                    pruned = true;
+        synchronized (ClaimedLand) {
+            for (int dim : ClaimedLand.keySet()) {
+                pruned = false;
+                synchronized (ClaimedLand.get(dim)) {
+                    for (String land : ClaimedLand.get(dim).keySet()) {
+                        if (FactionMap.containsKey(ClaimedLand.get(dim).get(land))) {
+                            FactionMap.get(ClaimedLand.get(dim).get(land)).addLandToFaction(dim, land);
+                        } else {
+                            LOGGER.warn("Discovered land owned by a faction that doesn't exist, removing owner");
+                            ClaimedLand.get(dim).remove(land);
+                            pruned = true;
+                        }
+                    }
                 }
-            }
-            if (pruned){
-                saveClaimedChunks(dim);
+                if (pruned) {
+                    saveClaimedChunks(dim);
+                }
             }
         }
     }
@@ -303,7 +307,7 @@ public class FactionManager {
      * @return A list of all the factions
      */
     public List<Faction> getListOfFactions(){
-        return new ArrayList<Faction>(FactionMap.values());
+        return new ArrayList<>(FactionMap.values());
     }
 
     /**
@@ -311,7 +315,7 @@ public class FactionManager {
      * @return A list of all the faction IDs
      */
     public List<UUID> getListOfFactionsUUIDs(){
-        return new ArrayList<UUID>(FactionMap.keySet());
+        return new ArrayList<>(FactionMap.keySet());
     }
 
     /**
@@ -597,9 +601,13 @@ public class FactionManager {
      * @param FactionID The ID of the faction
      */
     public void releaseAllFactionLand(UUID FactionID){
-        for (int dim : ClaimedLand.keySet()){
-            ClaimedLand.get(dim).values().removeIf(value -> value.equals(FactionID));
-            saveClaimedChunks(dim);
+        synchronized (ClaimedLand) {
+            for (int dim : ClaimedLand.keySet()) {
+                synchronized (ClaimedLand.get(dim)){
+                    ClaimedLand.get(dim).values().removeIf(value -> value.equals(FactionID));
+                }
+                saveClaimedChunks(dim);
+            }
         }
         if(FactionMap.containsKey(FactionID)) FactionMap.get(FactionID).land.clear();
     }
@@ -619,6 +627,8 @@ public class FactionManager {
         ClaimResult result = new ClaimResult();
         List<ChunkLocation> chunks = new ArrayList<>();
         Faction faction = FactionMap.get(FactionID);
+
+        //TODO: Finish
 
         // Ensure dimension is in the system
         if (!ClaimedLand.containsKey(Dim)) {
@@ -731,14 +741,8 @@ public class FactionManager {
         for (int dim : dims) saveClaimedChunks(dim);
         return result;
     }
-    /**
-     * Forcefully claim a chunk for the given faction
-     * @param FactionID The faction claiming the chunk
-     * @param Dim The dimention the chunk is in
-     * @param ChunkX The X Coord of the chunk
-     * @param ChunkZ The Z Coord of the chunk
-     */
-    public void forceClaimLand(UUID FactionID, int Dim, int ChunkX, int ChunkZ){
+
+    private void addLandToTheFaction(UUID FactionID, int Dim, int ChunkX, int ChunkZ){
         String chunkKey = makeChunkKey(ChunkX, ChunkZ);
 
         if (ClaimedLand.containsKey(Dim)) {
@@ -749,10 +753,51 @@ public class FactionManager {
             // Create dimension entry
             ClaimedLand.put(Dim, new HashMap<>());
         }
-
         ClaimedLand.get(Dim).put(chunkKey, FactionID);
-        saveClaimedChunks(Dim);
         FactionMap.get(FactionID).addLandToFaction(Dim, chunkKey);
+
+
+    }
+
+    /**
+     * Add a chunk to a faction
+     * @param FactionID The faction claiming the chunk
+     * @param chunk The chunk location being claimed
+     */
+    public void addLandToFaction(UUID FactionID, ChunkLocation chunk) {
+        addLandToTheFaction(FactionID, chunk.dim, chunk.x, chunk.z);
+        saveClaimedChunks(chunk.dim);
+    }
+
+    /**
+     * Add a chunk to a faction
+     * @param FactionID The faction claiming the chunk
+     * @param Dim The dimention the chunk is in
+     * @param ChunkX The X Coord of the chunk
+     * @param ChunkZ The Z Coord of the chunk
+     */
+    public void addLandToFaction(UUID FactionID, int Dim, int ChunkX, int ChunkZ) {
+        addLandToTheFaction(FactionID, Dim, ChunkX, ChunkZ);
+        saveClaimedChunks(Dim);
+    }
+
+    /**
+     * Add all the given chunks to the given faction
+     * @param FactionID The faction claiming the chunks
+     * @param chunks The chunks to add to the faction
+     */
+    public void addLandToFaction(UUID FactionID, List<ChunkLocation> chunks) {
+        Set<Integer> dims = new HashSet<>();
+
+        for (ChunkLocation chunk : chunks) {
+            dims.add(chunk.dim);
+            addLandToFaction(FactionID, chunk);
+        }
+
+        // Save all the chunks
+        for (int dim : dims) {
+            saveClaimedChunks(dim);
+        }
     }
 
     /**

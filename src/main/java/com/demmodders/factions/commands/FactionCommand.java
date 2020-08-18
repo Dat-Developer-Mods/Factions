@@ -636,6 +636,7 @@ public class FactionCommand extends CommandBase {
 
                 // Faction Lieutenant
                 case "claim":
+                    // TODO: Repair
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         // Check they're in a faction
                         if (!factionID.equals(FactionManager.WILDID)){

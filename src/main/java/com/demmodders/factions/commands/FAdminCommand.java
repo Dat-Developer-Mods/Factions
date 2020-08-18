@@ -233,7 +233,7 @@ public class FAdminCommand extends CommandBase {
                             if (targetFaction == null) {
                                 replyMessage = DemConstants.TextColour.ERROR + "Unknown faction";
                             } else {
-                                fMan.forceClaimLand(targetFaction, ((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ);
+                                fMan.addLandToFaction(targetFaction, ((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ);
                                 replyMessage = DemConstants.TextColour.INFO + "Successfully claimed this chunk for " + fMan.getFaction(targetFaction).name;
                                 fMan.getPlayer(playerID).lastFactionLand = targetFaction;
                                 break;

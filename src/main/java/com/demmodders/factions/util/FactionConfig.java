@@ -99,7 +99,7 @@ public class FactionConfig {
         @Config.Comment("The delay in seconds before a player teleports when using /faction home")
         public int teleportDelay = 3;
 
-        @Config.Name("Faction home cooldowm")
+        @Config.Name("Faction home cooldown")
         @Config.Comment("The delay in seconds before a player can teleport when using /faction home another time")
         public int reTeleportDelay = 0;
 
@@ -209,6 +209,11 @@ public class FactionConfig {
         @Config.Name("Require land to connect when stealing")
         @Config.Comment("Require newly claimed land to be right next to previously claimed land when stealing the land of other factions")
         public boolean landRequireConnectWhenStealing = false;
+
+        @Config.Name("Max claim radius")
+        @Config.RangeInt(min = 1)
+        @Config.Comment("The maximum radius the player can enter when making a square claim")
+        public int maxClaimRadius = 4;
     }
 
     public static class Flags {
