@@ -379,6 +379,7 @@ public class FactionCommand extends CommandBase {
 
                                     // Check this player can actually join the faction
                                     if (fMan.canAddPlayerToFaction(playerID, factionID)){
+                                        fMan.sendFactionwideMessage(factionID, new TextComponentString(DemConstants.TextColour.INFO + sender.getName() + " has just joined your faction"));
                                         fMan.setPlayerFaction(playerID, factionID, true);
                                         replyMessage = DemConstants.TextColour.INFO + "Successfully joined " + FactionConstants.TextColour.OWN + fMan.getFaction(factionID).name;
                                     } else {
