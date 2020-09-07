@@ -77,6 +77,10 @@ public class FactionConfig {
         @Config.RangeInt(min = 0)
         @Config.Comment("The maximum amount of members each faction is allowed (0 for infinite)")
         public int maxMembers = 0;
+
+        @Config.Name("Restrict Inventory Block Access")
+        @Config.Comment("Prevents players from accessing inventory blocks, such as chests, on land they don't own")
+        public boolean inventoryBlockRestriction = true;
     }
 
     public static class Player {

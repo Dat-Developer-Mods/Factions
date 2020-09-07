@@ -21,9 +21,13 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.player.PlayerContainerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 import org.apache.logging.log4j.LogManager;
@@ -200,6 +204,19 @@ public class PlayerEvents {
             if (!fMan.getPlayerCanBuild(chunkOwner, e.getEntity().getUniqueID())) {
                 e.getEntity().sendMessage(new TextComponentString(DemConstants.TextColour.ERROR + "You're not allowed to build on " + DemStringUtils.makePossessive(fMan.getFaction(chunkOwner).name) + " Land"));
                 e.setCanceled(true);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void playerInteract(PlayerInteractEvent.RightClickBlock e) {
+        if (FactionConfig.factionSubCat.inventoryBlockRestriction) {
+            FactionManager fMan = FactionManager.getInstance();
+            ChunkLocation chunk = ChunkLocation.coordsToChunkCoords(e.getEntity().dimension, e.getPos().getX(), e.getPos().getZ());
+            UUID chunkOwner = fMan.getChunkOwningFaction(chunk);
+            if (!fMan.getPlayerCanBuild(chunkOwner, e.getEntity().getUniqueID())) {
+                e.getEntity().sendMessage(new TextComponentString(DemConstants.TextColour.ERROR + "You're not allowed to interact with blocks on " + DemStringUtils.makePossessive(fMan.getFaction(chunkOwner).name) + " Land"));
+                e.setUseBlock(Event.Result.DENY);
             }
         }
     }
