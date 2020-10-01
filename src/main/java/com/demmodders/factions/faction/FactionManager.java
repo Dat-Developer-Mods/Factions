@@ -10,6 +10,7 @@ import com.demmodders.factions.api.event.OutFactionEvent;
 import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.FactionConstants;
 import com.demmodders.factions.util.FactionFileHelper;
+import com.demmodders.factions.util.UnknownPlayerException;
 import com.demmodders.factions.util.enums.ClaimType;
 import com.demmodders.factions.util.enums.FactionRank;
 import com.demmodders.factions.util.enums.RelationState;
@@ -19,6 +20,7 @@ import com.demmodders.factions.util.structures.Relationship;
 import com.demmodders.factions.util.structures.UnClaimResult;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import net.minecraft.command.PlayerNotFoundException;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.management.PlayerList;
@@ -409,8 +411,10 @@ public class FactionManager {
      * @param playerID The ID of the player
      * @return The UUID of the faction that owns the player
      */
-    public UUID getPlayersFactionID(UUID playerID){
-        return PlayerMap.get(playerID).faction;
+    public UUID getPlayersFactionID(UUID playerID) throws UnknownPlayerException {
+        Player player = PlayerMap.get(playerID);
+        if (player != null) return player.faction;
+        else throw new UnknownPlayerException();
     }
 
     /**
@@ -504,12 +508,17 @@ public class FactionManager {
     public boolean getPlayerCanBuild(UUID OwningFaction, UUID PlayerID){
         if (OwningFaction.equals(WILDID)) return true;
 
-        UUID playerFaction = getPlayersFactionID(PlayerID);
+        try {
+            UUID playerFaction = getPlayersFactionID(PlayerID);
 
-        if (OwningFaction.equals(playerFaction)) return true;
+            if (OwningFaction.equals(playerFaction)) return true;
 
-        RelationState relation = FactionMap.get(OwningFaction).getRelation(playerFaction);
-        return (relation == RelationState.ALLY && FactionConfig.factionSubCat.allyBuild) || ((relation == RelationState.ENEMY || relation == RelationState.PENDINGENEMY) && FactionConfig.factionSubCat.enemyBuild);
+            RelationState relation = FactionMap.get(OwningFaction).getRelation(playerFaction);
+            return (relation == RelationState.ALLY && FactionConfig.factionSubCat.allyBuild) || ((relation == RelationState.ENEMY || relation == RelationState.PENDINGENEMY) && FactionConfig.factionSubCat.enemyBuild);
+        } catch (UnknownPlayerException e) {
+            LOGGER.warn("Caught a fake player trying to build, allowing");
+            return true;
+        }
     }
 
     // Faction Functions
@@ -1180,14 +1189,14 @@ public class FactionManager {
 
     public void loadFaction(File factionFile, UUID ID){
         Gson gson = new Gson();
-        try {
-            Reader reader = new FileReader(factionFile);
+        try (Reader reader = new FileReader(factionFile)){
+
             Faction factionObject = gson.fromJson(reader, Faction.class);
             if (factionObject != null){
                 factionObject.ID = ID;
                 FactionMap.put(ID, factionObject);
             }
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -1215,13 +1224,12 @@ public class FactionManager {
 
     public void loadPlayer(File playerFile){
         Gson gson = new Gson();
-        try {
-            Reader reader = new FileReader(playerFile);
+        try (Reader reader = new FileReader(playerFile)) {
             Player playerObject = gson.fromJson(reader, Player.class);
             if (playerObject != null){
                 PlayerMap.put(UUID.fromString(FileHelper.getBaseName(playerFile.getName())), playerObject);
             }
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -1242,12 +1250,11 @@ public class FactionManager {
 
     public void loadClaimedChunkDim(File dimFile){
         Gson gson = new Gson();
-        try {
-            Reader reader = new FileReader(dimFile);
+        try (Reader reader = new FileReader(dimFile)){
             Type typeOfHashMap = new TypeToken<HashMap<String, UUID>>(){}.getType();
             HashMap<String, UUID> dimChunks = gson.fromJson(reader, typeOfHashMap);
             ClaimedLand.put(Integer.parseInt(FileHelper.getBaseName(dimFile.getName())), dimChunks);
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

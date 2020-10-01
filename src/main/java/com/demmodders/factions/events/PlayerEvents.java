@@ -14,6 +14,7 @@ import com.demmodders.factions.util.enums.ClaimType;
 import com.demmodders.factions.util.enums.FactionRank;
 import com.demmodders.factions.util.enums.RelationState;
 import com.demmodders.factions.util.structures.ClaimResult;
+import net.minecraft.command.PlayerNotFoundException;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.text.TextComponentString;
@@ -201,6 +202,7 @@ public class PlayerEvents {
             FactionManager fMan = FactionManager.getInstance();
             ChunkLocation chunk = ChunkLocation.coordsToChunkCoords(e.getEntity().dimension, e.getPos().getX(), e.getPos().getZ());
             UUID chunkOwner = fMan.getChunkOwningFaction(chunk);
+
             if (!fMan.getPlayerCanBuild(chunkOwner, e.getEntity().getUniqueID())) {
                 e.getEntity().sendMessage(new TextComponentString(DemConstants.TextColour.ERROR + "You're not allowed to build on " + DemStringUtils.makePossessive(fMan.getFaction(chunkOwner).name) + " Land"));
                 e.setCanceled(true);

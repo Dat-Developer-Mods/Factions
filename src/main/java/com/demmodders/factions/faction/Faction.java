@@ -24,7 +24,7 @@ public class Faction {
     public String name = "";
     public String desc = "";
     public String motd = "";
-    public Location homePos= null;
+    public Location homePos = null;
     public Long foundingTime = 0L;
     public Power power = null;
     public ArrayList<UUID> invites = new ArrayList<>();
