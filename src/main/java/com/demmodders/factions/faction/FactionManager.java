@@ -1127,7 +1127,7 @@ public class FactionManager {
         flags.add("unrelateable");
         flags.add("nodamage");
         flags.add("nobuild");
-        Faction wild = new Faction(SAFEID, "The SafeZone", "You're pretty safe here", flags);
+        Faction wild = new Faction(SAFEID, "TheSafeZone", "You're pretty safe here", flags);
         FactionMap.put(SAFEID, wild);
         saveFaction(SAFEID);
     }
@@ -1141,7 +1141,7 @@ public class FactionManager {
         flags.add("unlimitedland");
         flags.add("unrelateable");
         flags.add("bonuspower");
-        Faction wild = new Faction(WARID, "The WarZone", "You're not safe here, you will lose more power when you die, but will gain more power when you kill", flags);
+        Faction wild = new Faction(WARID, "TheWarZone", "You're not safe here, you will lose more power when you die, but will gain more power when you kill", flags);
         FactionMap.put(WARID, wild);
         saveFaction(WARID);
     }
