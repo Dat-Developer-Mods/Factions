@@ -2,6 +2,7 @@ package com.demmodders.factions.events;
 
 import com.demmodders.factions.Factions;
 import com.demmodders.factions.faction.FactionManager;
+import com.demmodders.factions.faction.Player;
 import com.demmodders.factions.util.enums.FactionChatMode;
 import com.demmodders.factions.util.enums.RelationState;
 import com.demmodders.factions.util.structures.Relationship;
@@ -26,7 +27,11 @@ public class ChatEvents {
     @SubscribeEvent(priority = NORMAL)
     public static void checkFactionChat(ServerChatEvent e){
         UUID playerID = e.getPlayer().getUniqueID();
-        if(FactionManager.getInstance().getPlayer(playerID).factionChat != FactionChatMode.NORMAL) {
+        Player player = FactionManager.getInstance().getPlayer(playerID);
+        if (player == null) {
+            LOGGER.warn("An unknown player tried to talk, maybe its a fake one from a mod, ignoring");
+            return;
+        } else if(player.factionChat != FactionChatMode.NORMAL) {
             // Cancel event
             e.setCanceled(true);
             // Get faction details
