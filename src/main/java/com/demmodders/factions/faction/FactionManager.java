@@ -10,6 +10,7 @@ import com.demmodders.factions.api.event.OutFactionEvent;
 import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.FactionConstants;
 import com.demmodders.factions.util.FactionFileHelper;
+import com.demmodders.factions.util.UnknownPlayerException;
 import com.demmodders.factions.util.enums.FactionRank;
 import com.demmodders.factions.util.enums.RelationState;
 import com.demmodders.factions.util.structures.Power;
@@ -402,8 +403,13 @@ public class FactionManager {
      * @param playerID The ID of the player
      * @return The UUID of the faction that owns the player
      */
-    public UUID getPlayersFactionID(UUID playerID){
-        return PlayerMap.get(playerID).faction;
+    public UUID getPlayersFactionID(UUID playerID) throws UnknownPlayerException {
+        Player player = PlayerMap.get(playerID);
+        if (player != null) {
+            return player.faction;
+        } else {
+            throw new UnknownPlayerException();
+        }
     }
 
     /**
@@ -497,12 +503,17 @@ public class FactionManager {
     public boolean getPlayerCanBuild(UUID OwningFaction, UUID PlayerID){
         if (OwningFaction.equals(WILDID)) return true;
 
-        UUID playerFaction = getPlayersFactionID(PlayerID);
+        try {
+            UUID playerFaction = getPlayersFactionID(PlayerID);
 
-        if (OwningFaction.equals(playerFaction)) return true;
+            if (OwningFaction.equals(playerFaction)) return true;
 
-        RelationState relation = FactionMap.get(OwningFaction).getRelation(playerFaction);
-        return (relation == RelationState.ALLY && FactionConfig.factionSubCat.allyBuild) || ((relation == RelationState.ENEMY || relation == RelationState.PENDINGENEMY) && FactionConfig.factionSubCat.enemyBuild);
+            RelationState relation = FactionMap.get(OwningFaction).getRelation(playerFaction);
+            return (relation == RelationState.ALLY && FactionConfig.factionSubCat.allyBuild) || ((relation == RelationState.ENEMY || relation == RelationState.PENDINGENEMY) && FactionConfig.factionSubCat.enemyBuild);
+        } catch (UnknownPlayerException error) {
+            LOGGER.warn("Caught fake player trying to build, allowing");
+            return true;
+        }
     }
 
     // Faction Functions
