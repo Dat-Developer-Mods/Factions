@@ -53,16 +53,17 @@ public class PlayerEvents {
     }
 
     private static double rankModifier(FactionRank rank){
-        switch(rank){
-            case LIEUTENANT:
-                return FactionConfig.powerSubCat.lieutenantMultiplier;
-            case OFFICER:
-                return FactionConfig.powerSubCat.officerMultiplier;
-            case OWNER:
-                return FactionConfig.powerSubCat.ownerMultiplier;
-            default:
-                return 1.D;
+        if (rank != null) {
+            switch (rank) {
+                case LIEUTENANT:
+                    return FactionConfig.powerSubCat.lieutenantMultiplier;
+                case OFFICER:
+                    return FactionConfig.powerSubCat.officerMultiplier;
+                case OWNER:
+                    return FactionConfig.powerSubCat.ownerMultiplier;
+            }
         }
+        return 1.D;
     }
 
     @SubscribeEvent
@@ -72,6 +73,11 @@ public class PlayerEvents {
             FactionManager fMan = FactionManager.getInstance();
             UUID killedFaction = fMan.getPlayersFactionID(e.getEntity().getUniqueID());
             UUID killerFaction = fMan.getPlayersFactionID(e.getSource().getTrueSource().getUniqueID());
+
+            if (killedFaction.equals(killerFaction)) {
+                return;
+            }
+
             UUID chunkOwner = fMan.getChunkOwningFaction(e.getEntity().dimension, e.getEntity().chunkCoordX, e.getEntity().chunkCoordZ);
             RelationState relation = fMan.getFaction(killedFaction).getRelation(killerFaction);
 
