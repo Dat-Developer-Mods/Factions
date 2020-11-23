@@ -1,6 +1,7 @@
 package com.demmodders.factions.events;
 
 import com.demmodders.factions.Factions;
+import com.demmodders.factions.faction.Player;
 import com.demmodders.factions.util.enums.FactionChatMode;
 import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.enums.RelationState;
@@ -26,23 +27,29 @@ public class ChatEvents {
     @SubscribeEvent(priority = NORMAL)
     public static void checkFactionChat(ServerChatEvent e){
         UUID playerID = e.getPlayer().getUniqueID();
-        if(FactionManager.getInstance().getPlayer(playerID).factionChat != FactionChatMode.NORMAL) {
-            // Cancel event
-            e.setCanceled(true);
-            // Get faction details
-            FactionManager fMan = FactionManager.getInstance();
-            UUID factionID = fMan.getPlayersFactionID(playerID);
+        Player player = FactionManager.getInstance().getPlayer(playerID);
+        if (player == null) {
+            LOGGER.warn("An unknown player tried to talk, maybe its a fake one from a mod, ignoring");
+            return;
+        } else {
+            if(player.factionChat != FactionChatMode.NORMAL) {
+                // Cancel event
+                e.setCanceled(true);
+                // Get faction details
+                FactionManager fMan = FactionManager.getInstance();
+                UUID factionID = fMan.getPlayersFactionID(playerID);
 
-            // Make message
-            ITextComponent message = (new TextComponentString(TextFormatting.DARK_GREEN + "[Faction Chat]" + "[" + fMan.getFaction(factionID).name + "]")).appendSibling(e.getComponent());
-            fMan.sendFactionwideMessage(factionID, message);
+                // Make message
+                ITextComponent message = (new TextComponentString(TextFormatting.DARK_GREEN + "[Faction Chat]" + "[" + fMan.getFaction(factionID).name + "]")).appendSibling(e.getComponent());
+                fMan.sendFactionwideMessage(factionID, message);
 
-            // Send to allies if enabled
-            if (fMan.getPlayer(playerID).factionChat == FactionChatMode.ALLY) {
-                HashMap<UUID, Relationship> relationships = fMan.getFaction(factionID).relationships;
-                for(UUID otherFaction : relationships.keySet()){
-                    // Only send message to allies
-                    if (relationships.get(otherFaction).relation == RelationState.ALLY) fMan.sendFactionwideMessage(otherFaction, message);
+                // Send to allies if enabled
+                if (fMan.getPlayer(playerID).factionChat == FactionChatMode.ALLY) {
+                    HashMap<UUID, Relationship> relationships = fMan.getFaction(factionID).relationships;
+                    for(UUID otherFaction : relationships.keySet()){
+                        // Only send message to allies
+                        if (relationships.get(otherFaction).relation == RelationState.ALLY) fMan.sendFactionwideMessage(otherFaction, message);
+                    }
                 }
             }
         }
