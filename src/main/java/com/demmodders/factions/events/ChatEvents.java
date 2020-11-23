@@ -1,13 +1,13 @@
 package com.demmodders.factions.events;
 
 import com.demmodders.factions.Factions;
-import com.demmodders.factions.util.enums.FactionChatMode;
 import com.demmodders.factions.faction.FactionManager;
+import com.demmodders.factions.util.enums.FactionChatMode;
 import com.demmodders.factions.util.enums.RelationState;
 import com.demmodders.factions.util.structures.Relationship;
-import com.mojang.realmsclient.gui.ChatFormatting;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -34,7 +34,7 @@ public class ChatEvents {
             UUID factionID = fMan.getPlayersFactionID(playerID);
 
             // Make message
-            ITextComponent message = (new TextComponentString(ChatFormatting.DARK_GREEN + "[Faction Chat]" + "[" + fMan.getFaction(factionID).name + "]")).appendSibling(e.getComponent());
+            ITextComponent message = (new TextComponentString(TextFormatting.DARK_GREEN + "[Faction Chat]" + "[" + fMan.getFaction(factionID).name + "]")).appendSibling(e.getComponent());
             fMan.sendFactionwideMessage(factionID, message);
 
             // Send to allies if enabled
