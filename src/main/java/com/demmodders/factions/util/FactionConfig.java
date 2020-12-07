@@ -99,9 +99,9 @@ public class FactionConfig {
         @Config.Comment("The delay in seconds before a player teleports when using /faction home")
         public int teleportDelay = 3;
 
-        @Config.Name("Faction home cooldowm")
+        @Config.Name("Faction home cooldown")
         @Config.Comment("The delay in seconds before a player can teleport when using /faction home another time")
-        public int reTeleportDelay = 0;
+        public int reTeleportDelay = 100;
 
         @Config.Name("Faction map width")
         @Config.RangeInt(min = 0)
