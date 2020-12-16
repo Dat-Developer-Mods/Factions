@@ -15,7 +15,7 @@ import org.apache.logging.log4j.Logger;
 public class Factions {
     public static final String MODID = "demfactions";
     public static final String NAME = "Factions";
-    public static final String VERSION = "1.0.4";
+    public static final String VERSION = "1.0.5";
     public static final String MC_VERSION = "[1.12.2]";
 
     public static final Logger LOGGER = LogManager.getLogger(Factions.MODID);
