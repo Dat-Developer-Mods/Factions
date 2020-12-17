@@ -4,6 +4,7 @@ import com.demmodders.datmoddingapi.delayedexecution.DelayHandler;
 import com.demmodders.datmoddingapi.delayedexecution.delayedevents.DelayedTeleportEvent;
 import com.demmodders.datmoddingapi.structures.Location;
 import com.demmodders.datmoddingapi.util.DemConstants;
+import com.demmodders.factions.delayedevents.FactionTeleport;
 import com.demmodders.factions.faction.Faction;
 import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.DemUtils;
@@ -495,10 +496,10 @@ public class FactionCommand extends CommandBase {
                                 // Create a delayed event to teleport the player
                                 if (age > FactionConfig.playerSubCat.reTeleportDelay) {
                                     EntityPlayerMP playerMP = (EntityPlayerMP) sender;
-                                    DelayHandler.addEvent(new DelayedTeleportEvent(fMan.getFaction(factionID).homePos, playerMP, FactionConfig.playerSubCat.teleportDelay));
+                                    DelayHandler.addEvent(new FactionTeleport(fMan.getFaction(factionID).homePos, playerMP, FactionConfig.playerSubCat.teleportDelay));
                                     replyMessage = DemConstants.TextColour.INFO + "Teleporting in " + FactionConfig.playerSubCat.teleportDelay + " Seconds";
                                 } else {
-                                    replyMessage = DemConstants.TextColour.ERROR + "You must wait " + (FactionConfig.playerSubCat.teleportDelay - age) + " more seconds before you can do that again";
+                                    replyMessage = DemConstants.TextColour.ERROR + "You must wait " + (FactionConfig.playerSubCat.reTeleportDelay - age) + " more seconds before you can do that again";
                                 }
                             } else {
                                 replyMessage = DemConstants.TextColour.ERROR + "Your faction doesn't have a home";

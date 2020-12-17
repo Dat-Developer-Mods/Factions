@@ -54,11 +54,6 @@ public class PlayerEvents {
         DelayHandler.addEvent(new PowerIncrease(FactionConfig.powerSubCat.powerGainInterval, (EntityPlayerMP) e.player));
     }
 
-    @SubscribeEvent
-    public static void playerConnect(FMLNetworkEvent.ServerConnectionFromClientEvent e){
-
-    }
-
     private static double rankModifier(FactionRank rank){
         if (rank != null) {
             switch (rank) {
