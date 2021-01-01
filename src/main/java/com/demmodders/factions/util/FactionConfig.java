@@ -73,6 +73,10 @@ public class FactionConfig {
         @Config.Comment("Permit enemies to build on each other's land")
         public boolean enemyBuild = false;
 
+        @Config.Name("Faction Name in Chat")
+        @Config.Comment("Display the player's faction name with their chat messages")
+        public boolean chatFName = true;
+
         @Config.Name("Max Faction Members")
         @Config.RangeInt(min = 0)
         @Config.Comment("The maximum amount of members each faction is allowed (0 for infinite)")

@@ -1,12 +1,12 @@
 package com.demmodders.factions.util.structures;
 
-public class UnClaimResult {
-    public int result = 0;
-    public int count = 0;
+import com.demmodders.factions.util.enums.EUnclaimResult;
 
-    public UnClaimResult(){}
+public class UnclaimResult {
+    public EUnclaimResult result;
+    public int count;
 
-    public UnClaimResult(int result, int count) {
+    public UnclaimResult(EUnclaimResult result, int count) {
         this.result = result;
         this.count = count;
     }

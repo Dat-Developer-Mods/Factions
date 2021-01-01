@@ -1,20 +1,17 @@
 package com.demmodders.factions.util.structures;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.demmodders.factions.util.enums.EClaimResult;
+
 import java.util.UUID;
 
 public class ClaimResult {
-    public int result = 0;
-    public int claimedLandCount = 0;
-    public int attemptedClaimedLandCount = 0;
-    public List<UUID> owners = new ArrayList<>();
+    public EClaimResult result;
+    public int count;
+    public UUID owner;
 
-    public ClaimResult(){}
-
-    ClaimResult(int Result, int ClaimedLand, int AttemptedClaimedLand) {
-        result = Result;
-        claimedLandCount = ClaimedLand;
-        attemptedClaimedLandCount = AttemptedClaimedLand;
+    public ClaimResult(EClaimResult result, int count, UUID owner) {
+        this.result = result;
+        this.count = count;
+        this.owner = owner;
     }
 }

@@ -130,27 +130,10 @@ public class PlayerEvents {
 
             // TODO: Test
             if (!playerFaction.equals(FactionManager.WILDID) && fMan.getPlayer(e.getEntity().getUniqueID()).autoClaim) {
-                ClaimResult result = fMan.claimLand(playerFaction, e.getEntity().getUniqueID(), e.getEntity().dimension, e.getNewChunkX(), e.getNewChunkZ(), ClaimType.ONE, 0);
-
+                ClaimResult result = fMan.claimLand(playerFaction, e.getEntity().getUniqueID(), e.getEntity().dimension, e.getNewChunkX(), e.getNewChunkZ());
+                // TODO: Finish
                 switch (result.result) {
-                    case 0:
-                        message = DemConstants.TextColour.INFO + "Successfully claimed this chunk for your faction";
-                        if (result.owners.size() > 0) {
-                            message += "off of " + fMan.getFaction(result.owners.get(0)).name;
-                        }
-                        break;
-                    case 1:
-                        message = DemConstants.TextColour.ERROR + "You do not have enough power to claim this chunk";
-                        break;
-                    case 2:
-                        message = DemConstants.TextColour.ERROR + "You cannot claim this chunk, it isn't connected to the rest of your land";
-                        break;
-                    case 3:
-                        message = DemConstants.TextColour.ERROR + "You cannot claim this chunk, " + fMan.getFaction(result.owners.get(0)).name + " owns it and has the power to keep it";
-                        break;
-                    case 5:
-                        message = DemConstants.TextColour.ERROR + "Failed to claim chunk";
-                        break;
+
                 }
 
                 e.getEntity().sendMessage(new TextComponentString(message));
@@ -173,6 +156,7 @@ public class PlayerEvents {
                         if (theFaction.desc.isEmpty()) message = FactionConfig.factionSubCat.factionLandTagNoDesc;
                         else message = FactionConfig.factionSubCat.factionLandTag;
                     }
+
                     e.getEntity().sendMessage(new TextComponentString(String.format(DemConstants.TextColour.INFO + message, fMan.getRelationColour(playerFaction, factionID) + theFaction.name + DemConstants.TextColour.INFO, fMan.getRelationColour(playerFaction, factionID) + DemStringUtils.makePossessive((theFaction.name)) + DemConstants.TextColour.INFO, theFaction.desc)));
                     fMan.getPlayer(e.getEntity().getUniqueID()).lastFactionLand = factionID;
                 }

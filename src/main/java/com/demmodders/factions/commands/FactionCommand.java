@@ -16,8 +16,10 @@ import com.demmodders.factions.util.enums.CommandResult;
 import com.demmodders.factions.util.enums.FactionChatMode;
 import com.demmodders.factions.util.enums.FactionRank;
 import com.demmodders.factions.util.structures.ClaimResult;
+import com.demmodders.factions.util.structures.UnclaimResult;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.command.NumberInvalidException;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
@@ -58,6 +60,7 @@ public class FactionCommand extends CommandBase {
         List<String> possibilities = new ArrayList<>();
         FactionManager fMan = FactionManager.getInstance();
         UUID factionID = fMan.getPlayersFactionID(((EntityPlayerMP) sender).getUniqueID());
+
         if (args.length == 1) {
             // All commands are possible
             HashMap<String, String> commands = FactionCommandList.getCommands();
@@ -644,73 +647,62 @@ public class FactionCommand extends CommandBase {
                         if (!factionID.equals(FactionManager.WILDID)){
                             // Make sure they're the correct rank
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.LIEUTENANT.ordinal()) {
-                                if (args.length == 1) {
-                                    replyMessage = DemConstants.TextColour.ERROR + "Bad argument, command should look like: " + DemConstants.TextColour.COMMAND + "/faction claim one|square|auto";
-                                } else {
-                                    try {
-                                        int radius = 0;
-                                        ClaimType type = ClaimType.valueOf(args[1].toUpperCase());
-                                        if (type == ClaimType.ALL) throw new IllegalArgumentException();
-                                        if (type == ClaimType.SQUARE) radius = Integer.parseInt(args[2]);
-                                        ClaimResult result = fMan.claimLand(factionID, playerID, ((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ, type, radius);
-                                        if (result.result == 5){
-                                            replyMessage = DemConstants.TextColour.ERROR + "Failed to claim chunk";
-                                        } else if (type != ClaimType.SQUARE) {
-                                            switch (result.result) {
-                                                case 0:
-                                                    replyMessage = DemConstants.TextColour.INFO + "Successfully claimed this chunk for your faction";
-                                                    if (result.owners.size() > 0) {
-                                                        replyMessage += "off of " + fMan.getFaction(result.owners.get(0)).name;
-                                                    }
-                                                    break;
-                                                case 1:
-                                                    replyMessage = DemConstants.TextColour.ERROR + "You do not have enough power to claim this chunk";
-                                                    break;
-                                                case 2:
-                                                    replyMessage = DemConstants.TextColour.ERROR + "You cannot claim this chunk, it isn't connected to the rest of your land";
-                                                    break;
-                                                case 3:
-                                                    if (result.owners.get(0).equals(factionID)) {
-                                                        replyMessage = DemConstants.TextColour.ERROR + "You already own this chunk";
-                                                    } else {
-                                                        replyMessage = DemConstants.TextColour.ERROR + "You cannot claim this chunk, " + fMan.getFaction(result.owners.get(0)).name + " owns it and has the power to keep it";
-                                                    }
-                                                    break;
+                                // Work out claim type
+                                if (args.length > 1) {
+                                    ClaimResult result = null;
+
+                                    switch (args[1]) {
+                                        case "auto":
+                                            fMan.getPlayer(playerID).autoClaim = !fMan.getPlayer(playerID).autoClaim;
+                                            if (fMan.getPlayer(playerID).autoClaim) {
+                                                replyMessage = DemConstants.TextColour.INFO + "Enabled auto claim";
+                                            } else {
+                                                replyMessage = DemConstants.TextColour.INFO + "Disabled auto claim";
                                             }
-// 0: Success, 1: Not enough power, 2: Must touch other land, 3: Faction owns it, 4: You own it, 5: Nope
-                                        } else {
-                                            // TODO: Square
-                                        }
-                                        switch (result) {
-                                            case 0:
-                                                replyMessage = DemConstants.TextColour.INFO + "Successfully claimed chunk for your faction";
-                                                fMan.getPlayer(playerID).lastFactionLand = factionID;
-                                                break;
-                                            case 1:
-                                                replyMessage = DemConstants.TextColour.INFO + "Successfully claimed this chunk for your faction off of " + fMan.getFaction(currentOwner).name;
-                                                fMan.getPlayer(playerID).lastFactionLand = factionID;
-                                                break;
-                                            case 2:
-                                                replyMessage = DemConstants.TextColour.ERROR + "You do not have enough power to claim this chunk";
-                                                break;
-                                            case 3:
-                                                replyMessage = DemConstants.TextColour.ERROR + "You cannot claim this chunk, all your claimed land must be connected";
-                                                break;
-                                            case 4:
-                                                replyMessage = DemConstants.TextColour.ERROR + "You cannot claim this chunk, " + fMan.getRelationColour(factionID, currentOwner) + fMan.getFaction(currentOwner).name + DemConstants.TextColour.ERROR + " owns it and has the power to keep it";
-                                                break;
-                                            case 5:
-                                                replyMessage = DemConstants.TextColour.ERROR + "You already own this chunk";
-                                                break;
-                                            case 6:
-                                                replyMessage = DemConstants.TextColour.ERROR + "Failed to claim chunk";
-                                                break;
-                                        }
-                                    } catch (IllegalArgumentException e) {
-                                        replyMessage = DemConstants.TextColour.ERROR + "Unknown claim type, available types are one, square, and auto";
-                                    } catch (IndexOutOfBoundsException e) {
-                                        replyMessage = DemConstants.TextColour.ERROR + "You must provide a radius when using a square claim: " + DemConstants.TextColour.COMMAND + "/faction claim square <radius>";
+                                        case "one":
+                                            result = fMan.claimLand(factionID, playerID, ((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ);
+                                            break;
+                                        case "square":
+                                            if (args.length > 2) {
+                                                try {
+                                                    result = fMan.squareClaimLand(factionID, playerID, ((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ, parseInt(args[2]));
+                                                } catch (NumberInvalidException e) {
+                                                    replyMessage = DemConstants.TextColour.ERROR + "The claim radius must be a whole number";
+                                                }
+                                            } else {
+                                                replyMessage = DemConstants.TextColour.ERROR + "Missing argument " + DemConstants.TextColour.COMMAND + "radius";
+                                            }
+                                            break;
+                                        default:
+                                            replyMessage = DemConstants.TextColour.ERROR + "Unknown claim method, available types are: " + DemConstants.TextColour.COMMAND + "one|square|auto";
                                     }
+                                    if (result != null) {
+                                        switch (result.result) {
+                                            case SUCCESS:
+                                                replyMessage = DemConstants.TextColour.INFO + "Successfully claimed " + (result.count == 1 ? "a chunk" : result.count + " chunks") + " for your faction";
+                                                break;
+                                            case STOLEN:
+                                                replyMessage = DemConstants.TextColour.INFO + "Successfully stolen " + (result.count == 1 ? "a chunk" : result.count + " chunks") + " for your faction from " + fMan.getRelationColour(factionID, result.owner) + fMan.getFaction(result.owner).name;
+                                                break;
+                                            case LACKPOWER:
+                                                replyMessage = DemConstants.TextColour.ERROR + "You do not have enough power to claim this land";
+                                                break;
+                                            case OWNED:
+                                                replyMessage = fMan.getRelationColour(factionID, result.owner) + fMan.getFaction(result.owner).name + DemConstants.TextColour.ERROR + " Owns that land and has enough power to keep it";
+                                                break;
+                                            case YOUOWN:
+                                                replyMessage = DemConstants.TextColour.INFO + "You already own that land";
+                                                break;
+                                            case MUSTCONNECT:
+                                                replyMessage = DemConstants.TextColour.ERROR + "You can only claim land that connects to land you already own";
+                                                break;
+                                            case NAH:
+                                                replyMessage = DemConstants.TextColour.ERROR + "You're unable to claim this land";
+                                                break;
+                                        }
+                                    }
+                                } else {
+                                    replyMessage = DemConstants.TextColour.ERROR + "Bad argument, command should look like: " + DemConstants.TextColour.COMMAND + "/faction claim one|auto" + DemConstants.TextColour.INFO + " or " + DemConstants.TextColour.COMMAND + "/faction claim square [radius]";
                                 }
                             } else {
                                 commandResult = CommandResult.NOFACTIONPERMISSION;
@@ -729,19 +721,50 @@ public class FactionCommand extends CommandBase {
                         if (!factionID.equals(FactionManager.WILDID)){
                             // Make sure they're the correct rank
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.LIEUTENANT.ordinal()) {
-                                // Check if the land is valid for claiming
-                                int result = fMan.unClaimLand(factionID, playerID, ((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ);
-                                switch(result){
-                                    case 0:
-                                        replyMessage = DemConstants.TextColour.INFO + "Successfully removed your faction's claimed on this chunk";
-                                        fMan.getPlayer(playerID).lastFactionLand = FactionManager.WILDID;
-                                        break;
-                                    case 1:
-                                        replyMessage = DemConstants.TextColour.ERROR + "Your faction doesn't own this chunk";
-                                        break;
-                                    case 2:
-                                        replyMessage = DemConstants.TextColour.ERROR + "Failed to unclaim chunk";
-                                        break;
+                                // Work out unclaim type
+                                if (args.length > 1) {
+                                    UnclaimResult result = null;
+                                    switch (args[1]) {
+                                        case "one":
+                                            result = fMan.unClaimLand(factionID, playerID, ((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ, ClaimType.ONE, 1);
+                                            break;
+                                        case "square":
+                                            if (args.length > 2) {
+                                                try {
+                                                    result = fMan.unClaimLand(factionID, playerID, ((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ, ClaimType.ONE, parseInt(args[2]));
+                                                } catch (NumberInvalidException e) {
+                                                    replyMessage = DemConstants.TextColour.ERROR + "The radius must be a whole number";
+                                                }
+                                            } else {
+                                                replyMessage = DemConstants.TextColour.ERROR + "Missing argument " + DemConstants.TextColour.COMMAND + "radius";
+                                            }
+                                            break;
+                                        case "all":
+                                            if (args.length > 2 && args[2].equalsIgnoreCase(fMan.getFaction(factionID).name)) {
+                                                result = fMan.unClaimLand(factionID, playerID, ((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ, ClaimType.ALL, 0);
+                                            } else {
+                                                replyMessage = DemConstants.TextColour.ERROR + "Are you sure you want to relinquish all your faction's land? Type: " + DemConstants.TextColour.COMMAND + "/faction unclaim all " + fMan.getFaction(factionID).name;
+                                            }
+                                            break;
+                                        default:
+                                            replyMessage = DemConstants.TextColour.ERROR + "Unknown unclaim method, available types are: " + DemConstants.TextColour.COMMAND + "one|square|all";
+                                    }
+
+                                    if (result != null) {
+                                        switch (result.result) {
+                                            case SUCCESS:
+                                                replyMessage = DemConstants.TextColour.INFO + "Successfully unclaimed " + (result.count == 1 ? "a chunk" : result.count + "chunks");
+                                                break;
+                                            case NOLAND:
+                                                replyMessage = DemConstants.TextColour.ERROR + "There isn't any land to unclaim";
+                                                break;
+                                            case NAH:
+                                                replyMessage = DemConstants.TextColour.ERROR + "Failed to unclaim land";
+                                                break;
+                                        }
+                                    }
+                                } else {
+                                    replyMessage = DemConstants.TextColour.ERROR + "Bad argument, command should look like: " + DemConstants.TextColour.COMMAND + "/faction unclaim one|all" + DemConstants.TextColour.INFO + " or " + DemConstants.TextColour.COMMAND + "/faction unclaim square [radius]";
                                 }
                             } else {
                                 commandResult = CommandResult.NOFACTIONPERMISSION;
@@ -1031,6 +1054,7 @@ public class FactionCommand extends CommandBase {
                                     }
                                     if (mOTD.toString().length() <= FactionConfig.factionSubCat.maxFactionMOTDLength) {
                                         fMan.getFaction(factionID).motd = mOTD.toString();
+                                        fMan.saveFaction(factionID);
                                         replyMessage = DemConstants.TextColour.INFO + "Successfully set MOTD to " + mOTD.toString();
                                     } else {
                                         replyMessage = DemConstants.TextColour.ERROR + "That MOTD is too long";
