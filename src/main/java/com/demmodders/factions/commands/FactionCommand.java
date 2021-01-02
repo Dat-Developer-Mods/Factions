@@ -128,6 +128,18 @@ public class FactionCommand extends CommandBase {
                     possibilities.add("faction");
                     possibilities.add("ally");
                     break;
+
+                case "claim":
+                    possibilities.add("one");
+                    possibilities.add("square");
+                    possibilities.add("auto");
+                    break;
+
+                case "unclaim":
+                    possibilities.add("one");
+                    possibilities.add("square");
+                    possibilities.add("all");
+                    break;
             }
         } else if (args.length == 3) {
             // Only the the second argument of commands with 2 arguments are possible

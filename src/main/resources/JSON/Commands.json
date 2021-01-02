@@ -38,6 +38,7 @@
     "setfaction" : "Forcefully set a player to be a member of the given faction, ignoring size limits",
     "home" : "Instantly teleport to your faction home, ignoring cooldowns",
     "claim" : "Forcefully claim a chunk for the given faction, or your faction if no faction is given",
+    "unclaim" : "Forcefully remove any faction's claim to a chunk",
     "ally" : "Forcefully create an alliance between 2 factions",
     "enemy" : "Forcefully make a pair of factions enemies",
     "neutral" : "Forcefully make a pair of factions neutral",

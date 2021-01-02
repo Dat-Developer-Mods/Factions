@@ -1,5 +1,6 @@
 package com.demmodders.factions.commands;
 
+import com.demmodders.datmoddingapi.structures.ChunkLocation;
 import com.demmodders.datmoddingapi.structures.Location;
 import com.demmodders.datmoddingapi.util.DatTeleporter;
 import com.demmodders.datmoddingapi.util.DemConstants;
@@ -233,10 +234,40 @@ public class FAdminCommand extends CommandBase {
                             if (targetFaction == null) {
                                 replyMessage = DemConstants.TextColour.ERROR + "Unknown faction";
                             } else {
-                                // fMan.addLandToFaction(targetFaction, ((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ);
+                                fMan.setChunkOwner(new ChunkLocation(((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ), targetFaction);
                                 replyMessage = DemConstants.TextColour.INFO + "Successfully claimed this chunk for " + fMan.getFaction(targetFaction).name;
                                 fMan.getPlayer(playerID).lastFactionLand = targetFaction;
                                 break;
+                            }
+                        } else {
+                            commandResult = CommandResult.NOCONSOLE;
+                        }
+                        break;
+                    case "claim":
+                        if (!console) {
+                            UUID targetFaction = (args.length > 1 ? fMan.getFactionIDFromName(args[1]) : factionID);
+                            if (targetFaction == null) {
+                                replyMessage = DemConstants.TextColour.ERROR + "Unknown faction";
+                            } else {
+                                fMan.setChunkOwner(new ChunkLocation(((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ), targetFaction);
+                                replyMessage = DemConstants.TextColour.INFO + "Successfully claimed this chunk for " + fMan.getFaction(targetFaction).name;
+                                fMan.getPlayer(playerID).lastFactionLand = targetFaction;
+                                break;
+                            }
+                        } else {
+                            commandResult = CommandResult.NOCONSOLE;
+                        }
+                        break;
+                    case "unclaim":
+                        if (!console) {
+                            ChunkLocation chunk = new ChunkLocation(((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ);
+                            UUID owningFaction = fMan.getChunkOwningFaction(chunk);
+                            if (FactionManager.WILDID.equals(owningFaction)) {
+                                replyMessage = DemConstants.TextColour.ERROR + "The land has not been claimed";
+                            } else {
+                                fMan.setChunkOwner(chunk, null);
+                                replyMessage = DemConstants.TextColour.INFO + "Successfully removed " + DemStringUtils.makePossessive(fMan.getFaction(owningFaction).name) + " claim on this land";
+                                fMan.getPlayer(playerID).lastFactionLand = FactionManager.WILDID;
                             }
                         } else {
                             commandResult = CommandResult.NOCONSOLE;
@@ -371,6 +402,7 @@ public class FAdminCommand extends CommandBase {
                                 }
                                 if (mOTD.toString().length() <= FactionConfig.factionSubCat.maxFactionMOTDLength) {
                                     fMan.getFaction(targetFaction).motd = mOTD.toString();
+
                                     replyMessage = DemConstants.TextColour.INFO + "Successfully set " + DemStringUtils.makePossessive(args[1]) + " MOTD to " + mOTD.toString();
                                 } else {
                                     replyMessage = DemConstants.TextColour.ERROR + "That MOTD is too long";
