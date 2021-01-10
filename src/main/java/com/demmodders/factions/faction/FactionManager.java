@@ -15,7 +15,7 @@ import com.demmodders.factions.util.enums.*;
 import com.demmodders.factions.util.structures.ClaimResult;
 import com.demmodders.factions.util.structures.Power;
 import com.demmodders.factions.util.structures.Relationship;
-import com.demmodders.factions.util.structures.UnclaimResulttemp;
+import com.demmodders.factions.util.structures.UnclaimResult;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import net.minecraft.entity.player.EntityPlayer;
@@ -825,7 +825,7 @@ public class FactionManager {
      * @param ChunkZ The Z Coord of the chunk
      * @return The result of the claim (0: Success, 1: Faction doesn't own that chunk, 2: Cancelled)
      */
-    public UnclaimResulttemp unClaimLand(UUID FactionID, @Nullable UUID PlayerID, int Dim, int ChunkX, int ChunkZ, ClaimType Type, int Radius){
+    public UnclaimResult unClaimLand(UUID FactionID, @Nullable UUID PlayerID, int Dim, int ChunkX, int ChunkZ, ClaimType Type, int Radius){
         List<ChunkLocation> chunks = new ArrayList<>();
 
         switch (Type) {
@@ -847,10 +847,10 @@ public class FactionManager {
         MinecraftForge.EVENT_BUS.post(event);
 
         if (event.isCanceled()) {
-            return new UnclaimResulttemp(EUnclaimResult.NAH, 0);
+            return new UnclaimResult(EUnclaimResult.NAH, 0);
         } else {
             int count = 0;
-            if (event.positions.isEmpty()) return new UnclaimResulttemp(EUnclaimResult.NOLAND, 0);
+            if (event.positions.isEmpty()) return new UnclaimResult(EUnclaimResult.NOLAND, 0);
             if (Type == ClaimType.ALL) {
                 count = countFactionLand(FactionID) - event.positions.size();
                 releaseAllFactionLand(event.factionID, event.positions);
@@ -858,7 +858,7 @@ public class FactionManager {
                 count = event.positions.size();
                 setManyChunksOwner(event.positions, WILDID);
             }
-            return new UnclaimResulttemp(EUnclaimResult.SUCCESS, count);
+            return new UnclaimResult(EUnclaimResult.SUCCESS, count);
         }
 
     }
