@@ -235,6 +235,7 @@ public class FactionManager {
         if (FactionMap.get(FactionID).invites.contains(PlayerID)) {
             FactionMap.get(FactionID).invites.remove(PlayerID);
             removed = true;
+            saveFaction(FactionID);
         }
         if (PlayerMap.get(PlayerID).invites.contains(FactionID)) {
             PlayerMap.get(PlayerID).invites.remove(FactionID);
@@ -684,7 +685,7 @@ public class FactionManager {
      * @param ChunkZ The Z Coord of the chunk
      * @return The result of the claim
      */
-    public ClaimResult claimLand(UUID FactionID, @Nullable UUID PlayerID, int Dim, int ChunkX, int ChunkZ){
+    public ClaimResult claimLand(UUID FactionID, @Nullable UUID PlayerID, int Dim, int ChunkX, int ChunkZ, boolean AllowSteal){
         Faction faction = FactionMap.get(FactionID);
         ChunkLocation loc = new ChunkLocation(Dim, ChunkX, ChunkZ);
         boolean stolen = false;
@@ -695,7 +696,7 @@ public class FactionManager {
         if (currentOwner.equals(FactionID)) return new ClaimResult(EClaimResult.YOUOWN, 0, FactionID);
         else if (!currentOwner.equals(WILDID)) {
             Faction owningFaction = getFaction(currentOwner);
-            if (owningFaction.calculateLandValue() > owningFaction.calculatePower()) stolen = true;
+            if (AllowSteal && owningFaction.calculateLandValue() > owningFaction.calculatePower()) stolen = true;
             else return new ClaimResult(EClaimResult.OWNED, 0, currentOwner);
         }
 
@@ -771,9 +772,13 @@ public class FactionManager {
      * @param FactionID The Faction claiming the chunks
      */
     public void setManyChunksOwner(List<ChunkLocation> chunks, UUID FactionID) {
+        Set<Integer> dims = new HashSet<>();
         for (ChunkLocation chunk: chunks) {
-            setChunkOwner(chunk, FactionID);
+            dims.add(chunk.dim);
+            setChunkOwner(chunk, FactionID, false);
         }
+
+        for (int dim : dims) saveClaimedChunks(dim);
     }
 
     /**
@@ -781,23 +786,34 @@ public class FactionManager {
      * @param chunk The chunk being claimed
      * @param FactionID The faction claiming the chunk
      */
-    public void setChunkOwner(ChunkLocation chunk, UUID FactionID) {
+    public void setChunkOwner(ChunkLocation chunk, UUID FactionID, boolean save) {
         if (!ClaimedLand.containsKey(chunk.dim)) {
             // Create dimension entry
             ClaimedLand.put(chunk.dim, new HashMap<>());
         }
 
+
+
         String chunkKey = makeChunkKey(chunk.x, chunk.z);
 
         UUID currentFaction = getChunkOwningFaction(chunk);
         if (!WILDID.equals(currentFaction)) {
-            getFaction(currentFaction).land.remove(chunkKey);
+            getFaction(currentFaction).land.get(chunk.dim).remove(chunkKey);
             ClaimedLand.get(chunk.dim).remove(chunkKey);
         }
 
         if (FactionID != null && !FactionID.equals(WILDID)) {
             ClaimedLand.get(chunk.dim).put(chunkKey, FactionID);
+
+            Faction faction = getFaction(FactionID);
+            if (!faction.land.containsKey(chunk.dim)) {
+                // Create dimension entry
+                faction.land.put(chunk.dim, new ArrayList<>());
+            }
+
+            faction.land.get(chunk.dim).add(chunkKey);
         }
+        if (save) saveClaimedChunks(chunk.dim);
     }
 
     /**

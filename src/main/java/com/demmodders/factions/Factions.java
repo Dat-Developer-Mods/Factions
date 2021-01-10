@@ -21,14 +21,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 
-@Mod(modid = Factions.MODID, name = Factions.NAME, serverSideOnly = true, version = Factions.VERSION, acceptableRemoteVersions  = "*", dependencies = "required-after:datmoddingapi@[1.1.1,)")
+@Mod(modid = Factions.MODID, name = Factions.NAME, serverSideOnly = true, version = Factions.VERSION, acceptableRemoteVersions  = "*", dependencies = "required-after:datmoddingapi@[1.2.1,)")
 public class Factions {
     public static final String MODID = "demfactions";
     public static final String NAME = "Factions";
-    public static final String VERSION = "1.0.2";
+    public static final String VERSION = "1.1.0-beta";
     public static final String MC_VERSION = "[1.12.2]";
-    public static final int COMMANDSVERSION = 1;
-    public static final int FLAGSVERSION = 0;
+    public static final int COMMANDSVERSION = 2;
+    public static final int FLAGSVERSION = 1;
 
     public static final Logger LOGGER = LogManager.getLogger(Factions.MODID);
 

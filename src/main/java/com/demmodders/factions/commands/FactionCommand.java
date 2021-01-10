@@ -1,7 +1,6 @@
 package com.demmodders.factions.commands;
 
 import com.demmodders.datmoddingapi.delayedexecution.DelayHandler;
-import com.demmodders.datmoddingapi.delayedexecution.delayedevents.DelayedTeleportEvent;
 import com.demmodders.datmoddingapi.structures.Location;
 import com.demmodders.datmoddingapi.util.DemConstants;
 import com.demmodders.factions.delayedevents.FactionTeleport;
@@ -33,7 +32,12 @@ import java.util.*;
 
 public class FactionCommand extends CommandBase {
     // Map symbols
-    final static String[] symbols = new String[]{"/", "\\", "|", "#", "?", "!", "%", "$", "&", "*", "£", "[", "]"};
+    final static String[] symbols = {"/", "\\", "#", "?", "!", "%", "$", "&", "*", "£", "[", "]"};
+    final static String[][] compass = {
+            {"\\", "N", "/"},
+            {"W", "+", "E"},
+            {"/", "S", "\\"},
+    };
 
     @Override
     public String getName() {
@@ -341,14 +345,42 @@ public class FactionCommand extends CommandBase {
                         int startZ = ((EntityPlayerMP) sender).chunkCoordZ - (FactionConfig.playerSubCat.mapHeight / 2);
                         int endZ = ((EntityPlayerMP) sender).chunkCoordZ + (FactionConfig.playerSubCat.mapHeight / 2);
 
+                        float yaw = ((EntityPlayerMP) sender).rotationYaw;
+
+                        if (yaw < 0) yaw += 360;
+
+                        int dirX = 0, dirY = 0;
+
+                        if (yaw < 66.5 || yaw > 292.5) {
+                            dirY = 2;
+                        } else if (yaw < 112.5 || yaw > 247.5) {
+                            dirY = 1;
+                        } else {
+                            dirY = 0;
+                        }
+
+                        if (yaw > 22.5 && yaw < 157.5) {
+                            dirX = 0;
+                        } else if (yaw > 202.5 && yaw < 337.5) {
+                            dirX = 2;
+                        } else {
+                            dirX = 1;
+                        }
+
+                        int compassX = 0, compassY = 0;
+
                         // Iterate over all the chunks within those coords
                         for (int i = startZ; i <= endZ; i++) {
                             for (int j = startX; j <= endX; j++) {
                                 // Check if the chunk is owned
                                 UUID theFaction = fMan.getChunkOwningFaction(((EntityPlayerMP) sender).dimension, j, i);
                                 message.append(TextFormatting.RESET);
+                                if (compassY < 3 && compassX < 3) {
+                                    message.append(compassX == dirX && compassY == dirY ? DemConstants.TextColour.COMMAND : DemConstants.TextColour.HEADER);
+                                    message.append(compass[compassY][compassX]);
+                                }
                                 // If its the same coord as the player's coord, display the centre symbol
-                                if (i == ((EntityPlayerMP) sender).chunkCoordZ && j == ((EntityPlayerMP) sender).chunkCoordX) message.append(TextFormatting.BLUE).append("+");
+                                else if (i == ((EntityPlayerMP) sender).chunkCoordZ && j == ((EntityPlayerMP) sender).chunkCoordX) message.append(TextFormatting.BLUE).append("+");
 
                                 // If the chunk is owned, mark it
                                 else if (!theFaction.equals(FactionManager.WILDID) && !fMan.getFaction(theFaction).hasFlag("uncharted")) {
@@ -360,7 +392,11 @@ public class FactionCommand extends CommandBase {
 
                                 // Otherwise place a dash
                                 else message.append("-");
+
+                                compassX += 1;
                             }
+                            compassX = 0;
+                            compassY += 1;
 
                             // Go to the next line
                             message.append("\n");
@@ -663,16 +699,19 @@ public class FactionCommand extends CommandBase {
                                 if (args.length > 1) {
                                     ClaimResult result = null;
 
+                                    replyMessage = "";
+
                                     switch (args[1]) {
                                         case "auto":
                                             fMan.getPlayer(playerID).autoClaim = !fMan.getPlayer(playerID).autoClaim;
                                             if (fMan.getPlayer(playerID).autoClaim) {
-                                                replyMessage = DemConstants.TextColour.INFO + "Enabled auto claim";
+                                                replyMessage = DemConstants.TextColour.INFO + "Enabled auto claim\n";
                                             } else {
                                                 replyMessage = DemConstants.TextColour.INFO + "Disabled auto claim";
+                                                break;
                                             }
                                         case "one":
-                                            result = fMan.claimLand(factionID, playerID, ((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ);
+                                            result = fMan.claimLand(factionID, playerID, ((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ, true);
                                             break;
                                         case "square":
                                             if (args.length > 2) {
@@ -691,25 +730,25 @@ public class FactionCommand extends CommandBase {
                                     if (result != null) {
                                         switch (result.result) {
                                             case SUCCESS:
-                                                replyMessage = DemConstants.TextColour.INFO + "Successfully claimed " + (result.count == 1 ? "a chunk" : result.count + " chunks") + " for your faction";
+                                                replyMessage += DemConstants.TextColour.INFO + "Successfully claimed " + (result.count == 1 ? "a chunk" : result.count + " chunks") + " for your faction";
                                                 break;
                                             case STOLEN:
-                                                replyMessage = DemConstants.TextColour.INFO + "Successfully stolen " + (result.count == 1 ? "a chunk" : result.count + " chunks") + " for your faction from " + fMan.getRelationColour(factionID, result.owner) + fMan.getFaction(result.owner).name;
+                                                replyMessage += DemConstants.TextColour.INFO + "Successfully stolen " + (result.count == 1 ? "a chunk" : result.count + " chunks") + " for your faction from " + fMan.getRelationColour(factionID, result.owner) + fMan.getFaction(result.owner).name;
                                                 break;
                                             case LACKPOWER:
-                                                replyMessage = DemConstants.TextColour.ERROR + "You do not have enough power to claim this land";
+                                                replyMessage += DemConstants.TextColour.ERROR + "You do not have enough power to claim this land";
                                                 break;
                                             case OWNED:
-                                                replyMessage = fMan.getRelationColour(factionID, result.owner) + fMan.getFaction(result.owner).name + DemConstants.TextColour.ERROR + " Owns that land and has enough power to keep it";
+                                                replyMessage += fMan.getRelationColour(factionID, result.owner) + fMan.getFaction(result.owner).name + DemConstants.TextColour.ERROR + " Owns that land and has enough power to keep it";
                                                 break;
                                             case YOUOWN:
-                                                replyMessage = DemConstants.TextColour.INFO + "You already own that land";
+                                                replyMessage += DemConstants.TextColour.INFO + "You already own that land";
                                                 break;
                                             case MUSTCONNECT:
-                                                replyMessage = DemConstants.TextColour.ERROR + "You can only claim land that connects to land you already own";
+                                                replyMessage += DemConstants.TextColour.ERROR + "You can only claim land that connects to land you already own";
                                                 break;
                                             case NAH:
-                                                replyMessage = DemConstants.TextColour.ERROR + "You're unable to claim this land";
+                                                replyMessage += DemConstants.TextColour.ERROR + "You're unable to claim this land";
                                                 break;
                                         }
                                     }
@@ -743,7 +782,7 @@ public class FactionCommand extends CommandBase {
                                         case "square":
                                             if (args.length > 2) {
                                                 try {
-                                                    result = fMan.unClaimLand(factionID, playerID, ((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ, ClaimType.ONE, parseInt(args[2]));
+                                                    result = fMan.unClaimLand(factionID, playerID, ((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ, ClaimType.SQUARE, parseInt(args[2]));
                                                 } catch (NumberInvalidException e) {
                                                     replyMessage = DemConstants.TextColour.ERROR + "The radius must be a whole number";
                                                 }
@@ -765,7 +804,7 @@ public class FactionCommand extends CommandBase {
                                     if (result != null) {
                                         switch (result.result) {
                                             case SUCCESS:
-                                                replyMessage = DemConstants.TextColour.INFO + "Successfully unclaimed " + (result.count == 1 ? "a chunk" : result.count + "chunks");
+                                                replyMessage = DemConstants.TextColour.INFO + "Successfully unclaimed " + (result.count == 1 ? "a chunk" : result.count + " chunks");
                                                 break;
                                             case NOLAND:
                                                 replyMessage = DemConstants.TextColour.ERROR + "There isn't any land to unclaim";
@@ -1275,6 +1314,7 @@ public class FactionCommand extends CommandBase {
                                         if (args[1].equals("set")) {
                                             if(!fMan.getFaction(factionID).hasFlag(args[2].toLowerCase())) {
                                                 fMan.getFaction(factionID).setFlag(args[2].toLowerCase());
+                                                fMan.saveFaction(factionID);
                                                 replyMessage = DemConstants.TextColour.INFO + "Successfully set flag";
                                             } else {
                                                 replyMessage = DemConstants.TextColour.ERROR + "Your faction already has that flag set";
@@ -1282,6 +1322,7 @@ public class FactionCommand extends CommandBase {
                                         } else if (args[1].equals("remove")){
                                             if(fMan.getFaction(factionID).hasFlag(args[2].toLowerCase())) {
                                                 fMan.getFaction(factionID).removeFlag(args[2].toLowerCase());
+                                                fMan.saveFaction(factionID);
                                                 replyMessage = DemConstants.TextColour.INFO + "Successfully removed flag";
                                             } else {
                                                 replyMessage = DemConstants.TextColour.ERROR + "Your faction doesn't have that flag set";
@@ -1323,6 +1364,7 @@ public class FactionCommand extends CommandBase {
                                     }
                                     if (desc.toString().length() <= FactionConfig.factionSubCat.maxFactionDescLength) {
                                         fMan.getFaction(factionID).desc = desc.toString();
+                                        fMan.saveFaction(factionID);
                                         replyMessage = DemConstants.TextColour.INFO + "Successfully set description to " + desc.toString();
                                     } else {
                                         replyMessage = DemConstants.TextColour.ERROR + "That description is too long";

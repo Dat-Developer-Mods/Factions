@@ -30,6 +30,7 @@ import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -123,17 +124,40 @@ public class PlayerEvents {
     public static void enterChunk(EntityEvent.EnteringChunk e){
         // This fires really weirdly, sometimes 3 times giving: faction land, wild land, faction land, its really weird
         // Make sure its a player
-        if (e.getEntity() instanceof EntityPlayer) {
-            FactionManager fMan = FactionManager.getInstance();
+
+        FactionManager fMan = FactionManager.getInstance();
+        if (e.getEntity() instanceof EntityPlayer && fMan.isPlayerRegistered(e.getEntity().getUniqueID())) {
             UUID playerFaction = fMan.getPlayersFactionID(e.getEntity().getUniqueID());
             String message = "";
 
             // TODO: Test
             if (!playerFaction.equals(FactionManager.WILDID) && fMan.getPlayer(e.getEntity().getUniqueID()).autoClaim) {
-                ClaimResult result = fMan.claimLand(playerFaction, e.getEntity().getUniqueID(), e.getEntity().dimension, e.getNewChunkX(), e.getNewChunkZ());
-                // TODO: Finish
-                switch (result.result) {
-
+                ClaimResult result = fMan.claimLand(playerFaction, e.getEntity().getUniqueID(), e.getEntity().dimension, e.getNewChunkX(), e.getNewChunkZ(), false);
+                if (result != null) {
+                    String replyMessage;
+                    switch (result.result) {
+                        case SUCCESS:
+                            replyMessage = DemConstants.TextColour.INFO + "Successfully claimed " + (result.count == 1 ? "a chunk" : result.count + " chunks") + " for your faction";
+                            break;
+                        case STOLEN:
+                            replyMessage = DemConstants.TextColour.ERROR + "I don't know what to say, this isn't supposed to have happened, please inform me (The mod developer) on my discord server";
+                            break;
+                        case LACKPOWER:
+                            replyMessage = DemConstants.TextColour.ERROR + "You do not have enough power to claim this land";
+                            break;
+                        case OWNED:
+                            replyMessage = DemConstants.TextColour.ERROR + "You cannot auto-claim land from " + fMan.getRelationColour(playerFaction, result.owner) + fMan.getFaction(result.owner).name;
+                            break;
+                        case YOUOWN:
+                            replyMessage = DemConstants.TextColour.INFO + "You already own that land";
+                            break;
+                        case MUSTCONNECT:
+                            replyMessage = DemConstants.TextColour.ERROR + "You can only claim land that connects to land you already own";
+                            break;
+                        case NAH:
+                            replyMessage = DemConstants.TextColour.ERROR + "You're unable to claim this land";
+                            break;
+                    }
                 }
 
                 e.getEntity().sendMessage(new TextComponentString(message));

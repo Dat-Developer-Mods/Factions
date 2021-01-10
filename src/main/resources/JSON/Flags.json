@@ -15,8 +15,7 @@
     "uncharted" : "The faction does not show up on a map",
     "default" : "The faction is one of the default factions",
     "nodamage" : "You cannot take damage on this faction's land",
-    "noexplode" : "Blocks in this land can't explode",
-    "nobuild" : "Players can't break of place blocks in this region",
+    "nobuild" : "Players can't break or place blocks in this region",
     "bonuspower" : "You lose/gain more power when you die/kill on this faction's land"
   }
 }

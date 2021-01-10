@@ -55,11 +55,6 @@ public class FAdminCommand extends CommandBase {
                     possibilities.add("3");
                     break;
 
-                // Argument is an invite in the player
-                case "":
-                    possibilities = fMan.getListOfFactionsNamesFromFactionList(fMan.getPlayer(((EntityPlayerMP) sender).getUniqueID()).invites);
-                    break;
-
                 // Argument is a faction name
                 case "claim":
                 case "ally":
@@ -234,22 +229,7 @@ public class FAdminCommand extends CommandBase {
                             if (targetFaction == null) {
                                 replyMessage = DemConstants.TextColour.ERROR + "Unknown faction";
                             } else {
-                                fMan.setChunkOwner(new ChunkLocation(((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ), targetFaction);
-                                replyMessage = DemConstants.TextColour.INFO + "Successfully claimed this chunk for " + fMan.getFaction(targetFaction).name;
-                                fMan.getPlayer(playerID).lastFactionLand = targetFaction;
-                                break;
-                            }
-                        } else {
-                            commandResult = CommandResult.NOCONSOLE;
-                        }
-                        break;
-                    case "claim":
-                        if (!console) {
-                            UUID targetFaction = (args.length > 1 ? fMan.getFactionIDFromName(args[1]) : factionID);
-                            if (targetFaction == null) {
-                                replyMessage = DemConstants.TextColour.ERROR + "Unknown faction";
-                            } else {
-                                fMan.setChunkOwner(new ChunkLocation(((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ), targetFaction);
+                                fMan.setChunkOwner(new ChunkLocation(((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ), targetFaction, true);
                                 replyMessage = DemConstants.TextColour.INFO + "Successfully claimed this chunk for " + fMan.getFaction(targetFaction).name;
                                 fMan.getPlayer(playerID).lastFactionLand = targetFaction;
                                 break;
@@ -265,7 +245,7 @@ public class FAdminCommand extends CommandBase {
                             if (FactionManager.WILDID.equals(owningFaction)) {
                                 replyMessage = DemConstants.TextColour.ERROR + "The land has not been claimed";
                             } else {
-                                fMan.setChunkOwner(chunk, null);
+                                fMan.setChunkOwner(chunk, null, true);
                                 replyMessage = DemConstants.TextColour.INFO + "Successfully removed " + DemStringUtils.makePossessive(fMan.getFaction(owningFaction).name) + " claim on this land";
                                 fMan.getPlayer(playerID).lastFactionLand = FactionManager.WILDID;
                             }
