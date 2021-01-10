@@ -6,10 +6,6 @@ jdk:
 
 before_install: chmod +x gradlew
 
-# Setup the workspace.
-install:
-  - ./gradlew setupCIWorkspace -S
-
 # So the cache doesn't get repacked every time.
 before_cache:
   - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
