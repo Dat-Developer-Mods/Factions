@@ -15,7 +15,7 @@ import com.demmodders.factions.util.enums.CommandResult;
 import com.demmodders.factions.util.enums.FactionChatMode;
 import com.demmodders.factions.util.enums.FactionRank;
 import com.demmodders.factions.util.structures.ClaimResult;
-import com.demmodders.factions.util.structures.UnclaimResult;
+import com.demmodders.factions.util.structures.UnclaimResulttemp;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.NumberInvalidException;
@@ -774,7 +774,7 @@ public class FactionCommand extends CommandBase {
                             if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.LIEUTENANT.ordinal()) {
                                 // Work out unclaim type
                                 if (args.length > 1) {
-                                    UnclaimResult result = null;
+                                    UnclaimResulttemp result = null;
                                     switch (args[1]) {
                                         case "one":
                                             result = fMan.unClaimLand(factionID, playerID, ((EntityPlayerMP) sender).dimension, ((EntityPlayerMP) sender).chunkCoordX, ((EntityPlayerMP) sender).chunkCoordZ, ClaimType.ONE, 1);
