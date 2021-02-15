@@ -1,6 +1,7 @@
 package com.demmodders.factions.faction;
 
 import com.demmodders.datmoddingapi.util.DemConstants;
+import com.demmodders.factions.util.DemUtils;
 import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.FactionConstants;
 import com.demmodders.factions.util.enums.FactionChatMode;
@@ -16,6 +17,7 @@ public class Player {
     public FactionRank factionRank = null;
     public Power power = null;
     public String lastKnownName = "";
+    public long lastOnline = 0L;
     public transient UUID lastFactionLand  = null;
     public transient boolean autoClaim = false;
     public transient ArrayList<UUID> invites = new ArrayList<>();
@@ -73,6 +75,9 @@ public class Player {
         message.append(DemConstants.TextColour.INFO).append("======").append(FactionConstants.TextColour.OWN).append(lastKnownName).append(DemConstants.TextColour.INFO).append("======\n");
         message.append(DemConstants.TextColour.INFO).append("Faction: ").append(TextFormatting.RESET).append(relationColour).append(faction != FactionManager.WILDID ? fMan.getFaction(faction).name : "N/A").append("\n");
         message.append(DemConstants.TextColour.INFO).append("Rank: ").append(factionRank != null ? FactionRank.getFactionRankString(factionRank) : "N/A").append("\n");
+        if (lastOnline == 0L) {
+            message.append(DemConstants.TextColour.INFO).append("Last Online: ").append(DemUtils.displayAge(DemUtils.calculateAge(lastOnline) / 60000)).append(" ago").append("\n");
+        }
         message.append(DemConstants.TextColour.INFO).append("Personal Power: ").append(power.power).append("\n");
         message.append(DemConstants.TextColour.INFO).append("Personal Max Power: ").append(power.maxPower);
 

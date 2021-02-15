@@ -12,6 +12,7 @@ import com.demmodders.factions.util.enums.RelationState;
 import com.demmodders.factions.util.structures.Power;
 import com.demmodders.factions.util.structures.Relationship;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -28,7 +29,7 @@ public class Faction {
     public Long foundingTime = 0L;
     public Power power = null;
     public ArrayList<UUID> invites = new ArrayList<>();
-    public ArrayList<String>flags = new ArrayList<>();
+    public ArrayList<String> flags = new ArrayList<>();
     public HashMap<UUID, Relationship> relationships = new HashMap<>();
     public transient ArrayList<UUID> members = new ArrayList<>();
     public transient HashMap<Integer, ArrayList<String>> land = new HashMap<>();
@@ -136,6 +137,21 @@ public class Faction {
             return relation.relation;
         }
         return null;
+    }
+
+    public long getLastOnline() {
+        long latest = foundingTime;
+        FactionManager fMan = FactionManager.getInstance();
+
+        for (UUID playerID : members) {
+            if (FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayerByUUID(playerID) != null) {
+                return 0L;
+            }
+            Player player = fMan.getPlayer(playerID);
+            latest = Math.max(latest, player.lastOnline);
+        }
+
+        return latest;
     }
 
     /**
@@ -280,14 +296,9 @@ public class Faction {
         StringBuilder message = new StringBuilder();
         String age;
 
-        long minutes = DemUtils.calculateAge(foundingTime) / 60000;
-        if (minutes < 60){
-            age = minutes + " Minutes";
-        } else if (minutes < 1440){
-            age = (minutes / 60) + " Hours";
-        } else {
-            age = (minutes / 1440) + " Days";
-        }
+        long lastOnline = getLastOnline();
+
+        age = DemUtils.displayAge(DemUtils.calculateAge(foundingTime) / 60000);
 
         // Work out invitation policy to display
         String invitePolicy;
@@ -329,6 +340,9 @@ public class Faction {
 
         message.append(DemConstants.TextColour.INFO).append("======").append(TextFormatting.RESET).append(relationColour).append(name).append(DemConstants.TextColour.INFO).append("======\n");
         message.append(DemConstants.TextColour.INFO).append("Description: ").append(TextFormatting.RESET).append(desc).append("\n");
+        if (lastOnline != 0L) {
+            message.append(DemConstants.TextColour.INFO).append("Last Online: ").append(TextFormatting.RESET).append(DemUtils.displayAge(DemUtils.calculateAge(lastOnline) / 60000)).append(" ago").append("\n");
+        }
         message.append(DemConstants.TextColour.INFO).append("Age: ").append(TextFormatting.RESET).append(age).append("\n");
         message.append(DemConstants.TextColour.INFO).append("Invitation Policy: ").append(TextFormatting.RESET).append(invitePolicy).append("\n");
         message.append(DemConstants.TextColour.INFO).append("Land worth: ").append(TextFormatting.RESET).append(calculateLandValue()).append("\n");

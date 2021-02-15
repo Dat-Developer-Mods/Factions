@@ -3,6 +3,7 @@ package com.demmodders.factions.commands;
 import com.demmodders.datmoddingapi.delayedexecution.DelayHandler;
 import com.demmodders.datmoddingapi.structures.Location;
 import com.demmodders.datmoddingapi.util.DemConstants;
+import com.demmodders.factions.Factions;
 import com.demmodders.factions.delayedevents.FactionTeleport;
 import com.demmodders.factions.faction.Faction;
 import com.demmodders.factions.faction.FactionManager;
@@ -1125,40 +1126,10 @@ public class FactionCommand extends CommandBase {
                     }
                     break;
 
-                // Faction Owner
-                case "disband":
-                    if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
-                        if (!factionID.equals(FactionManager.WILDID)){
-                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
-                                if (args.length == 1){
-                                    replyMessage = DemConstants.TextColour.ERROR + "Are you sure? type " + DemConstants.TextColour.COMMAND + "/faction disband " + fMan.getFaction(factionID).name;
-                                } else {
-                                    String factionName = fMan.getFaction(factionID).name;
-                                    if (args[1].equals(factionName)){
-                                        if (fMan.disbandFaction(factionID, playerID)){
-                                            FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendMessage(new TextComponentString(DemConstants.TextColour.INFO + factionName + " has been disbanded"));
-                                        } else {
-                                            replyMessage = DemConstants.TextColour.ERROR + "Failed to disband faction";
-                                        }
-                                    } else {
-                                        replyMessage = DemConstants.TextColour.ERROR + "Failed to disband faction, to disband your faction type " + DemConstants.TextColour.COMMAND + "/faction disband " + fMan.getFaction(factionID).name;
-                                    }
-                                }
-                            } else {
-                                commandResult = CommandResult.NOFACTIONPERMISSION;
-                            }
-                        } else {
-                            commandResult = CommandResult.NOFACTION;
-                        }
-                    } else {
-                        commandResult = CommandResult.NOPERMISSION;
-                    }
-                    break;
-
                 case "promote":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (!factionID.equals(FactionManager.WILDID)){
-                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
+                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
                                 if (args.length > 1) {
                                     UUID otherPlayer = fMan.getPlayerIDFromName(args[1]);
                                     if (otherPlayer == null || !fMan.getPlayer(otherPlayer).faction.equals(factionID)){
@@ -1170,13 +1141,20 @@ public class FactionCommand extends CommandBase {
                                             case GRUNT:
                                                 fMan.setPlayerRank(otherPlayer, FactionRank.LIEUTENANT);
                                                 replyMessage = DemConstants.TextColour.INFO + "Promoted " + args[1] + " to Lieutenant";
+
+                                                fMan.sendMessageToPlayer(otherPlayer, DemConstants.TextColour.INFO + "You were promoted to Lieutenant");
                                                 break;
                                             case LIEUTENANT:
-                                                fMan.setPlayerRank(otherPlayer, FactionRank.OFFICER);
-                                                replyMessage = DemConstants.TextColour.INFO + "Promoted " + args[1] + " to Officer";
+                                                if (fMan.getPlayer(playerID).factionRank == FactionRank.OWNER) {
+                                                    replyMessage = DemConstants.TextColour.ERROR + "Only the owner of the faction can promote members to Officers";
+                                                } else {
+                                                    fMan.setPlayerRank(otherPlayer, FactionRank.OFFICER);
+                                                    replyMessage = DemConstants.TextColour.INFO + "Promoted " + args[1] + " to Officer";
+                                                    fMan.sendMessageToPlayer(otherPlayer, DemConstants.TextColour.INFO + "You were promoted to Officer");
+                                                }
                                                 break;
                                             case OFFICER:
-                                                replyMessage = DemConstants.TextColour.ERROR + "That player has the highest rank you can promote them to";
+                                                replyMessage = DemConstants.TextColour.ERROR + "That player cannot be promoted anymore";
                                                 break;
                                             case OWNER:
                                                 replyMessage = DemConstants.TextColour.ERROR + "That player is the maximum rank possible";
@@ -1199,7 +1177,7 @@ public class FactionCommand extends CommandBase {
                 case "demote":
                     if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
                         if (!factionID.equals(FactionManager.WILDID)){
-                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
+                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OFFICER.ordinal()) {
                                 if (args.length > 1) {
                                     UUID otherPlayer = fMan.getPlayerIDFromName(args[1]);
                                     if (otherPlayer == null || !fMan.getPlayer(otherPlayer).faction.equals(factionID)){
@@ -1214,17 +1192,54 @@ public class FactionCommand extends CommandBase {
                                             case LIEUTENANT:
                                                 fMan.setPlayerRank(otherPlayer, FactionRank.GRUNT);
                                                 replyMessage = DemConstants.TextColour.INFO + "Demoted " + args[1] + " to Grunt";
+                                                fMan.sendMessageToPlayer(otherPlayer, DemConstants.TextColour.INFO + "You were demoted to Grunt");
                                                 break;
                                             case OFFICER:
-                                                fMan.setPlayerRank(otherPlayer, FactionRank.LIEUTENANT);
-                                                replyMessage = DemConstants.TextColour.INFO + "Demoted " + args[1] + " to Lieutenant";
+                                                if (fMan.getPlayer(playerID).factionRank == FactionRank.OWNER) {
+                                                    replyMessage = DemConstants.TextColour.ERROR + "You cannot demote other Officers";
+                                                } else {
+                                                    fMan.setPlayerRank(otherPlayer, FactionRank.LIEUTENANT);
+                                                    replyMessage = DemConstants.TextColour.INFO + "Demoted " + args[1] + " to Lieutenant";
+
+                                                    fMan.sendMessageToPlayer(otherPlayer, DemConstants.TextColour.INFO + "You were demoted to Lieutenant");
+                                                }
                                                 break;
                                             case OWNER:
-                                                replyMessage = DemConstants.TextColour.ERROR + "You cannot demote the owner";
+                                                replyMessage = DemConstants.TextColour.ERROR + "You cannot demote the Owner";
                                         }
                                     }
                                 } else {
                                     replyMessage = DemConstants.TextColour.ERROR + "Bad argument, command should look like: " + DemConstants.TextColour.COMMAND + "/faction demote <member name>";
+                                }
+                            } else {
+                                commandResult = CommandResult.NOFACTIONPERMISSION;
+                            }
+                        } else {
+                            commandResult = CommandResult.NOFACTION;
+                        }
+                    } else {
+                        commandResult = CommandResult.NOPERMISSION;
+                    }
+                    break;
+
+                // Faction Owner
+                case "disband":
+                    if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
+                        if (!factionID.equals(FactionManager.WILDID)){
+                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
+                                if (args.length == 1){
+                                    replyMessage = DemConstants.TextColour.ERROR + "Are you sure? type " + DemConstants.TextColour.COMMAND + "/faction disband " + fMan.getFaction(factionID).name;
+                                } else {
+                                    String factionName = fMan.getFaction(factionID).name;
+                                    if (args[1].equals(factionName)){
+                                        if (fMan.disbandFaction(factionID, playerID)){
+                                            FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendMessage(new TextComponentString(DemConstants.TextColour.INFO + factionName + " has been disbanded"));
+                                        } else {
+                                            replyMessage = DemConstants.TextColour.ERROR + "Failed to disband faction";
+                                        }
+                                    } else {
+                                        replyMessage = DemConstants.TextColour.ERROR + "Failed to disband faction, to disband your faction type " + DemConstants.TextColour.COMMAND + "/faction disband " + fMan.getFaction(factionID).name;
+                                    }
                                 }
                             } else {
                                 commandResult = CommandResult.NOFACTIONPERMISSION;
@@ -1265,6 +1280,41 @@ public class FactionCommand extends CommandBase {
                                     }
                                 } else {
                                     replyMessage = DemConstants.TextColour.ERROR + "Bad argument, command should look like: " + DemConstants.TextColour.COMMAND + "/faction setrank <member name> <new rank>";
+                                }
+                            } else {
+                                commandResult = CommandResult.NOFACTIONPERMISSION;
+                            }
+                        } else {
+                            commandResult = CommandResult.NOFACTION;
+                        }
+                    } else {
+                        commandResult = CommandResult.NOPERMISSION;
+                    }
+                    break;
+
+                case "rename":
+                    if (PermissionAPI.hasPermission((EntityPlayerMP) sender, "demfactions.faction.manage")) {
+                        if (!factionID.equals(FactionManager.WILDID)) {
+                            if (fMan.getPlayer(playerID).factionRank.ordinal() >= FactionRank.OWNER.ordinal()) {
+                                if (args.length > 2) {
+                                    String name = args[1];
+                                    int rc = fMan.setFactionName(playerID, factionID, name);
+                                    switch (rc) {
+                                        case 0:
+                                            replyMessage = DemConstants.TextColour.INFO + "Successfully changed your faction's name to " + FactionConstants.TextColour.OWN + fMan.getFaction(factionID).name;
+                                            break;
+                                        case 1:
+                                            replyMessage = DemConstants.TextColour.ERROR + "That name is too long";
+                                            break;
+                                        case 2:
+                                            replyMessage = DemConstants.TextColour.ERROR + "That name is too short";
+                                            break;
+                                        case 3:
+                                            replyMessage = DemConstants.TextColour.ERROR + "Failed to change faction name";
+                                            break;
+                                    }
+                                } else {
+                                    replyMessage = DemConstants.TextColour.ERROR + "Bad argument, command should look like: " + DemConstants.TextColour.COMMAND + "/faction rename <name>";
                                 }
                             } else {
                                 commandResult = CommandResult.NOFACTIONPERMISSION;

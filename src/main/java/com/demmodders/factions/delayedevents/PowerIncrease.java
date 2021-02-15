@@ -45,7 +45,7 @@ public class PowerIncrease extends BaseDelayedEvent {
             fPlayer.addPower((int) Math.ceil(FactionConfig.powerSubCat.powerGainAmount * rankMultiplier(fPlayer.factionRank)));
             this.player.sendMessage(new TextComponentString(DemConstants.TextColour.INFO + "You just gained power! Your power is now " + fPlayer.power.power + "/" + fPlayer.power.maxPower));
         }
-        exeTime = System.currentTimeMillis() + delay * 1000;
+        exeTime = System.currentTimeMillis() + delay * 1000L;
     }
 
     @Override

@@ -16,6 +16,16 @@ public class DemUtils {
         return time - startingDate;
     }
 
+    public static String displayAge(Long ageInMinutes) {
+        if (ageInMinutes < 60){
+            return ageInMinutes + " Minutes";
+        } else if (ageInMinutes < 1440){
+            return (ageInMinutes / 60) + " Hours";
+        } else {
+            return (ageInMinutes / 1440) + " Days";
+        }
+    }
+
     public static int clamp(int Value, int Min, int Max) {
         if (Value < Min) return Min;
         else return Math.min(Value, Max);

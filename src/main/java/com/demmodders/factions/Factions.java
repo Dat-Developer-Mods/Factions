@@ -1,8 +1,11 @@
 package com.demmodders.factions;
 
+import com.demmodders.datmoddingapi.delayedexecution.DelayHandler;
 import com.demmodders.factions.commands.CommandRegister;
 import com.demmodders.factions.commands.FactionCommandList;
+import com.demmodders.factions.delayedevents.FactionCleanout;
 import com.demmodders.factions.faction.FactionManager;
+import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.FlagDescriptions;
 import com.demmodders.factions.util.structures.Version;
 import com.google.gson.Gson;
@@ -100,5 +103,6 @@ public class Factions {
     public void serverLoad(FMLServerStartingEvent e){
         // register commands
         CommandRegister.RegisterCommands(e);
+        if (FactionConfig.factionSubCat.clearFactionPeriod != 0) DelayHandler.addEvent(new FactionCleanout());
     }
 }

@@ -5,12 +5,13 @@ import com.demmodders.factions.faction.Player;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.fml.common.eventhandler.Event;
 
+import javax.annotation.Nullable;
 import java.util.UUID;
 
 public class FactionEvent extends Event {
     public final UUID causingPlayerID;
 
-    public FactionEvent(UUID Player){
+    public FactionEvent(@Nullable UUID Player){
         causingPlayerID = Player;
     }
 

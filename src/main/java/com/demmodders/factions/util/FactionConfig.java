@@ -85,6 +85,16 @@ public class FactionConfig {
         @Config.Name("Restrict Inventory Block Access")
         @Config.Comment("Prevents players from accessing inventory blocks, such as chests, on land they don't own")
         public boolean inventoryBlockRestriction = true;
+
+        @Config.Name("Clear Faction Period")
+        @Config.RangeInt(min = 0)
+        @Config.Comment("The amount of time in minutes between each time the server checks to delete old factions, 0 to disable")
+        public int clearFactionPeriod = 0;
+
+        @Config.Name("Clear Faction Period")
+        @Config.RangeInt(min = 0)
+        @Config.Comment("The maximum age in minutes a faction is allowed to be offline before it is removed")
+        public int maxFactionOffline = 10080;
     }
 
     public static class Player {

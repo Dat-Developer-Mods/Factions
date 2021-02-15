@@ -43,11 +43,26 @@ public class InFactionEvent extends FactionEvent {
             }
         }
 
+        /**
+         * Fired when a chunk is about to be unclaimed
+         */
         @Cancelable
         public static class FactionUnClaimEvent extends ChunkEvent {
             public FactionUnClaimEvent(List<ChunkLocation> chunkLocations, UUID playerID, UUID factionID, ClaimType Type) {
                 super(chunkLocations, playerID, factionID, Type);
             }
+        }
+    }
+
+    /**
+     * Fired when a faction is about to be renamed
+     */
+    @Cancelable
+    public static class FactionRenameEvent extends InFactionEvent{
+        public String newName;
+        public FactionRenameEvent(UUID Player, UUID FactionID, String newName) {
+            super(Player, FactionID);
+            this.newName = newName;
         }
     }
 

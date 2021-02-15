@@ -10,11 +10,9 @@ import com.demmodders.factions.faction.Faction;
 import com.demmodders.factions.faction.FactionManager;
 import com.demmodders.factions.util.FactionConfig;
 import com.demmodders.factions.util.FactionConstants;
-import com.demmodders.factions.util.enums.ClaimType;
 import com.demmodders.factions.util.enums.FactionRank;
 import com.demmodders.factions.util.enums.RelationState;
 import com.demmodders.factions.util.structures.ClaimResult;
-import net.minecraft.command.PlayerNotFoundException;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.text.TextComponentString;
@@ -22,16 +20,13 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
-import net.minecraftforge.fml.common.network.FMLNetworkEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -43,16 +38,24 @@ public class PlayerEvents {
 
     @SubscribeEvent
     public static void playerLogin(PlayerLoggedInEvent e){
-        if (FactionManager.getInstance().isPlayerRegistered(e.player.getUniqueID())) {
+        FactionManager fMan = FactionManager.getInstance();
+        if (fMan.isPlayerRegistered(e.player.getUniqueID())) {
             // record username for use when they're offline, for listing members
-            FactionManager.getInstance().setPlayerLastKnownName(e.player.getUniqueID(), e.player.getName());
+            fMan.setPlayerLastKnownName(e.player.getUniqueID(), e.player.getName());
+            fMan.setPlayerLastOnline(e.player.getUniqueID(), 0L);
         } else {
             LOGGER.info(e.player.getName() + " is not registered with factions, amending");
-            FactionManager.getInstance().registerPlayer(e.player);
+            fMan.registerPlayer(e.player);
         }
 
         // Add event for the player to
         DelayHandler.addEvent(new PowerIncrease(FactionConfig.powerSubCat.powerGainInterval, (EntityPlayerMP) e.player));
+    }
+
+    @SubscribeEvent
+    public static void playerLogoff(PlayerLoggedOutEvent e) {
+        FactionManager fMan = FactionManager.getInstance();
+        fMan.setPlayerLastOnline(e.player.getUniqueID(), System.currentTimeMillis());
     }
 
     private static double rankModifier(FactionRank rank){

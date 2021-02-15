@@ -145,9 +145,13 @@ public class FactionManager {
      * @param PlayerID the ID of the player being updated
      * @param Name the new name of the player
      */
-
     public void setPlayerLastKnownName(UUID PlayerID, String Name){
         PlayerMap.get(PlayerID).lastKnownName = Name;
+        savePlayer(PlayerID);
+    }
+
+    public void setPlayerLastOnline(UUID PlayerID, long LastOnline) {
+        getPlayer(PlayerID).lastOnline = LastOnline;
         savePlayer(PlayerID);
     }
 
@@ -511,6 +515,24 @@ public class FactionManager {
     }
 
     // Faction Functions
+
+    /**
+     * Checks the given faction name is valid
+     * @param Name The name to test
+     * @return 0 for success, 1 for name too long, 2 for name too short, 3 for faction with name exists
+     */
+    public int checkFactionName(String Name) {
+        if (Name.length() > FactionConfig.factionSubCat.maxFactionNameLength) {
+            return 1;
+        } else if (Name.length() < 1){
+            return 2;
+        } else if(getFactionIDFromName(Name) != null){
+            return 3;
+        } else {
+            return 0;
+        }
+    }
+
     /**
      * Creates a faction
      * @param Name The name of the faction
@@ -518,16 +540,11 @@ public class FactionManager {
      * @return The result of creating the faction (0 for success, 1 for name too long, 2 for name too short, 3 for faction exists, 4 cancelled)
      */
     public int createFaction(String Name, UUID PlayerID) {
-        if (Name.length() > FactionConfig.factionSubCat.maxFactionNameLength) {
-            LOGGER.warn(Factions.MODID + " Failed to create faction, name too long");
-            return 1;
-        } else if (Name.length() < 1){
-            LOGGER.warn(Factions.MODID + " Failed to create faction, name too short");
-            return 2;
-        } else if(getFactionIDFromName(Name) != null){
-            LOGGER.warn(Factions.MODID + " Failed to create faction, Faction already exists");
-            return 3;
+        int rc = checkFactionName(Name);
+        if (rc != 0) {
+            return rc;
         }
+
         OutFactionEvent.FactionCreateEvent event = new OutFactionEvent.FactionCreateEvent(PlayerID, Name);
         MinecraftForge.EVENT_BUS.post(event);
         if (event.isCanceled()) return 4;
@@ -540,6 +557,29 @@ public class FactionManager {
         PlayerMap.get(PlayerID).faction = factionID;
         PlayerMap.get(PlayerID).factionRank = FactionRank.OWNER;
         savePlayer(PlayerID);
+
+        return 0;
+    }
+    /**
+     * Creates a faction
+     * @param FactionID The ID of the faction who's name is being changed
+     * @param Name The name of the faction
+     * @return The result of changing the name (0 for success, 1 for name too long, 2 for name too short, 3 for faction with name exists, 4 cancelled)
+     */
+    public int setFactionName(@Nullable UUID PlayerID, UUID FactionID, String Name) {
+        int rc = checkFactionName(Name);
+        if (rc != 0) {
+            return rc;
+        }
+
+        InFactionEvent.FactionRenameEvent event = new InFactionEvent.FactionRenameEvent(PlayerID, FactionID, Name);
+        MinecraftForge.EVENT_BUS.post(event);
+        if (event.isCanceled()) return 4;
+
+        Faction faction = getFaction(event.factionID);
+        faction.name = event.newName;
+
+        saveFaction(event.factionID);
 
         return 0;
     }
