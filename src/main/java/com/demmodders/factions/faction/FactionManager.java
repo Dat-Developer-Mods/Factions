@@ -509,7 +509,6 @@ public class FactionManager {
             RelationState relation = FactionMap.get(OwningFaction).getRelation(playerFaction);
             return (relation == RelationState.ALLY && FactionConfig.factionSubCat.allyBuild) || ((relation == RelationState.ENEMY || relation == RelationState.PENDINGENEMY) && FactionConfig.factionSubCat.enemyBuild);
         } catch (UnknownPlayerException e) {
-            LOGGER.warn("Caught a fake player trying to build, allowing");
             return true;
         }
     }
