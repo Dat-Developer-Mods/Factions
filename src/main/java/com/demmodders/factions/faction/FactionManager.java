@@ -151,8 +151,13 @@ public class FactionManager {
     }
 
     public void setPlayerLastOnline(UUID PlayerID, long LastOnline) {
-        getPlayer(PlayerID).lastOnline = LastOnline;
-        savePlayer(PlayerID);
+        Player player = getPlayer(PlayerID);
+        if (player != null) {
+            player.lastOnline = LastOnline;
+            savePlayer(PlayerID);
+        } else {
+            LOGGER.warn("A player that wasn't registered with factions left the server, this shouldn't happen (as all players should be registered");
+        }
     }
 
     /**
