@@ -566,7 +566,8 @@ public class FactionManager {
     }
     /**
      * Creates a faction
-     * @param FactionID The ID of the faction who's name is being changed
+     * @param PlayerID The ID of the player who's changing the name, used for the event
+     * @param FactionID The ID of the faction whose name is being changed
      * @param Name The name of the faction
      * @return The result of changing the name (0 for success, 1 for name too long, 2 for name too short, 3 for faction with name exists, 4 cancelled)
      */
@@ -727,6 +728,7 @@ public class FactionManager {
      * @param Dim The dimension the chunk is in
      * @param ChunkX The X Coord of the chunk
      * @param ChunkZ The Z Coord of the chunk
+     * @param AllowSteal If the claim is permitted when the land is already owned
      * @return The result of the claim
      */
     public ClaimResult claimLand(UUID FactionID, @Nullable UUID PlayerID, int Dim, int ChunkX, int ChunkZ, boolean AllowSteal){
@@ -829,6 +831,7 @@ public class FactionManager {
      * Sets the owner of a chunk, accounting for if the chunk is already owned
      * @param chunk The chunk being claimed
      * @param FactionID The faction claiming the chunk
+     * @param save If the change should be saved to disk
      */
     public void setChunkOwner(ChunkLocation chunk, UUID FactionID, boolean save) {
         if (!ClaimedLand.containsKey(chunk.dim)) {
@@ -867,6 +870,8 @@ public class FactionManager {
      * @param Dim The dimension the chunk is in
      * @param ChunkX The X Coord of the chunk
      * @param ChunkZ The Z Coord of the chunk
+     * @param Type The type of claim
+     * @param Radius If the type is square, then this value is the radius of that square
      * @return The result of the claim (0: Success, 1: Faction doesn't own that chunk, 2: Cancelled)
      */
     public UnclaimResult unClaimLand(UUID FactionID, @Nullable UUID PlayerID, int Dim, int ChunkX, int ChunkZ, ClaimType Type, int Radius){

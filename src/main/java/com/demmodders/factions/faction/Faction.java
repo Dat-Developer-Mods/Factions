@@ -285,6 +285,7 @@ public class Faction {
 
     /**
      * Builds a message giving information about the faction
+     * @param askingFaction The uuid of the faction that's requesting the info, used for colouring
      * @return a long message detailing public information about the faction
      */
     public String printFactionInfo(UUID askingFaction){
@@ -348,9 +349,9 @@ public class Faction {
         message.append(DemConstants.TextColour.INFO).append("Land worth: ").append(TextFormatting.RESET).append(calculateLandValue()).append("\n");
         message.append(DemConstants.TextColour.INFO).append("Power: ").append(TextFormatting.RESET).append(calculatePower()).append("\n");
         message.append(DemConstants.TextColour.INFO).append("Max Power: ").append(TextFormatting.RESET).append(calculateMaxPower()).append("\n");
-        message.append(DemConstants.TextColour.INFO).append("Members: ").append(memberText.toString()).append("\n");
-        message.append(DemConstants.TextColour.INFO).append("Allies: ").append(allies.toString()).append("\n");
-        message.append(DemConstants.TextColour.INFO).append("Enemies: ").append(enemies.toString());
+        message.append(DemConstants.TextColour.INFO).append("Members: ").append(memberText).append("\n");
+        message.append(DemConstants.TextColour.INFO).append("Allies: ").append(allies).append("\n");
+        message.append(DemConstants.TextColour.INFO).append("Enemies: ").append(enemies);
 
         return message.toString();
     }
