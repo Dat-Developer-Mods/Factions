@@ -24,11 +24,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 
-@Mod(modid = Factions.MODID, name = Factions.NAME, serverSideOnly = true, version = Factions.VERSION, acceptableRemoteVersions  = "*", dependencies = "required-after:datmoddingapi@[1.2.1,)")
+@Mod(modid = Factions.MODID, name = Factions.NAME, serverSideOnly = true, version = Factions.VERSION, acceptableRemoteVersions  = "*", dependencies = "required-after:datmoddingapi@[1.3.3,)")
 public class Factions {
     public static final String MODID = "demfactions";
     public static final String NAME = "Factions";
-    public static final String VERSION = "1.1.1-beta";
+    public static final String VERSION = "1.1.1";
     public static final String MC_VERSION = "[1.12.2]";
     public static final int COMMANDSVERSION = 2;
     public static final int FLAGSVERSION = 1;
