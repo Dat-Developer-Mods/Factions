@@ -75,7 +75,7 @@ public class Player {
         message.append(DemConstants.TextColour.INFO).append("======").append(FactionConstants.TextColour.OWN).append(lastKnownName).append(DemConstants.TextColour.INFO).append("======\n");
         message.append(DemConstants.TextColour.INFO).append("Faction: ").append(TextFormatting.RESET).append(relationColour).append(faction != FactionManager.WILDID ? fMan.getFaction(faction).name : "N/A").append("\n");
         message.append(DemConstants.TextColour.INFO).append("Rank: ").append(factionRank != null ? FactionRank.getFactionRankString(factionRank) : "N/A").append("\n");
-        if (lastOnline == 0L) {
+        if (lastOnline != 0L) {
             message.append(DemConstants.TextColour.INFO).append("Last Online: ").append(DemUtils.displayAge(DemUtils.calculateAge(lastOnline) / 60000)).append(" ago").append("\n");
         }
         message.append(DemConstants.TextColour.INFO).append("Personal Power: ").append(power.power).append("\n");
