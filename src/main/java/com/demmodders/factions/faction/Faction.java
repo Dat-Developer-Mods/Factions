@@ -269,7 +269,7 @@ public class Faction {
         if (land.size() == 0){
             return true;
         }
-        else if (land.get(Dim).size() == 0) return true;
+        else if (land.get(Dim) == null || land.get(Dim).size() == 0) return true;
         String[] coords;
         for (String key : land.get(Dim)){
             coords = key.split(", ");

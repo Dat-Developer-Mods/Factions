@@ -28,7 +28,7 @@ import java.nio.file.Files;
 public class Factions {
     public static final String MODID = "demfactions";
     public static final String NAME = "Factions";
-    public static final String VERSION = "1.1.1";
+    public static final String VERSION = "1.1.2";
     public static final String MC_VERSION = "[1.12.2]";
     public static final int COMMANDSVERSION = 2;
     public static final int FLAGSVERSION = 1;

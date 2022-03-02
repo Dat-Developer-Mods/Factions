@@ -16,7 +16,7 @@ repositories {
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'maven-publish'
 
-version = "1.1.1"
+version = "1.1.2"
 group = "com.demmodders.factions" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 
 java {
